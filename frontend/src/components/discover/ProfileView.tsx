@@ -203,7 +203,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       />
 
       <InfoCard kicker="ABOUT ME" Icon={UserRound} testID="discover-about">
-        <Text style={styles.cardBody}>{profile.summary}</Text>
+        <ExpandableText text={profile.summary} />
       </InfoCard>
 
       <Prompt text={prompts[1]} />
@@ -369,6 +369,43 @@ function Prompt({ text }: { text: string }) {
     <Text style={styles.prompt} numberOfLines={2}>
       {text}
     </Text>
+  );
+}
+
+// Collapsible body — shows the first 3 lines with a "See more" toggle. Uses
+// a character-length heuristic so it works consistently across native/web
+// (onTextLayout is unreliable when numberOfLines is already clamping the
+// measured text on RN Web).
+const ABOUT_CLAMP_CHARS = 140;
+
+function ExpandableText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isTruncatable = text.length > ABOUT_CLAMP_CHARS;
+
+  return (
+    <View>
+      <Text
+        style={styles.cardBody}
+        numberOfLines={expanded || !isTruncatable ? undefined : 3}
+      >
+        {text}
+      </Text>
+      {isTruncatable ? (
+        <Pressable
+          testID="about-toggle"
+          onPress={() => setExpanded((v) => !v)}
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.expandToggle,
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Text style={styles.expandToggleText}>
+            {expanded ? "See less" : "See more"}
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -598,6 +635,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: "400",
     color: TEXT,
+  },
+  expandToggle: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+  },
+  expandToggleText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: PURPLE,
+    letterSpacing: -0.1,
   },
 
   // Lifestyle / align grid
