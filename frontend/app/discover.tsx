@@ -7,7 +7,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { ChevronDown, Crown, Heart, SlidersHorizontal, Sparkles, Star, X } from "lucide-react-native";
+import { ChevronDown, Crown, SlidersHorizontal, Sparkles } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -103,23 +103,6 @@ export default function Discover() {
   const advance = () => {
     if (sortedProfiles.length === 0) return;
     setIdx((i) => (i + 1) % sortedProfiles.length);
-  };
-
-  const handleLike = async () => {
-    if (!profile) return;
-    
-    // Call API to express interest
-    const currentUserId = "current-user-123"; // TODO: Get from auth context
-    const result = await discoverService.connect(currentUserId, profile.id);
-    
-    // Check if it's a mutual match
-    if (result.isMatch) {
-      setMatchedProfile(profile);
-      setShowMatchOverlay(true);
-    } else {
-      // No match yet, just advance
-      advance();
-    }
   };
 
   const handleStartConversation = () => {
@@ -218,46 +201,6 @@ export default function Discover() {
               profile={profile}
               dimension={dimension}
             />
-
-            {/* Action row at the bottom of the profile — scrolls in with content */}
-            <View testID="discover-action-bar" style={styles.actionBar}>
-              <Pressable
-                testID="discover-action-dislike"
-                onPress={advance}
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  styles.actionBtnGhost,
-                  pressed && { transform: [{ scale: 0.94 }] },
-                ]}
-                hitSlop={6}
-              >
-                <X size={26} color={TEXT} strokeWidth={2.4} />
-              </Pressable>
-              <Pressable
-                testID="discover-action-superlike"
-                onPress={advance}
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  styles.actionBtnSuperlike,
-                  pressed && { transform: [{ scale: 0.94 }] },
-                ]}
-                hitSlop={6}
-              >
-                <Star size={26} color="#1D4ED8" strokeWidth={2.4} fill="#1D4ED8" />
-              </Pressable>
-              <Pressable
-                testID="discover-action-like"
-                onPress={handleLike}
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  styles.actionBtnLike,
-                  pressed && { transform: [{ scale: 0.94 }] },
-                ]}
-                hitSlop={6}
-              >
-                <Heart size={26} color="#FFFFFF" strokeWidth={2.4} fill="#FFFFFF" />
-              </Pressable>
-            </View>
           </Animated.View>
         ) : (
           <Text style={styles.empty}>Loading…</Text>
@@ -591,50 +534,4 @@ const styles = StyleSheet.create({
   bannerHi: { color: PURPLE, fontWeight: "700" },
 
   empty: { padding: 32, textAlign: "center", color: MUTED },
-
-  // inline action bar at the bottom of the profile
-  actionBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 18,
-    marginTop: 24,
-    marginHorizontal: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: BORDER,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-  actionBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  actionBtnGhost: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: BORDER,
-  },
-  actionBtnSuperlike: {
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1.5,
-    borderColor: "#BFDBFE",
-  },
-  actionBtnLike: {
-    backgroundColor: PURPLE,
-    shadowColor: PURPLE,
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-  },
 });
