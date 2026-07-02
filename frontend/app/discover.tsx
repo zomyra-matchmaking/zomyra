@@ -238,24 +238,23 @@ export default function Discover() {
         onLayout={(e) => setFilterHeaderH(e.nativeEvent.layout.height)}
         testID="discover-filter-header"
       >
-        {/* Header — [All matches ▼]   [Filter cog] */}
+        {/* Header — [✨ Showing your best All matches ▼]  [Filter cog] */}
         <View style={styles.header}>
           <Pressable
             testID="filter-chip-compatibility"
             onPress={() => setSheetOpen(true)}
             style={({ pressed }) => [
-              styles.headerPill,
+              styles.statusPill,
               pressed && { opacity: 0.85 },
             ]}
           >
             <Sparkles size={12} color={PURPLE} strokeWidth={2} />
-            <Text style={styles.headerPillText} numberOfLines={1}>
-              {dimLabel} matches
+            <Text style={styles.statusPillText} numberOfLines={1}>
+              Showing your best{" "}
+              <Text style={styles.statusPillHi}>{dimLabel}</Text> matches
             </Text>
             <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
           </Pressable>
-
-          <View style={styles.headerCenter} pointerEvents="none" />
 
           <Pressable
             testID="filter-icon"
@@ -266,16 +265,8 @@ export default function Discover() {
             ]}
             hitSlop={8}
           >
-            <SlidersHorizontal size={18} color={PURPLE} strokeWidth={2} />
+            <SlidersHorizontal size={16} color={PURPLE} strokeWidth={2} />
           </Pressable>
-        </View>
-
-        {/* "Showing your best XXX matches" banner */}
-        <View style={styles.banner}>
-          <Sparkles size={12} color={PURPLE} strokeWidth={2} />
-          <Text style={styles.bannerText}>
-            Showing your best <Text style={styles.bannerHi}>{dimLabel}</Text> matches
-          </Text>
         </View>
 
         {/* Filter chip row */}
@@ -292,8 +283,8 @@ export default function Discover() {
               style={styles.chip}
             >
               <Text style={styles.chipLabel}>{c.label}</Text>
-              <Crown size={12} color="#F59E0B" strokeWidth={2} fill="#F59E0B" />
-              <ChevronDown size={14} color={MUTED} strokeWidth={2} />
+              <Crown size={11} color="#F59E0B" strokeWidth={2} fill="#F59E0B" />
+              <ChevronDown size={12} color={MUTED} strokeWidth={2} />
             </Pressable>
           ))}
         </ScrollView>
@@ -547,20 +538,35 @@ const styles = StyleSheet.create({
 
   // header
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingHorizontal: 14,
+    paddingTop: 6,
+    paddingBottom: 6,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 8,
     zIndex: 10,
   },
-  headerCenter: {
+  // Combined "Showing your best XXX matches" pill (was 2 rows — now 1)
+  statusPill: {
     flex: 1,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 48,
+    gap: 6,
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: LIGHT_PURPLE,
   },
+  statusPillText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "600",
+    color: TEXT,
+    letterSpacing: -0.1,
+  },
+  statusPillHi: { color: PURPLE, fontWeight: "800" },
   kicker: {
     fontSize: 12,
     fontWeight: "800",
@@ -575,8 +581,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   settingsBtn: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: 999,
     backgroundColor: LIGHT_PURPLE,
     borderWidth: 1,
@@ -610,30 +616,29 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
 
-  // chip row
+  // chip row (slim)
   chipsRow: {
-    paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingHorizontal: 14,
+    paddingTop: 2,
+    paddingBottom: 8,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   chip: {
     flexShrink: 0,
-    height: 34,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    height: 28,
+    paddingHorizontal: 10,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: BORDER,
     backgroundColor: "#FFF",
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
   },
   chipLabel: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: "600",
     color: TEXT,
     letterSpacing: -0.1,
