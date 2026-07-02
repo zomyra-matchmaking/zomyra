@@ -7,7 +7,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { ChevronDown, Crown, SlidersHorizontal, Sparkles } from "lucide-react-native";
+import { ChevronDown, Crown, Send, SlidersHorizontal, Sparkles, X } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -103,6 +103,21 @@ export default function Discover() {
   const advance = () => {
     if (sortedProfiles.length === 0) return;
     setIdx((i) => (i + 1) % sortedProfiles.length);
+  };
+
+  const handleLike = async () => {
+    if (!profile) return;
+
+    // Call API to express interest
+    const currentUserId = "current-user-123"; // TODO: Get from auth context
+    const result = await discoverService.connect(currentUserId, profile.id);
+
+    if (result.isMatch) {
+      setMatchedProfile(profile);
+      setShowMatchOverlay(true);
+    } else {
+      advance();
+    }
   };
 
   const handleStartConversation = () => {
@@ -201,6 +216,44 @@ export default function Discover() {
               profile={profile}
               dimension={dimension}
             />
+
+            {/* Bottom action row — Decline (left) & Express Interest (right) */}
+            <View testID="discover-action-bar" style={styles.actionBar}>
+              <Pressable
+                testID="discover-action-decline"
+                onPress={advance}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  styles.actionSlot,
+                  pressed && { transform: [{ scale: 0.96 }] },
+                ]}
+              >
+                <View style={styles.declineBtn}>
+                  <X size={26} color={TEXT} strokeWidth={2.4} />
+                </View>
+                <Text style={styles.declineLabel}>Decline</Text>
+              </Pressable>
+
+              <Pressable
+                testID="discover-action-interest"
+                onPress={handleLike}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  styles.actionSlot,
+                  pressed && { transform: [{ scale: 0.96 }] },
+                ]}
+              >
+                <View style={styles.interestBtn}>
+                  <Send
+                    size={26}
+                    color="#FFFFFF"
+                    strokeWidth={2.2}
+                    style={{ transform: [{ translateX: -1 }] }}
+                  />
+                </View>
+                <Text style={styles.interestLabel}>Express Interest</Text>
+              </Pressable>
+            </View>
           </Animated.View>
         ) : (
           <Text style={styles.empty}>Loading…</Text>
@@ -534,4 +587,58 @@ const styles = StyleSheet.create({
   bannerHi: { color: PURPLE, fontWeight: "700" },
 
   empty: { padding: 32, textAlign: "center", color: MUTED },
+
+  // Bottom action row (Decline / Express Interest)
+  actionBar: {
+    marginTop: 20,
+    marginHorizontal: 24,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  actionSlot: {
+    alignItems: "center",
+    gap: 8,
+    minWidth: 96,
+  },
+  declineBtn: {
+    width: 64,
+    height: 64,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  declineLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: MUTED,
+    letterSpacing: -0.1,
+  },
+  interestBtn: {
+    width: 64,
+    height: 64,
+    borderRadius: 999,
+    backgroundColor: PURPLE,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: PURPLE,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  interestLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: PURPLE,
+    letterSpacing: -0.1,
+  },
 });
