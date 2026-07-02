@@ -157,9 +157,7 @@ export default function Discover() {
           <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
         </Pressable>
 
-        <View style={styles.headerCenter} pointerEvents="none">
-          <Wordmark fontSize={22} />
-        </View>
+        
 
         <Pressable
           testID="filter-icon"
