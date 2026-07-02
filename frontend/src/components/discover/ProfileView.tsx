@@ -190,7 +190,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
           style={({ pressed }) => [styles.refreshDot, pressed && { opacity: 0.7 }]}
           hitSlop={8}
         >
-          <Sparkles size={18} color={PURPLE} strokeWidth={2} />
+          <Sparkles size={15} color={PURPLE} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -480,16 +480,16 @@ const styles = StyleSheet.create({
   // Identity
   identityRow: {
     paddingHorizontal: PAD_X,
-    paddingTop: 8,
+    paddingTop: 4,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   identityName: {
-    fontSize: 28,
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: "800",
     color: TEXT,
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
     flexShrink: 1,
   },
   identityNameRow: {
@@ -501,19 +501,19 @@ const styles = StyleSheet.create({
   premiumBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderRadius: 999,
     backgroundColor: PURPLE,
     shadowColor: PURPLE,
     shadowOpacity: 0.18,
-    shadowRadius: 6,
+    shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   premiumBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "800",
     color: "#FFF",
     letterSpacing: 0.3,
@@ -523,12 +523,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginTop: 4,
+    marginTop: 2,
   },
-  identityLoc: { fontSize: 13, color: MUTED, fontWeight: "500" },
+  identityLoc: { fontSize: 12.5, color: MUTED, fontWeight: "500" },
   refreshDot: {
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
     borderRadius: 999,
     backgroundColor: LIGHT_PURPLE,
     borderWidth: 1,
@@ -540,12 +540,12 @@ const styles = StyleSheet.create({
   // Prompts
   prompt: {
     paddingHorizontal: PAD_X,
-    marginTop: 24,
-    marginBottom: 8,
-    fontSize: 20,
-    fontWeight: "600",
+    marginTop: 16,
+    marginBottom: 6,
+    fontSize: 16,
+    fontWeight: "700",
     color: TEXT,
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
 
   // Photo card

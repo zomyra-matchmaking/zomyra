@@ -21,6 +21,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { CompatibilitySheet } from "@/src/components/discover/CompatibilitySheet";
+import { Logo } from "@/src/components/brand/Logo";
 import { DualRangeSlider } from "@/src/components/discover/DualRangeSlider";
 import { PremiumFilterDialog } from "@/src/components/discover/PremiumFilterDialog";
 import { ProfileView } from "@/src/components/discover/ProfileView";
@@ -238,8 +239,12 @@ export default function Discover() {
         onLayout={(e) => setFilterHeaderH(e.nativeEvent.layout.height)}
         testID="discover-filter-header"
       >
-        {/* Header — [✨ Showing your best All matches ▼]  [Filter cog] */}
+        {/* Header — [🔷 logo]   [✨ Showing your best XXX matches ▾]   [Cog] */}
         <View style={styles.header}>
+          <View style={styles.brandDot} pointerEvents="none">
+            <Logo size={22} />
+          </View>
+
           <Pressable
             testID="filter-chip-compatibility"
             onPress={() => setSheetOpen(true)}
@@ -558,6 +563,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
     backgroundColor: LIGHT_PURPLE,
+  },
+  brandDot: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
   },
   statusPillText: {
     flex: 1,
