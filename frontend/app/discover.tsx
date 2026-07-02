@@ -310,6 +310,15 @@ export default function Discover() {
             <Text style={styles.compactName} numberOfLines={1}>
               {profile.name}, {profile.age}
             </Text>
+            {profile.premium ? (
+              <View
+                testID="discover-compact-premium-badge"
+                style={styles.compactPremiumBadge}
+              >
+                <Crown size={10} color="#FFF" strokeWidth={2.4} fill="#FFF" />
+                <Text style={styles.compactPremiumText}>Premium</Text>
+              </View>
+            ) : null}
           </View>
         ) : null}
       </Animated.View>
@@ -501,21 +510,39 @@ const styles = StyleSheet.create({
     zIndex: 4,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
+    paddingTop: 6,
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: BORDER,
   },
   compactHeaderInner: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 32,
+    gap: 8,
+    minHeight: 28,
   },
   compactName: {
-    fontSize: 18,
+    fontSize: 15.5,
     fontWeight: "800",
     color: TEXT,
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
+  },
+  compactPremiumBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: PURPLE,
+  },
+  compactPremiumText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#FFF",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
   },
 
   // header
