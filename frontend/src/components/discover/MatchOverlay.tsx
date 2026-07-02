@@ -362,28 +362,6 @@ export function MatchOverlay({
             </View>
           </Animated.View>
 
-          {/* Profile Info Below Photos */}
-          <Animated.View style={[styles.profileInfo, photosStyle]}>
-            <Text style={styles.profileName}>{matchedUserName}, 29</Text>
-            <Text style={styles.profileJob}>Senior Product Designer</Text>
-            <Text style={styles.profileLocation}>Bengaluru</Text>
-            
-            <View style={styles.profileStats}>
-              <View style={styles.stat}>
-                <Text style={styles.statIcon}>📏</Text>
-                <Text style={styles.statText}>5'10"</Text>
-              </View>
-              <View style={styles.stat}>
-                <Text style={styles.statIcon}>💪</Text>
-                <Text style={styles.statText}>Athletic</Text>
-              </View>
-              <View style={styles.stat}>
-                <Text style={styles.statIcon}>💰</Text>
-                <Text style={styles.statText}>₹24-30 LPA</Text>
-              </View>
-            </View>
-          </Animated.View>
-
           {/* Action Buttons */}
           <Animated.View style={[styles.buttonsContainer, buttonsStyle]}>
             <Pressable
@@ -413,7 +391,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(30, 35, 48, 0.88)",
+    backgroundColor: "rgba(53, 47, 63, 0.9)",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 9999,
@@ -442,6 +420,10 @@ const styles = StyleSheet.create({
   },
   ringLeft: {
     left: 0,
+    top: 5,
+  },
+  ringRight: {
+    right: 0,
     top: 5,
   },
   title: {

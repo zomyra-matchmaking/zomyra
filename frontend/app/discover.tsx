@@ -13,7 +13,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { Easing, FadeIn, FadeOut } from "react-native-reanimated";
 
-import { Wordmark } from "@/src/components/brand/Logo";
 import { CompatibilitySheet } from "@/src/components/discover/CompatibilitySheet";
 import { DualRangeSlider } from "@/src/components/discover/DualRangeSlider";
 import { PremiumFilterDialog } from "@/src/components/discover/PremiumFilterDialog";
@@ -155,9 +154,7 @@ export default function Discover() {
           <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
         </Pressable>
 
-        <View style={styles.headerCenter} pointerEvents="none">
-          <Wordmark fontSize={22} />
-        </View>
+        <View style={styles.headerCenter} pointerEvents="none" />
 
         <Pressable
           testID="filter-icon"
