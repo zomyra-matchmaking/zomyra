@@ -11,7 +11,14 @@ import { ChevronDown, Crown, Send, SlidersHorizontal, Sparkles, X } from "lucide
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, { Easing, FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeOut,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 
 import { CompatibilitySheet } from "@/src/components/discover/CompatibilitySheet";
 import { DualRangeSlider } from "@/src/components/discover/DualRangeSlider";
@@ -135,72 +142,40 @@ export default function Discover() {
   const profile = sortedProfiles[idx];
   const dimLabel = DIM_LABEL[dimension];
 
+  // Scroll-driven header transition — the filter header (pill + banner + chips)
+  // gradually fades and translates up as the user scrolls the profile, while a
+  // compact header showing the current profile's name+age fades in to replace
+  // it. Reverses on scroll-up.
+  const scrollY = useSharedValue(0);
+  const [filterHeaderH, setFilterHeaderH] = useState(140);
+  const FADE_END = 70;
+  const scrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const filterHeaderStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(scrollY.value / FADE_END, 0), 1);
+    return {
+      opacity: 1 - p,
+      transform: [{ translateY: -18 * p }],
+    };
+  });
+  const compactHeaderStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(scrollY.value / FADE_END, 0), 1);
+    return {
+      opacity: p,
+      transform: [{ translateY: 14 * (1 - p) }],
+    };
+  });
+
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
-      {/* Header — [All matches ▼]   ZOMYRA   [Filter cog] */}
-      <View style={styles.header}>
-        <Pressable
-          testID="filter-chip-compatibility"
-          onPress={() => setSheetOpen(true)}
-          style={({ pressed }) => [
-            styles.headerPill,
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <Sparkles size={12} color={PURPLE} strokeWidth={2} />
-          <Text style={styles.headerPillText} numberOfLines={1}>
-            {dimLabel} matches
-          </Text>
-          <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
-        </Pressable>
-
-        <View style={styles.headerCenter} pointerEvents="none" />
-
-        <Pressable
-          testID="filter-icon"
-          onPress={() => router.push("/filters" as never)}
-          style={({ pressed }) => [
-            styles.settingsBtn,
-            pressed && { opacity: 0.85 },
-          ]}
-          hitSlop={8}
-        >
-          <SlidersHorizontal size={18} color={PURPLE} strokeWidth={2} />
-        </Pressable>
-      </View>
-
-      {/* "Showing your best XXX matches" banner */}
-      <View style={styles.banner}>
-        <Sparkles size={12} color={PURPLE} strokeWidth={2} />
-        <Text style={styles.bannerText}>
-          Showing your best <Text style={styles.bannerHi}>{dimLabel}</Text> matches
-        </Text>
-      </View>
-
-      {/* Filter chip row — [Height 👑] [Build 👑] [Income 👑] [Education 👑] */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsRow}
-      >
-        {QUICK_CHIPS.map((c) => (
-          <Pressable
-            key={c.key}
-            testID={`filter-chip-${c.key}`}
-            onPress={() => setQuickKey(c.key)}
-            style={styles.chip}
-          >
-            <Text style={styles.chipLabel}>{c.label}</Text>
-            <Crown size={12} color="#F59E0B" strokeWidth={2} fill="#F59E0B" />
-            <ChevronDown size={14} color={MUTED} strokeWidth={2} />
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 120, paddingTop: 12 }}
+      {/* Scrollable profile content — headers overlay on top */}
+      <Animated.ScrollView
+        contentContainerStyle={{ paddingBottom: 120, paddingTop: filterHeaderH + 6 }}
         showsVerticalScrollIndicator={false}
         testID="discover-scroll"
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         {profile ? (
           <Animated.View
@@ -255,7 +230,89 @@ export default function Discover() {
         ) : (
           <Text style={styles.empty}>Loading…</Text>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* ─── Overlay: Filter header (fades out on scroll down) ─── */}
+      <Animated.View
+        style={[styles.headerOverlay, filterHeaderStyle]}
+        onLayout={(e) => setFilterHeaderH(e.nativeEvent.layout.height)}
+        testID="discover-filter-header"
+      >
+        {/* Header — [All matches ▼]   [Filter cog] */}
+        <View style={styles.header}>
+          <Pressable
+            testID="filter-chip-compatibility"
+            onPress={() => setSheetOpen(true)}
+            style={({ pressed }) => [
+              styles.headerPill,
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Sparkles size={12} color={PURPLE} strokeWidth={2} />
+            <Text style={styles.headerPillText} numberOfLines={1}>
+              {dimLabel} matches
+            </Text>
+            <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
+          </Pressable>
+
+          <View style={styles.headerCenter} pointerEvents="none" />
+
+          <Pressable
+            testID="filter-icon"
+            onPress={() => router.push("/filters" as never)}
+            style={({ pressed }) => [
+              styles.settingsBtn,
+              pressed && { opacity: 0.85 },
+            ]}
+            hitSlop={8}
+          >
+            <SlidersHorizontal size={18} color={PURPLE} strokeWidth={2} />
+          </Pressable>
+        </View>
+
+        {/* "Showing your best XXX matches" banner */}
+        <View style={styles.banner}>
+          <Sparkles size={12} color={PURPLE} strokeWidth={2} />
+          <Text style={styles.bannerText}>
+            Showing your best <Text style={styles.bannerHi}>{dimLabel}</Text> matches
+          </Text>
+        </View>
+
+        {/* Filter chip row */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
+          {QUICK_CHIPS.map((c) => (
+            <Pressable
+              key={c.key}
+              testID={`filter-chip-${c.key}`}
+              onPress={() => setQuickKey(c.key)}
+              style={styles.chip}
+            >
+              <Text style={styles.chipLabel}>{c.label}</Text>
+              <Crown size={12} color="#F59E0B" strokeWidth={2} fill="#F59E0B" />
+              <ChevronDown size={14} color={MUTED} strokeWidth={2} />
+            </Pressable>
+          ))}
+        </ScrollView>
+      </Animated.View>
+
+      {/* ─── Overlay: Compact profile header (fades in on scroll down) ─── */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.compactHeader, compactHeaderStyle]}
+        testID="discover-compact-header"
+      >
+        {profile ? (
+          <View style={styles.compactHeaderInner}>
+            <Text style={styles.compactName} numberOfLines={1}>
+              {profile.name}, {profile.age}
+            </Text>
+          </View>
+        ) : null}
+      </Animated.View>
 
       <FloatingNav />
 
@@ -425,6 +482,41 @@ function OptionList({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#FFFFFF" },
+
+  // Header overlay (position:absolute so it can fade out over content)
+  headerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    zIndex: 5,
+  },
+  // Compact profile header — same slot, pointerEvents="none"
+  compactHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 4,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+  },
+  compactHeaderInner: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 32,
+  },
+  compactName: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: TEXT,
+    letterSpacing: -0.3,
+  },
 
   // header
   header: {
