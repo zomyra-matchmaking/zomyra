@@ -220,7 +220,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             const I = LIFESTYLE_ICONS[label] ?? Sparkles;
             return (
               <View key={label} style={styles.lifestyleItem}>
-                <I size={18} color={PURPLE} strokeWidth={2} />
+                <I size={16} color={PURPLE} strokeWidth={2} />
                 <Text style={styles.lifestyleText} numberOfLines={1}>
                   {label}
                 </Text>
@@ -249,7 +249,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
               const I = ALIGN_ICONS[s.label] ?? Heart;
               return (
                 <View key={s.label} style={styles.lifestyleItem}>
-                  <I size={18} color={PURPLE} strokeWidth={2} />
+                  <I size={16} color={PURPLE} strokeWidth={2} />
                   <Text style={styles.lifestyleText} numberOfLines={2}>
                     {s.label}
                   </Text>
@@ -409,10 +409,10 @@ function InfoCard({
   return (
     <View style={styles.infoCard} testID={testID}>
       <View style={styles.infoHeaderRow}>
-        <Icon size={14} color={PURPLE} strokeWidth={2} />
+        <Icon size={12} color={PURPLE} strokeWidth={2.2} />
         <Text style={styles.kicker}>{kicker}</Text>
       </View>
-      <View style={{ marginTop: 8 }}>{children}</View>
+      <View style={{ marginTop: 6 }}>{children}</View>
     </View>
   );
 }
@@ -431,10 +431,10 @@ function StaticCard({
   return (
     <View style={[styles.infoCard, styles.collapsibleCard]} testID={testID}>
       <View style={styles.infoHeaderRow}>
-        <Icon size={14} color={PURPLE} strokeWidth={2} />
+        <Icon size={12} color={PURPLE} strokeWidth={2.2} />
         <Text style={styles.kicker}>{kicker}</Text>
       </View>
-      <View style={{ marginTop: 12 }}>{children}</View>
+      <View style={{ marginTop: 8 }}>{children}</View>
     </View>
   );
 }
@@ -464,7 +464,7 @@ function FactWithIcon({
   return (
     <View style={styles.factItem}>
       <View style={styles.factIconRow}>
-        <Icon size={14} color={PURPLE} strokeWidth={2} />
+        <Icon size={13} color={PURPLE} strokeWidth={2.2} />
         <Text style={styles.factValue} numberOfLines={2}>
           {value}
         </Text>
@@ -549,53 +549,53 @@ const styles = StyleSheet.create({
   },
 
   // Photo card
-  photoCardWrap: { paddingHorizontal: PAD_X, marginTop: 8 },
+  photoCardWrap: { paddingHorizontal: PAD_X, marginTop: 4 },
   photoCard: {
     width: CARD_W,
     height: Math.round(CARD_W * 1.0),
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: "hidden",
     backgroundColor: LIGHT_PURPLE,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   photoImg: { width: "100%", height: "100%" },
-  footerSlot: { paddingHorizontal: PAD_X, paddingTop: 16 },
+  footerSlot: { paddingHorizontal: PAD_X, paddingTop: 12 },
 
   // Info card
   infoCard: {
-    marginTop: 16,
+    marginTop: 12,
     marginHorizontal: PAD_X,
     backgroundColor: LIGHT_PURPLE,
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: BORDER,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
   },
   collapsibleCard: {
     backgroundColor: "#FFFFFF",
     borderColor: BORDER,
   },
-  infoHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  infoHeaderRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   kicker: {
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: 1,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
     color: PURPLE,
     textTransform: "uppercase",
   },
   cardBody: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 13.5,
+    lineHeight: 20,
     fontWeight: "400",
     color: TEXT,
   },
@@ -606,12 +606,12 @@ const styles = StyleSheet.create({
     width: "50%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 8,
-    paddingRight: 8,
+    gap: 7,
+    paddingVertical: 6,
+    paddingRight: 6,
   },
   lifestyleText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500",
     color: TEXT,
     flexShrink: 1,
@@ -621,20 +621,21 @@ const styles = StyleSheet.create({
   factsRow: { flexDirection: "row", flexWrap: "wrap" },
   factItem: {
     width: "50%",
-    paddingVertical: 8,
-    paddingRight: 8,
+    paddingVertical: 6,
+    paddingRight: 6,
   },
-  factIconRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  factIconRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   factValue: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
     color: TEXT,
     flexShrink: 1,
+    letterSpacing: -0.1,
   },
   factLabel: {
-    marginTop: 2,
-    fontSize: 13,
-    fontWeight: "400",
+    marginTop: 1,
+    fontSize: 11.5,
+    fontWeight: "500",
     color: MUTED,
   },
 
