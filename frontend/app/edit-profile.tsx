@@ -20,9 +20,11 @@ import {
   Briefcase,
   Camera,
   CheckCircle2,
+  ChevronRight,
   Cigarette,
   Dumbbell,
   GraduationCap,
+  Heart,
   IndianRupee,
   Info,
   Languages as LanguagesIcon,
@@ -54,6 +56,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
+import { SCALE_QUESTIONS } from "@/src/lib/onboarding/scales";
 import type {
   BodyType,
   Diet,
@@ -112,6 +115,13 @@ export default function EditProfileScreen() {
   const heightStr = state.heightCm
     ? `${Math.floor(state.heightCm / 30.48)}'${Math.round((state.heightCm % 30.48) / 2.54)}"`
     : "—";
+
+  // How many personality scales are already answered — shown as a small
+  // "3/10" style badge on the retake CTA so users can see their progress.
+  const personalityAnswered = useMemo(
+    () => SCALE_QUESTIONS.filter((q) => typeof state.scales[q.id] === "number").length,
+    [state.scales],
+  );
 
   /* ───────── photo picker ───────── */
   const pickPhoto = async (replaceIdx: number | null) => {
@@ -219,6 +229,35 @@ export default function EditProfileScreen() {
               </View>
             </View>
           </View>
+
+          {/* ── Personality Test CTA ── */}
+          <Pressable
+            testID="retake-personality-test-cta"
+            onPress={() => router.push("/personality-test")}
+            style={({ pressed }) => [
+              styles.personalityCta,
+              pressed && { opacity: 0.92, transform: [{ scale: 0.995 }] },
+            ]}
+          >
+            <View style={styles.personalityIconWrap}>
+              <Heart size={22} color="#FFFFFF" strokeWidth={2.4} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.personalityTitleRow}>
+                <Text style={styles.personalityTitle}>Retake Personality Test</Text>
+                <View style={styles.personalityBadge}>
+                  <Sparkles size={10} color={PURPLE} strokeWidth={2.6} />
+                  <Text style={styles.personalityBadgeText}>
+                    {personalityAnswered}/{SCALE_QUESTIONS.length}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.personalitySubtitle} numberOfLines={2}>
+                A quick, conversational check-in — refresh how you love to help us find better matches.
+              </Text>
+            </View>
+            <ChevronRight size={20} color={PURPLE} strokeWidth={2.4} />
+          </Pressable>
 
           {/* ── Primary photo card (hero) ── */}
           <SectionCard kicker="PRIMARY PHOTO" Icon={Camera} testID="card-primary-photo">
@@ -847,4 +886,73 @@ const styles = StyleSheet.create({
   },
   sheetItemActive: { backgroundColor: LIGHT_PURPLE },
   sheetItemText: { fontSize: 14.5, fontWeight: "600", color: TEXT },
+
+  // Personality test CTA
+  personalityCta: {
+    marginHorizontal: 16,
+    marginTop: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: BORDER,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    shadowColor: PURPLE,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 14,
+    elevation: 2,
+  },
+  personalityIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: PURPLE,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: PURPLE,
+    shadowOpacity: 0.35,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  personalityTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  personalityTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: TEXT,
+    letterSpacing: -0.2,
+  },
+  personalityBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: LIGHT_PURPLE,
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  personalityBadgeText: {
+    fontSize: 10.5,
+    fontWeight: "800",
+    color: PURPLE,
+    letterSpacing: 0.3,
+  },
+  personalitySubtitle: {
+    marginTop: 4,
+    fontSize: 12.5,
+    color: MUTED,
+    fontWeight: "500",
+    lineHeight: 17,
+  },
 });
