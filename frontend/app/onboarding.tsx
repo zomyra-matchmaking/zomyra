@@ -365,6 +365,28 @@ const Q1: QuestionScreen[] = [
       ),
     }),
   },
+  {
+    kind: "q", section: 1,
+    render: (s, set) => ({
+      title: "About you",
+      subtitle: "Write a short intro your matches will see on your profile.",
+      canNext: true,
+      body: (
+        <View>
+          <TextInput
+            testID="onboarding-bio"
+            value={s.bio}
+            onChangeText={(t) => set("bio", t.slice(0, 500))}
+            placeholder="I love long walks, weekend hikes, and honest conversations over coffee…"
+            placeholderTextColor={colors.mutedForeground}
+            multiline
+            style={styles.bioInput}
+          />
+          <Text style={styles.bioCount}>{s.bio.length}/500</Text>
+        </View>
+      ),
+    }),
+  },
 ];
 
 const Q2: QuestionScreen[] = [
