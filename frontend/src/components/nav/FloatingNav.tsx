@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
   bar: {
     width: "100%",
     maxWidth: 372,
-    height: 68,
-    borderRadius: 24,
+    height: 60,
+    borderRadius: 999,
     backgroundColor: "#FFF",
     borderWidth: 1,
     borderColor: BORDER,
