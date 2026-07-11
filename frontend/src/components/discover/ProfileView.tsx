@@ -141,7 +141,9 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
   const languages = findFact(profile, "Languages") ?? "—";
   const religion = profile.religion ?? "—";
 
-  const lifestyle = profile.lifestyle.slice(0, 6);
+  const lifestyle = profile.lifestyle
+    .filter((l) => l !== "Career Focused" && l !== "Family Oriented")
+    .slice(0, 6);
   const alignedItems = profile.snapshot;
 
   const heroHeight = Math.round(SCREEN_H_FULL * 0.72);
