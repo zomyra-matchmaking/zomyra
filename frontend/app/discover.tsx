@@ -7,14 +7,21 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { ChevronDown, Crown, Heart, SlidersHorizontal, Sparkles, Star, X } from "lucide-react-native";
+import { ChevronDown, Crown, Send, SlidersHorizontal, Sparkles, X } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, { Easing, FadeIn, FadeOut } from "react-native-reanimated";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeOut,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 
-import { Wordmark } from "@/src/components/brand/Logo";
 import { CompatibilitySheet } from "@/src/components/discover/CompatibilitySheet";
+import { Logo } from "@/src/components/brand/Logo";
 import { DualRangeSlider } from "@/src/components/discover/DualRangeSlider";
 import { PremiumFilterDialog } from "@/src/components/discover/PremiumFilterDialog";
 import { ProfileView } from "@/src/components/discover/ProfileView";
@@ -68,6 +75,7 @@ const DIM_LABEL: Record<CompatibilityDimension, string> = {
 
 export default function Discover() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data: profiles = [] } = useQuery({
     queryKey: ["discover-profiles"],
     queryFn: () => discoverService.list(),
@@ -107,17 +115,15 @@ export default function Discover() {
 
   const handleLike = async () => {
     if (!profile) return;
-    
+
     // Call API to express interest
     const currentUserId = "current-user-123"; // TODO: Get from auth context
     const result = await discoverService.connect(currentUserId, profile.id);
-    
-    // Check if it's a mutual match
+
     if (result.isMatch) {
       setMatchedProfile(profile);
       setShowMatchOverlay(true);
     } else {
-      // No match yet, just advance
       advance();
     }
   };
@@ -138,72 +144,48 @@ export default function Discover() {
   const profile = sortedProfiles[idx];
   const dimLabel = DIM_LABEL[dimension];
 
+  // Scroll-driven header transition — the filter header (pill + banner + chips)
+  // gradually fades and translates up as the user scrolls the profile, while a
+  // compact header showing the current profile's name+age fades in to replace
+  // it. Reverses on scroll-up.
+  const scrollY = useSharedValue(0);
+  const [filterHeaderH, setFilterHeaderH] = useState(140);
+  const FADE_END = 70;
+  const scrollHandler = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const filterHeaderStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(scrollY.value / FADE_END, 0), 1);
+    return {
+      opacity: 1 - p,
+      transform: [{ translateY: -18 * p }],
+    };
+  });
+  const compactHeaderStyle = useAnimatedStyle(() => {
+    const p = Math.min(Math.max(scrollY.value / FADE_END, 0), 1);
+    return {
+      opacity: p,
+      transform: [{ translateY: 14 * (1 - p) }],
+    };
+  });
+
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
-      {/* Header — [All matches ▼]   ZOMYRA   [Filter cog] */}
-      <View style={styles.header}>
-        <Pressable
-          testID="filter-chip-compatibility"
-          onPress={() => setSheetOpen(true)}
-          style={({ pressed }) => [
-            styles.headerPill,
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <Sparkles size={12} color={PURPLE} strokeWidth={2} />
-          <Text style={styles.headerPillText} numberOfLines={1}>
-            {dimLabel} matches
-          </Text>
-          <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
-        </Pressable>
-
-        
-
-        <Pressable
-          testID="filter-icon"
-          onPress={() => router.push("/filters" as never)}
-          style={({ pressed }) => [
-            styles.settingsBtn,
-            pressed && { opacity: 0.85 },
-          ]}
-          hitSlop={8}
-        >
-          <SlidersHorizontal size={18} color={PURPLE} strokeWidth={2} />
-        </Pressable>
-      </View>
-
-      {/* "Showing your best XXX matches" banner */}
-      <View style={styles.banner}>
-        <Sparkles size={12} color={PURPLE} strokeWidth={2} />
-        <Text style={styles.bannerText}>
-          Showing your best <Text style={styles.bannerHi}>{dimLabel}</Text> matches
-        </Text>
-      </View>
-
-      {/* Filter chip row — [Height 👑] [Build 👑] [Income 👑] [Education 👑] */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsRow}
-      >
-        {QUICK_CHIPS.map((c) => (
-          <Pressable
-            key={c.key}
-            testID={`filter-chip-${c.key}`}
-            onPress={() => setQuickKey(c.key)}
-            style={styles.chip}
-          >
-            <Text style={styles.chipLabel}>{c.label}</Text>
-            <Crown size={12} color="#F59E0B" strokeWidth={2} fill="#F59E0B" />
-            <ChevronDown size={14} color={MUTED} strokeWidth={2} />
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 120, paddingTop: 12 }}
+      {/* Scrollable profile content — headers overlay on top */}
+      <Animated.ScrollView
+        contentContainerStyle={{
+          paddingBottom: 120,
+          // filterHeaderH already includes insets.top (the overlay applies it
+          // as internal padding to sit below the notch). The ScrollView
+          // itself starts inside the SafeAreaView's insets.top padding, so
+          // we subtract it here to avoid the notch height being counted
+          // twice — otherwise there's a big empty gap under the chips row.
+          paddingTop: Math.max(0, filterHeaderH - insets.top) + 6,
+        }}
         showsVerticalScrollIndicator={false}
         testID="discover-scroll"
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         {profile ? (
           <Animated.View
@@ -217,50 +199,134 @@ export default function Discover() {
               dimension={dimension}
             />
 
-            {/* Action row at the bottom of the profile — scrolls in with content */}
+            {/* Bottom action row — Decline (left) & Express Interest (right) */}
             <View testID="discover-action-bar" style={styles.actionBar}>
               <Pressable
-                testID="discover-action-dislike"
+                testID="discover-action-decline"
                 onPress={advance}
+                hitSlop={8}
                 style={({ pressed }) => [
-                  styles.actionBtn,
-                  styles.actionBtnGhost,
-                  pressed && { transform: [{ scale: 0.94 }] },
+                  styles.actionSlot,
+                  pressed && { transform: [{ scale: 0.96 }] },
                 ]}
-                hitSlop={6}
               >
-                <X size={26} color={TEXT} strokeWidth={2.4} />
+                <View style={styles.declineBtn}>
+                  <X size={26} color={TEXT} strokeWidth={2.4} />
+                </View>
+                <Text style={styles.declineLabel}>Decline</Text>
               </Pressable>
+
               <Pressable
-                testID="discover-action-superlike"
-                onPress={advance}
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  styles.actionBtnSuperlike,
-                  pressed && { transform: [{ scale: 0.94 }] },
-                ]}
-                hitSlop={6}
-              >
-                <Star size={26} color="#1D4ED8" strokeWidth={2.4} fill="#1D4ED8" />
-              </Pressable>
-              <Pressable
-                testID="discover-action-like"
+                testID="discover-action-interest"
                 onPress={handleLike}
+                hitSlop={8}
                 style={({ pressed }) => [
-                  styles.actionBtn,
-                  styles.actionBtnLike,
-                  pressed && { transform: [{ scale: 0.94 }] },
+                  styles.actionSlot,
+                  pressed && { transform: [{ scale: 0.96 }] },
                 ]}
-                hitSlop={6}
               >
-                <Heart size={26} color="#FFFFFF" strokeWidth={2.4} fill="#FFFFFF" />
+                <View style={styles.interestBtn}>
+                  <Send
+                    size={26}
+                    color="#FFFFFF"
+                    strokeWidth={2.2}
+                    style={{ transform: [{ translateX: -1 }] }}
+                  />
+                </View>
+                <Text style={styles.interestLabel}>Express Interest</Text>
               </Pressable>
             </View>
           </Animated.View>
         ) : (
           <Text style={styles.empty}>Loading…</Text>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* ─── Overlay: Filter header (fades out on scroll down) ─── */}
+      <Animated.View
+        style={[styles.headerOverlay, { paddingTop: insets.top }, filterHeaderStyle]}
+        onLayout={(e) => setFilterHeaderH(e.nativeEvent.layout.height)}
+        testID="discover-filter-header"
+      >
+        {/* Header — [🔷 logo]   [✨ Showing your best XXX matches ▾]   [Cog] */}
+        <View style={styles.header}>
+          <View style={styles.brandDot} pointerEvents="none">
+            <Logo size={22} />
+          </View>
+
+          <Pressable
+            testID="filter-chip-compatibility"
+            onPress={() => setSheetOpen(true)}
+            style={({ pressed }) => [
+              styles.statusPill,
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Sparkles size={12} color={PURPLE} strokeWidth={2} />
+            <Text style={styles.statusPillText} numberOfLines={1}>
+              Showing your best{" "}
+              <Text style={styles.statusPillHi}>{dimLabel}</Text> matches
+            </Text>
+            <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
+          </Pressable>
+
+          <Pressable
+            testID="filter-icon"
+            onPress={() => router.push("/filters" as never)}
+            style={({ pressed }) => [
+              styles.settingsBtn,
+              pressed && { opacity: 0.85 },
+            ]}
+            hitSlop={8}
+          >
+            <SlidersHorizontal size={16} color={PURPLE} strokeWidth={2} />
+          </Pressable>
+        </View>
+
+        {/* Filter chip row */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
+          {QUICK_CHIPS.map((c) => (
+            <Pressable
+              key={c.key}
+              testID={`filter-chip-${c.key}`}
+              onPress={() => setQuickKey(c.key)}
+              style={styles.chip}
+            >
+              <Text style={styles.chipLabel}>{c.label}</Text>
+              <Crown size={11} color="#F59E0B" strokeWidth={2} fill="#F59E0B" />
+              <ChevronDown size={12} color={MUTED} strokeWidth={2} />
+            </Pressable>
+          ))}
+        </ScrollView>
+      </Animated.View>
+
+      {/* ─── Overlay: Compact profile header (fades in on scroll down) ─── */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.compactHeader, { paddingTop: insets.top + 6 }, compactHeaderStyle]}
+        testID="discover-compact-header"
+      >
+        {profile ? (
+          <View style={styles.compactHeaderInner}>
+            <Text style={styles.compactName} numberOfLines={1}>
+              {profile.name}, {profile.age}
+            </Text>
+            {profile.premium ? (
+              <View
+                testID="discover-compact-premium-badge"
+                style={styles.compactPremiumBadge}
+              >
+                <Crown size={10} color="#FFF" strokeWidth={2.4} fill="#FFF" />
+                <Text style={styles.compactPremiumText}>Premium</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </Animated.View>
 
       <FloatingNav />
 
@@ -431,22 +497,96 @@ function OptionList({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#FFFFFF" },
 
-  // header
-  header: {
+  // Header overlay (position:absolute so it can fade out over content)
+  headerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    zIndex: 5,
+  },
+  // Compact profile header — same slot, pointerEvents="none"
+  compactHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 4,
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 6,
     paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: BORDER,
+  },
+  compactHeaderInner: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 8,
+    minHeight: 28,
+  },
+  compactName: {
+    fontSize: 15.5,
+    fontWeight: "800",
+    color: TEXT,
+    letterSpacing: -0.2,
+  },
+  compactPremiumBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: PURPLE,
+  },
+  compactPremiumText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#FFF",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+  },
+
+  // header
+  header: {
+    paddingHorizontal: 14,
+    paddingTop: 6,
+    paddingBottom: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     zIndex: 10,
   },
-  headerCenter: {
+  // Combined "Showing your best XXX matches" pill (was 2 rows — now 1)
+  statusPill: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: LIGHT_PURPLE,
+  },
+  brandDot: {
+    width: 28,
+    height: 28,
     alignItems: "center",
     justifyContent: "center",
-    marginHorizontal: 48,
   },
+  statusPillText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "600",
+    color: TEXT,
+    letterSpacing: -0.1,
+  },
+  statusPillHi: { color: PURPLE, fontWeight: "800" },
   kicker: {
     fontSize: 12,
     fontWeight: "800",
@@ -461,8 +601,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   settingsBtn: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: 999,
     backgroundColor: LIGHT_PURPLE,
     borderWidth: 1,
@@ -496,30 +636,29 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
 
-  // chip row
+  // chip row (slim)
   chipsRow: {
-    paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingHorizontal: 14,
+    paddingTop: 2,
+    paddingBottom: 8,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   chip: {
     flexShrink: 0,
-    height: 34,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    height: 28,
+    paddingHorizontal: 10,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: BORDER,
     backgroundColor: "#FFF",
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
   },
   chipLabel: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: "600",
     color: TEXT,
     letterSpacing: -0.1,
@@ -590,49 +729,57 @@ const styles = StyleSheet.create({
 
   empty: { padding: 32, textAlign: "center", color: MUTED },
 
-  // inline action bar at the bottom of the profile
+  // Bottom action row (Decline / Express Interest)
   actionBar: {
+    marginTop: 20,
+    marginHorizontal: 24,
     flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  actionSlot: {
     alignItems: "center",
-    justifyContent: "center",
-    gap: 18,
-    marginTop: 24,
-    marginHorizontal: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    gap: 8,
+    minWidth: 96,
+  },
+  declineBtn: {
+    width: 64,
+    height: 64,
     borderRadius: 999,
     backgroundColor: "#FFFFFF",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: BORDER,
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOpacity: 0.06,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  actionBtn: {
-    width: 56,
-    height: 56,
+  declineLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: MUTED,
+    letterSpacing: -0.1,
+  },
+  interestBtn: {
+    width: 64,
+    height: 64,
     borderRadius: 999,
+    backgroundColor: PURPLE,
     alignItems: "center",
     justifyContent: "center",
-  },
-  actionBtnGhost: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: BORDER,
-  },
-  actionBtnSuperlike: {
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1.5,
-    borderColor: "#BFDBFE",
-  },
-  actionBtnLike: {
-    backgroundColor: PURPLE,
     shadowColor: PURPLE,
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 6,
+  },
+  interestLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: PURPLE,
+    letterSpacing: -0.1,
   },
 });

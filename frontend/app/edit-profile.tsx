@@ -78,7 +78,7 @@ const INCOME_OPTS: IncomeRange[] = ["Under ₹5 LPA", "₹5–10 LPA", "₹10–
 const DIET_OPTS: Diet[] = ["Vegetarian", "Eggetarian", "Non-Vegetarian", "Vegan"];
 const DRINK_OPTS: Drinking[] = ["Never", "Socially", "Occasionally", "Frequently"];
 const SMOKE_OPTS: Smoking[] = ["Never", "Occasionally", "Frequently"];
-const FITNESS_OPTS: Fitness[] = ["Not Important", "Moderately Active", "Active", "Fitness Enthusiast"];
+const FITNESS_OPTS: Fitness[] = ["Daily", "3–5 times a week", "1–2 times a week", "A few times a month", "Rarely", "Never"];
 
 const PLACEHOLDER_PHOTO =
   "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=900&q=80&auto=format&fit=crop";

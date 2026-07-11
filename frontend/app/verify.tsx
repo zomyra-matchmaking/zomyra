@@ -55,7 +55,7 @@ export default function VerifyScreen() {
         step={0}
         total={TOTAL}
         title="Add your photos"
-        subtitle="Choose photos that best represent you. Your first photo will be shown as your cover."
+        subtitle="Choose photos that best represent you."
         onBack={goBack}
         onNext={goNext}
         canNext={canContinue}

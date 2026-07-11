@@ -1,7 +1,8 @@
 /**
- * Photo upload grid — uses expo-image-picker. Drag-reorder is simplified to
- * tap-to-set-cover + tap-to-remove for the RN version. The data model still
- * mirrors web exactly (UploadedPhoto[] in order, [0] is cover).
+ * Photo upload grid — uses expo-image-picker. Cover is implicitly the first
+ * photo (photos[0]). Non-first photos cannot be promoted to cover here;
+ * if the user wants a different cover they can delete and re-upload in the
+ * desired order.
  */
 import { GripVertical, ImagePlus, Star, Trash2 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -13,6 +14,17 @@ import { toast } from "@/src/components/ui/Toast";
 import { MAX_PHOTOS, type UploadedPhoto } from "@/src/lib/verification/types";
 import { uploadService } from "@/src/services/upload";
 import { colors, radii } from "@/src/theme/colors";
+
+// Short, warm, matrimony-appropriate prompts shown on the empty upload
+// slots. Each hints at what kind of photo would work well for that slot.
+const SLOT_PROMPTS = [
+  "The real me",
+  "Chai talks and long drives",
+  "Family is everything",
+  "Weekend vibes",
+  "A moment I'm proud of",
+  "Where I feel most me",
+] as const;
 
 type Props = {
   photos: UploadedPhoto[];
@@ -49,15 +61,6 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
     onChange([...photos, ...uploaded.map((u) => ({ id: u.id, uri: u.uri }))]);
   };
 
-  const makeCover = (id: string) => {
-    const idx = photos.findIndex((p) => p.id === id);
-    if (idx <= 0) return;
-    const next = [...photos];
-    const [item] = next.splice(idx, 1);
-    next.unshift(item);
-    onChange(next);
-  };
-
   const confirmDelete = () => {
     if (!pendingDelete) return;
     onChange(photos.filter((p) => p.id !== pendingDelete));
@@ -72,6 +75,7 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
         {slots.map((slot, i) => {
           const isCover = i === 0 && !!slot;
           const isRequired = i < 3;
+          const prompt = SLOT_PROMPTS[i] ?? `Photo ${i + 1}`;
           return (
             <View key={slot?.id ?? `empty-${i}`} style={styles.cell}>
               {slot ? (
@@ -82,15 +86,7 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
                       <Star size={10} color="#fff" strokeWidth={3} />
                       <Text style={styles.coverText}>COVER</Text>
                     </View>
-                  ) : (
-                    <Pressable
-                      testID={`make-cover-${i}`}
-                      onPress={() => makeCover(slot.id)}
-                      style={styles.setCoverBtn}
-                    >
-                      <Text style={styles.setCoverText}>Set cover</Text>
-                    </Pressable>
-                  )}
+                  ) : null}
                   <View style={styles.gripBadge}>
                     <GripVertical size={12} color={colors.mutedForeground} />
                   </View>
@@ -109,7 +105,9 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
                   style={[styles.tile, styles.placeholder]}
                 >
                   <ImagePlus size={20} color={colors.mutedForeground} />
-                  <Text style={styles.placeholderLabel}>Photo {i + 1}</Text>
+                  <Text style={styles.placeholderLabel} numberOfLines={2}>
+                    {prompt}
+                  </Text>
                   <Text style={styles.placeholderHint}>{isRequired ? "REQUIRED" : "OPTIONAL"}</Text>
                 </Pressable>
               )}
@@ -119,7 +117,7 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
       </View>
 
       <Text style={styles.help}>
-        Tap an empty slot to upload. Tap “Set cover” to make a photo your first photo.
+        Tap an empty slot to upload a photo.
       </Text>
 
       <ConfirmDialog
@@ -162,11 +160,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 4,
   },
-  placeholderLabel: { fontSize: 11, fontWeight: "600", color: colors.mutedForeground },
+  placeholderLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.mutedForeground,
+    textAlign: "center",
+    lineHeight: 14,
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
   placeholderHint: {
     fontSize: 9.5,
     letterSpacing: 1,
     color: colors.mutedForeground,
+    marginTop: 2,
   },
   coverChip: {
     position: "absolute",
@@ -181,16 +188,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   coverText: { color: "#fff", fontSize: 9, fontWeight: "700", letterSpacing: 0.8 },
-  setCoverBtn: {
-    position: "absolute",
-    top: 6,
-    left: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.95)",
-  },
-  setCoverText: { fontSize: 9.5, fontWeight: "700", color: colors.primary },
   gripBadge: {
     position: "absolute",
     top: 6,

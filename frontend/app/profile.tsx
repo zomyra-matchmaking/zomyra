@@ -17,6 +17,7 @@ import {
   Crown,
   Eye,
   Headphones,
+  Heart,
   LogOut,
   MapPin,
   Pencil,
@@ -133,6 +134,16 @@ export default function ProfileScreen() {
             title="Edit profile"
             subtitle="Update your photos, details & preferences"
             onPress={() => router.push("/edit-profile" as never)}
+          />
+          <Divider />
+          <ActionRow
+            testID="profile-action-personality"
+            Icon={Heart}
+            iconBg={LIGHT_PURPLE}
+            iconColor={PURPLE}
+            title="Personality test"
+            subtitle="Retake the conversational test to refresh your matches"
+            onPress={() => router.push("/personality-test" as never)}
           />
           <Divider />
           {!isPremium ? (

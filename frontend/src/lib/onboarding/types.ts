@@ -19,7 +19,13 @@ export type IncomeRange =
 export type Diet = "Vegetarian" | "Eggetarian" | "Non-Vegetarian" | "Vegan";
 export type Drinking = "Never" | "Socially" | "Occasionally" | "Frequently";
 export type Smoking = "Never" | "Occasionally" | "Frequently";
-export type Fitness = "Not Important" | "Moderately Active" | "Active" | "Fitness Enthusiast";
+export type Fitness =
+  | "Daily"
+  | "3–5 times a week"
+  | "1–2 times a week"
+  | "A few times a month"
+  | "Rarely"
+  | "Never";
 export type FamilyStructure = "Nuclear Family" | "Joint Family" | "Flexible";
 export type Relocation = "Open to Relocation" | "Depends on Opportunity" | "Prefer Not To Relocate";
 export type Religion =

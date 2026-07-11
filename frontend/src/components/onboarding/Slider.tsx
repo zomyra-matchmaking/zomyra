@@ -1,10 +1,21 @@
 /**
- * Single-thumb slider with proper touch tracking. Tapping anywhere on the
- * track jumps the thumb to that position; dragging moves it. Works on both
- * native (PanResponder) and web.
+ * Single-thumb slider with smooth continuous drag.
+ *
+ * How this feels smooth:
+ * - The thumb follows the finger continuously during drag (no jumping between
+ *   discrete step positions).
+ * - The value is snapped to the nearest step, but only reported to the parent
+ *   when it CROSSES a step boundary (which throttles re-renders) or on release.
+ * - On release, the thumb animates via spring to the snapped position.
+ * - When the parent updates `value` (e.g. going back to a previous question),
+ *   the thumb smoothly animates to the new position via spring.
+ *
+ * Internal thumb position is kept in an Animated.Value so we never call
+ * `setState` during drag — that's what caused visible jank previously.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   LayoutChangeEvent,
   PanResponder,
   StyleSheet,
@@ -35,32 +46,103 @@ export function Slider({ min, max, step = 1, value, onChange, onComplete }: Prop
   const trackPageXRef = useRef(0);
   const containerRef = useRef<View>(null);
 
-  const xToValue = (x: number) => {
-    const ratio = clamp(x / (widthRef.current || 1), 0, 1);
+  // Live thumb x-position in track-local pixels. Animated so we can update
+  // without React re-renders (via setValue on every pan frame) AND spring to
+  // snapped positions on release.
+  const posX = useRef(new Animated.Value(0)).current;
+  const isDragging = useRef(false);
+  const lastReportedValue = useRef<number>(value);
+
+  const valueToX = (v: number, w: number) =>
+    ((clamp(v, min, max) - min) / (max - min)) * w;
+
+  const xToValue = (x: number, w: number) => {
+    const ratio = clamp(x / (w || 1), 0, 1);
     const raw = min + ratio * (max - min);
-    return Math.round(raw / step) * step;
+    return clamp(Math.round(raw / step) * step, min, max);
   };
 
-  // Convert a page-space X into local track-space X.
-  const pageToLocal = (pageX: number) => pageX - trackPageXRef.current;
-
-  const update = (pageX: number) => {
-    const next = clamp(xToValue(pageToLocal(pageX)), min, max);
-    onChange(next);
-    return next;
-  };
+  // Sync internal position when parent value changes (e.g. navigation between
+  // questions restoring saved answers). Skip during active drag so we don't
+  // fight the user's finger.
+  useEffect(() => {
+    if (widthRef.current === 0) return;
+    if (isDragging.current) return;
+    const targetX = valueToX(value, widthRef.current);
+    Animated.spring(posX, {
+      toValue: targetX,
+      friction: 8,
+      tension: 120,
+      useNativeDriver: false,
+    }).start();
+    lastReportedValue.current = value;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, width]);
 
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (e) => update(e.nativeEvent.pageX),
-      onPanResponderMove: (e) => update(e.nativeEvent.pageX),
-      onPanResponderRelease: (e) => {
-        const finalValue = update(e.nativeEvent.pageX);
-        if (onComplete) {
-          onComplete(finalValue);
+      onPanResponderTerminationRequest: () => false,
+
+      onPanResponderGrant: (e) => {
+        isDragging.current = true;
+        const localX = clamp(
+          e.nativeEvent.pageX - trackPageXRef.current,
+          0,
+          widthRef.current,
+        );
+        posX.stopAnimation();
+        posX.setValue(localX);
+        const snapped = xToValue(localX, widthRef.current);
+        if (snapped !== lastReportedValue.current) {
+          lastReportedValue.current = snapped;
+          onChange(snapped);
         }
+      },
+
+      onPanResponderMove: (e) => {
+        const localX = clamp(
+          e.nativeEvent.pageX - trackPageXRef.current,
+          0,
+          widthRef.current,
+        );
+        // Move thumb continuously — no snapping visually.
+        posX.setValue(localX);
+        // Only fire onChange when the snapped step actually changes.
+        const snapped = xToValue(localX, widthRef.current);
+        if (snapped !== lastReportedValue.current) {
+          lastReportedValue.current = snapped;
+          onChange(snapped);
+        }
+      },
+
+      onPanResponderRelease: (e) => {
+        const localX = clamp(
+          e.nativeEvent.pageX - trackPageXRef.current,
+          0,
+          widthRef.current,
+        );
+        const snapped = xToValue(localX, widthRef.current);
+        const snappedX = valueToX(snapped, widthRef.current);
+        // Smoothly settle onto the exact snapped position.
+        Animated.spring(posX, {
+          toValue: snappedX,
+          friction: 8,
+          tension: 140,
+          useNativeDriver: false,
+        }).start(() => {
+          isDragging.current = false;
+        });
+        if (snapped !== lastReportedValue.current) {
+          lastReportedValue.current = snapped;
+          onChange(snapped);
+        }
+        if (onComplete) onComplete(snapped);
+      },
+
+      onPanResponderTerminate: () => {
+        isDragging.current = false;
       },
     }),
   ).current;
@@ -69,13 +151,11 @@ export function Slider({ min, max, step = 1, value, onChange, onComplete }: Prop
     const w = e.nativeEvent.layout.width;
     setWidth(w);
     widthRef.current = w;
-    // Record the absolute X of the track so we can convert pageX → local X.
+    posX.setValue(valueToX(value, w));
     containerRef.current?.measure((_x, _y, _w, _h, pageX) => {
       trackPageXRef.current = pageX;
     });
   };
-
-  const x = ((value - min) / (max - min)) * (width || 1);
 
   return (
     <View
@@ -85,10 +165,23 @@ export function Slider({ min, max, step = 1, value, onChange, onComplete }: Prop
       {...pan.panHandlers}
     >
       <View style={styles.track} />
-      <View style={[styles.activeTrack, { width: x }]} />
-      <View
+      <Animated.View style={[styles.activeTrack, { width: posX }]} />
+      <Animated.View
         pointerEvents="none"
-        style={[styles.thumb, { left: x - THUMB / 2 }]}
+        style={[
+          styles.thumb,
+          {
+            transform: [
+              {
+                translateX: posX.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-THUMB / 2, -THUMB / 2 + 1],
+                  extrapolate: "extend",
+                }),
+              },
+            ],
+          },
+        ]}
       />
     </View>
   );
@@ -113,6 +206,7 @@ const styles = StyleSheet.create({
   },
   thumb: {
     position: "absolute",
+    left: 0,
     width: THUMB,
     height: THUMB,
     borderRadius: 999,

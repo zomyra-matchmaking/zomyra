@@ -18,7 +18,7 @@ import { ScaleSlider } from "@/src/components/onboarding/ScaleSlider";
 import { Slider } from "@/src/components/onboarding/Slider";
 import { calcAge, DateWheel } from "@/src/components/onboarding/DateWheel";
 import { TreasureMap, type TreasureStepInfo } from "@/src/components/onboarding/TreasureMap";
-import { PersonalityChat } from "@/src/components/onboarding/PersonalityChat";
+import { PersonalityQuiz } from "@/src/components/onboarding/PersonalityQuiz";
 import {
   cmToImperial,
   HEIGHT_MAX_CM,
@@ -298,12 +298,12 @@ const Q1: QuestionScreen[] = [
   {
     kind: "q", section: 1, autoAdvance: true,
     render: (s, set) => ({
-      title: "How active are you?",
+      title: "How often do you exercise or stay physically active?",
       canNext: !!s.fitness,
       hideNext: !!s.fitness,
       body: (
         <OptionGrid
-          options={["Not Important", "Moderately Active", "Active", "Fitness Enthusiast"] as const}
+          options={["Daily", "3–5 times a week", "1–2 times a week", "A few times a month", "Rarely", "Never"] as const}
           value={s.fitness}
           onChange={(v) => set("fitness", v)}
           compact
@@ -393,7 +393,7 @@ const Q2: QuestionScreen[] = [
   {
     kind: "q", section: 2,
     render: (s, set) => ({
-      title: "Preferred age range?",
+      title: "Preferred age range in partner?",
       canNext: true,
       body: (
         <RangeDualSlider
@@ -525,7 +525,7 @@ export default function OnboardingScreen() {
 
   if (screen.kind === "chat") {
     return (
-      <PersonalityChat
+      <PersonalityQuiz
         state={state}
         onUpdateScale={(id, value) => set("scales", { ...state.scales, [id]: value })}
         onComplete={handleNext}
