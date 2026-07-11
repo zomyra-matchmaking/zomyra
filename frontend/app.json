@@ -13,7 +13,8 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Add profile photos to share with matches",
         "NSCameraUsageDescription": "Take photos to share on your profile"
-      }
+      },
+      "bundleIdentifier": "com.emergent.zomyraapppreview.q3b1np"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +26,8 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.CAMERA"
-      ]
+      ],
+      "package": "com.emergent.zomyraapppreview.q3b1np"
     },
     "web": {
       "bundler": "metro",
