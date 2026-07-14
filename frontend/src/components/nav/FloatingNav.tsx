@@ -40,7 +40,7 @@ export function FloatingNav() {
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.host, { paddingBottom: insets.bottom + 8 }]}
+      style={[styles.host, { paddingBottom: insets.bottom + 6 }]}
     >
       <View style={styles.bar}>
         {ITEMS.map((item) => {
@@ -61,7 +61,7 @@ export function FloatingNav() {
               style={styles.item}
             >
               <View style={styles.iconWrap}>
-                <Icon size={22} color={color} strokeWidth={stroke} />
+                <Icon size={20} color={color} strokeWidth={stroke} />
                 {item.key === "requests" && requestCount > 0 ? (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{badgeText}</Text>
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: "100%",
-    maxWidth: 372,
-    height: 68,
+    maxWidth: 340,
+    height: 56,
     borderRadius: 999,
     backgroundColor: "#FFF",
     borderWidth: 1,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 8 },
@@ -108,16 +108,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
-    paddingVertical: 6,
+    gap: 2,
+    paddingVertical: 4,
   },
   iconWrap: {
-    width: 28,
-    height: 28,
+    width: 24,
+    height: 24,
     alignItems: "center",
     justifyContent: "center",
   },
-  label: { fontSize: 11, fontWeight: "600" },
+  label: { fontSize: 10, fontWeight: "600", letterSpacing: -0.1 },
   badge: {
     position: "absolute",
     top: -6,

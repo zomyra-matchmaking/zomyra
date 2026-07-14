@@ -18,6 +18,7 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 
 import { CompatibilitySheet } from "@/src/components/discover/CompatibilitySheet";
@@ -144,30 +145,30 @@ export default function Discover() {
   const profile = sortedProfiles[idx];
   const dimLabel = DIM_LABEL[dimension];
 
-  // Scroll-driven header transition — the filter header (pill + banner + chips)
-  // gradually fades and translates up as the user scrolls the profile, while a
-  // compact header showing the current profile's name+age fades in to replace
-  // it. Reverses on scroll-up.
+  // Direction-driven header — hides on scroll down, reveals on scroll up.
   const scrollY = useSharedValue(0);
+  const hidden = useSharedValue(0); // 0 = shown, 1 = hidden
   const [filterHeaderH, setFilterHeaderH] = useState(140);
-  const FADE_END = 70;
-  const scrollHandler = useAnimatedScrollHandler((e) => {
-    scrollY.value = e.contentOffset.y;
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (e, ctx: { prev?: number }) => {
+      const y = e.contentOffset.y;
+      const prev = ctx.prev ?? 0;
+      const dy = y - prev;
+      if (y <= 8) {
+        hidden.value = withTiming(0, { duration: 200 });
+      } else if (dy > 1) {
+        hidden.value = withTiming(1, { duration: 240, easing: Easing.out(Easing.cubic) });
+      } else if (dy < -1) {
+        hidden.value = withTiming(0, { duration: 220, easing: Easing.out(Easing.cubic) });
+      }
+      ctx.prev = y;
+      scrollY.value = y;
+    },
   });
-  const filterHeaderStyle = useAnimatedStyle(() => {
-    const p = Math.min(Math.max(scrollY.value / FADE_END, 0), 1);
-    return {
-      opacity: 1 - p,
-      transform: [{ translateY: -18 * p }],
-    };
-  });
-  const compactHeaderStyle = useAnimatedStyle(() => {
-    const p = Math.min(Math.max(scrollY.value / FADE_END, 0), 1);
-    return {
-      opacity: p,
-      transform: [{ translateY: 14 * (1 - p) }],
-    };
-  });
+  const filterHeaderStyle = useAnimatedStyle(() => ({
+    opacity: 1 - hidden.value,
+    transform: [{ translateY: -filterHeaderH * hidden.value }],
+  }));
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
@@ -198,51 +199,51 @@ export default function Discover() {
               profile={profile}
               dimension={dimension}
             />
-
-            {/* Bottom action row — Decline (left) & Express Interest (right) */}
-            <View testID="discover-action-bar" style={styles.actionBar}>
-              <Pressable
-                testID="discover-action-decline"
-                onPress={advance}
-                hitSlop={8}
-                style={({ pressed }) => [
-                  styles.actionSlot,
-                  pressed && { transform: [{ scale: 0.96 }] },
-                ]}
-              >
-                <View style={styles.declineBtn}>
-                  <X size={26} color={TEXT} strokeWidth={2.4} />
-                </View>
-                <Text style={styles.declineLabel}>Decline</Text>
-              </Pressable>
-
-              <Pressable
-                testID="discover-action-interest"
-                onPress={handleLike}
-                hitSlop={8}
-                style={({ pressed }) => [
-                  styles.actionSlot,
-                  pressed && { transform: [{ scale: 0.96 }] },
-                ]}
-              >
-                <View style={styles.interestBtn}>
-                  <Send
-                    size={26}
-                    color="#FFFFFF"
-                    strokeWidth={2.2}
-                    style={{ transform: [{ translateX: -1 }] }}
-                  />
-                </View>
-                <Text style={styles.interestLabel}>Express Interest</Text>
-              </Pressable>
-            </View>
           </Animated.View>
         ) : (
           <Text style={styles.empty}>Loading…</Text>
         )}
       </Animated.ScrollView>
 
-      {/* ─── Overlay: Filter header (fades out on scroll down) ─── */}
+      {/* ─── Floating action pill — Decline (X) + Interest (Send) ─── */}
+      {profile ? (
+        <View
+          pointerEvents="box-none"
+          style={[styles.actionFloat, { bottom: insets.bottom + 72 }]}
+        >
+          <Pressable
+            testID="discover-action-decline"
+            onPress={advance}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.actionFloatBtn,
+              styles.actionFloatDecline,
+              pressed && { transform: [{ scale: 0.94 }] },
+            ]}
+          >
+            <X size={22} color={TEXT} strokeWidth={2.4} />
+          </Pressable>
+          <Pressable
+            testID="discover-action-interest"
+            onPress={handleLike}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.actionFloatBtn,
+              styles.actionFloatInterest,
+              pressed && { transform: [{ scale: 0.94 }] },
+            ]}
+          >
+            <Send
+              size={22}
+              color="#FFFFFF"
+              strokeWidth={2.2}
+              style={{ transform: [{ translateX: -1 }] }}
+            />
+          </Pressable>
+        </View>
+      ) : null}
+
+      {/* ─── Overlay: Filter header (hides on scroll down, reveals on scroll up) ─── */}
       <Animated.View
         style={[styles.headerOverlay, { paddingTop: insets.top }, filterHeaderStyle]}
         onLayout={(e) => setFilterHeaderH(e.nativeEvent.layout.height)}
@@ -302,30 +303,6 @@ export default function Discover() {
             </Pressable>
           ))}
         </ScrollView>
-      </Animated.View>
-
-      {/* ─── Overlay: Compact profile header (fades in on scroll down) ─── */}
-      <Animated.View
-        pointerEvents="none"
-        style={[styles.compactHeader, { paddingTop: insets.top + 6 }, compactHeaderStyle]}
-        testID="discover-compact-header"
-      >
-        {profile ? (
-          <View style={styles.compactHeaderInner}>
-            <Text style={styles.compactName} numberOfLines={1}>
-              {profile.name}, {profile.age}
-            </Text>
-            {profile.premium ? (
-              <View
-                testID="discover-compact-premium-badge"
-                style={styles.compactPremiumBadge}
-              >
-                <Crown size={10} color="#FFF" strokeWidth={2.4} fill="#FFF" />
-                <Text style={styles.compactPremiumText}>Premium</Text>
-              </View>
-            ) : null}
-          </View>
-        ) : null}
       </Animated.View>
 
       <FloatingNav />
@@ -505,49 +482,6 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: "#FFFFFF",
     zIndex: 5,
-  },
-  // Compact profile header — same slot, pointerEvents="none"
-  compactHeader: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 4,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: BORDER,
-  },
-  compactHeaderInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    minHeight: 28,
-  },
-  compactName: {
-    fontSize: 15.5,
-    fontWeight: "800",
-    color: TEXT,
-    letterSpacing: -0.2,
-  },
-  compactPremiumBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
-  },
-  compactPremiumText: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: "#FFF",
-    letterSpacing: 0.3,
-    textTransform: "uppercase",
   },
 
   // header
@@ -729,57 +663,40 @@ const styles = StyleSheet.create({
 
   empty: { padding: 32, textAlign: "center", color: MUTED },
 
-  // Bottom action row (Decline / Express Interest)
-  actionBar: {
-    marginTop: 20,
-    marginHorizontal: 24,
+  // Floating action pill — sits above the FloatingNav (72px above bottom-safe).
+  actionFloat: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-  },
-  actionSlot: {
     alignItems: "center",
-    gap: 8,
-    minWidth: 96,
+    justifyContent: "center",
+    gap: 14,
+    zIndex: 6,
   },
-  declineBtn: {
-    width: 64,
-    height: 64,
+  actionFloatBtn: {
+    width: 52,
+    height: 52,
     borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionFloatDecline: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1.5,
     borderColor: BORDER,
-    alignItems: "center",
-    justifyContent: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
-  declineLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: MUTED,
-    letterSpacing: -0.1,
-  },
-  interestBtn: {
-    width: 64,
-    height: 64,
-    borderRadius: 999,
+  actionFloatInterest: {
     backgroundColor: PURPLE,
-    alignItems: "center",
-    justifyContent: "center",
     shadowColor: PURPLE,
     shadowOpacity: 0.35,
-    shadowRadius: 16,
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
-  },
-  interestLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: PURPLE,
-    letterSpacing: -0.1,
   },
 });

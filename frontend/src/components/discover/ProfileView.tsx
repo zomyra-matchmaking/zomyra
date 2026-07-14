@@ -40,7 +40,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react-native";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Dimensions,
   Image,
@@ -51,6 +51,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeOut,
+} from "react-native-reanimated";
 
 import type { CompatibilityDimension, DiscoverProfile } from "@/src/lib/discover/mock";
 
@@ -119,6 +123,15 @@ type Props = {
 export function ProfileView({ profile, dimension = "all", footer }: Props) {
   const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
   const [showReason, setShowReason] = useState(false);
+  const [tierExpanded, setTierExpanded] = useState(true);
+
+  // Start expanded, collapse to icon-only after a beat so the "Excellent
+  // Match" moment lands first, then gracefully tucks away.
+  useEffect(() => {
+    setTierExpanded(true);
+    const t = setTimeout(() => setTierExpanded(false), 3000);
+    return () => clearTimeout(t);
+  }, [profile.id]);
 
   const dimScore = profile.scores?.[dimension];
   const reason = dimScore?.reason ?? profile.matchReason;
@@ -146,7 +159,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
     .slice(0, 6);
   const alignedItems = profile.snapshot;
 
-  const heroHeight = Math.round(SCREEN_H_FULL * 0.72);
+  const heroHeight = Math.round(SCREEN_H_FULL * 0.62);
 
   return (
     <View style={styles.root}>
@@ -158,10 +171,13 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
           resizeMode="cover"
         />
 
-        {/* Compatibility chip — floats top-right of the hero */}
+        {/* Compatibility chip — floats top-right; auto-collapses to icon-only. */}
         <Pressable
           testID="discover-tier-chip"
-          onPress={() => setShowReason(true)}
+          onPress={() => {
+            setTierExpanded(true);
+            setShowReason(true);
+          }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.heroTierChip,
@@ -169,9 +185,17 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
           ]}
         >
           <Sparkles size={12} color="#FFF" strokeWidth={2.4} />
-          <Text style={styles.heroTierText} numberOfLines={1}>
-            {dimScore?.tier ?? profile.compatibility}
-          </Text>
+          {tierExpanded ? (
+            <Animated.View
+              entering={FadeIn.duration(240)}
+              exiting={FadeOut.duration(220)}
+              style={styles.heroTierLabelWrap}
+            >
+              <Text style={styles.heroTierText} numberOfLines={1}>
+                {dimScore?.tier ?? profile.compatibility}
+              </Text>
+            </Animated.View>
+          ) : null}
         </Pressable>
 
         {/* Tap hero to open the full-screen viewer */}
@@ -197,7 +221,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             </Text>
             {profile.premium ? (
               <View testID="discover-premium-badge" style={styles.heroPremiumBadge}>
-                <Crown size={10} color="#FFF" strokeWidth={2.4} fill="#FFF" />
+                <Crown size={11} color="#F59E0B" strokeWidth={2.4} fill="#F59E0B" />
                 <Text style={styles.heroPremiumText}>Premium</Text>
               </View>
             ) : null}
@@ -212,14 +236,14 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       </View>
 
       {/* ─────────────── 2. ABOUT ME ─────────────── */}
-      <Section kicker="ABOUT" title="About me" testID="discover-about">
+      <Section kicker="ABOUT ME" testID="discover-about">
         <ExpandableText text={profile.summary} />
       </Section>
 
       <Hairline />
 
       {/* ─────────────── 3. LIFESTYLE ─────────────── */}
-      <Section kicker="DAILY RHYTHM" title="Lifestyle" testID="discover-lifestyle">
+      <Section kicker="LIFESTYLE" testID="discover-lifestyle">
         <View style={styles.factGrid}>
           {lifestyle.map((label) => {
             const I = LIFESTYLE_ICONS[label] ?? Sparkles;
@@ -239,8 +263,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
 
       {/* ─────────────── 4. PROFESSION & INCOME ─────────────── */}
       <Section
-        kicker="WORK"
-        title="Profession & Income"
+        kicker="PROFESSION & INCOME"
         testID="discover-profession-income"
       >
         <DetailRow Icon={BriefcaseBusiness} label="Profession" value={profession} />
@@ -255,7 +278,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       />
 
       {/* ─────────────── 6. QUICK FACTS ─────────────── */}
-      <Section kicker="AT A GLANCE" title="Quick facts" Icon={BadgeInfo} testID="discover-quick-facts">
+      <Section kicker="QUICK FACTS" Icon={BadgeInfo} testID="discover-quick-facts">
         <View style={styles.quickGrid}>
           <QuickFact label="Height" value={height} />
           <QuickFact label="Build" value={build} />
@@ -274,8 +297,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       {/* ─────────────── 8. WHAT WE ALIGN ON ─────────────── */}
       {alignedItems.length > 0 ? (
         <Section
-          kicker="COMMON GROUND"
-          title="What we align on"
+          kicker="WHAT WE ALIGN ON"
           Icon={HeartHandshake}
           testID="discover-align"
         >
@@ -300,8 +322,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
 
       {/* ─────────────── 9. LANGUAGES & RELIGION ─────────────── */}
       <Section
-        kicker="ROOTS"
-        title="Languages & faith"
+        kicker="LANGUAGES & FAITH"
         testID="discover-lang-religion"
       >
         <DetailRow Icon={LanguagesIcon} label="Languages" value={languages} />
@@ -399,13 +420,11 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
 
 function Section({
   kicker,
-  title,
   Icon,
   children,
   testID,
 }: {
   kicker: string;
-  title: string;
   Icon?: LucideIcon;
   children: ReactNode;
   testID?: string;
@@ -416,7 +435,6 @@ function Section({
         {Icon ? <Icon size={12} color={PURPLE} strokeWidth={2} /> : null}
         <Text style={styles.kicker}>{kicker}</Text>
       </View>
-      <Text style={styles.sectionTitle}>{title}</Text>
       <View style={styles.sectionBody}>{children}</View>
     </View>
   );
@@ -614,7 +632,6 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
@@ -622,6 +639,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
     zIndex: 2,
+    overflow: "hidden",
+  },
+  heroTierLabelWrap: {
+    marginLeft: 5,
   },
   heroTierText: {
     fontSize: 11,
@@ -668,11 +689,11 @@ const styles = StyleSheet.create({
 
   // ─── About body ───
   bodyText: {
-    fontSize: 15,
-    lineHeight: 24,
-    color: "#374151",
-    fontWeight: "400",
-    letterSpacing: 0.1,
+    fontSize: 14.5,
+    lineHeight: 22,
+    color: TEXT,
+    fontWeight: "500",
+    letterSpacing: -0.1,
   },
   expandToggle: { marginTop: 10, alignSelf: "flex-start" },
   expandToggleText: {
@@ -708,28 +729,28 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingVertical: 14,
+    gap: 12,
+    paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: HAIRLINE,
   },
   detailIcon: {
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
     alignItems: "center",
     justifyContent: "center",
   },
   detailLabel: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 11.5,
+    fontWeight: "500",
     color: SOFT,
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   detailValue: {
     marginTop: 2,
-    fontSize: 15.5,
-    fontWeight: "600",
+    fontSize: 14.5,
+    fontWeight: "500",
     color: TEXT,
     letterSpacing: -0.1,
   },
@@ -741,33 +762,31 @@ const styles = StyleSheet.create({
   },
   quickFact: {
     width: "50%",
-    marginBottom: 20,
+    marginBottom: 18,
     paddingRight: 12,
   },
   quickFactLabel: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 11.5,
+    fontWeight: "500",
     color: SOFT,
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   quickFactValue: {
     marginTop: 4,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14.5,
+    fontWeight: "500",
     color: TEXT,
-    letterSpacing: -0.2,
+    letterSpacing: -0.1,
   },
 
-  // ─── Editorial photos ───
+  // ─── Editorial photos (edge-to-edge, no radius) ───
   editorialPhotoWrap: {
     marginTop: 32,
-    paddingHorizontal: PAD_X,
   },
   editorialPhoto: {
-    width: SCREEN_W - PAD_X * 2,
-    height: Math.round((SCREEN_W - PAD_X * 2) * 1.15),
-    borderRadius: 12,
+    width: SCREEN_W,
+    height: Math.round(SCREEN_W * 1.15),
     overflow: "hidden",
     backgroundColor: LIGHT_PURPLE,
   },
@@ -783,15 +802,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 7,
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: BORDER,
     backgroundColor: "#FFFFFF",
   },
   alignChipText: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 14.5,
+    fontWeight: "500",
     color: TEXT,
     letterSpacing: -0.1,
     maxWidth: SCREEN_W - PAD_X * 2 - 60,
