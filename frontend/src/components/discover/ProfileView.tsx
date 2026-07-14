@@ -32,7 +32,6 @@ import {
   HeartHandshake,
   Home,
   IndianRupee,
-  Languages as LanguagesIcon,
   Leaf,
   MapPin,
   Sparkles,
@@ -106,6 +105,19 @@ const DIMENSION_TITLE: Record<CompatibilityDimension, string> = {
   priorities: "How your priorities align",
 };
 
+// Short editorial captions for each photo slot. Cycled deterministically per
+// profile so every card feels curated, not random.
+const PHOTO_PROMPTS = [
+  "Me during chai",
+  "Sunday mornings",
+  "Somewhere I feel most me",
+  "Little things I love",
+  "How a good day looks",
+  "In my element",
+  "Home is a feeling",
+  "Slow evenings",
+];
+
 function findFact(profile: DiscoverProfile, label: string): string | undefined {
   return profile.facts.find((f) => f.label.toLowerCase() === label.toLowerCase())
     ?.value;
@@ -159,6 +171,20 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
     .slice(0, 6);
   const alignedItems = profile.snapshot;
 
+  // Photo captions — deterministic order based on profile id so the same
+  // profile always reads the same short prompt above each shot.
+  const photoPrompts = useMemo(() => {
+    const arr = [...PHOTO_PROMPTS];
+    const seed = profile.id
+      .split("")
+      .reduce((a, c) => a + c.charCodeAt(0), 0);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = (seed * (i + 1)) % (i + 1);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [profile.id]);
+
   const heroHeight = Math.round(SCREEN_H_FULL * 0.62);
 
   return (
@@ -170,6 +196,13 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
           style={StyleSheet.absoluteFill as never}
           resizeMode="cover"
         />
+
+        {/* Photo prompt — top-left caption, complements the tier chip on the right. */}
+        <View pointerEvents="none" style={styles.heroPromptWrap}>
+          <Text style={styles.heroPromptText} numberOfLines={1}>
+            {photoPrompts[0]}
+          </Text>
+        </View>
 
         {/* Compatibility chip — floats top-right; auto-collapses to icon-only. */}
         <Pressable
@@ -266,11 +299,22 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         kicker="PROFESSION & INCOME"
         testID="discover-profession-income"
       >
-        <DetailRow Icon={BriefcaseBusiness} label="Profession" value={profession} />
-        <DetailRow Icon={IndianRupee} label="Income" value={income} last />
+        <View style={styles.professionRow}>
+          <BriefcaseBusiness size={16} color={PURPLE} strokeWidth={1.8} />
+          <Text style={styles.professionText} numberOfLines={2}>
+            {profession}
+          </Text>
+        </View>
+        <View style={styles.professionRow}>
+          <IndianRupee size={16} color={PURPLE} strokeWidth={1.8} />
+          <Text style={styles.professionText} numberOfLines={2}>
+            {income}
+          </Text>
+        </View>
       </Section>
 
       {/* ─────────────── 5. SECOND IMAGE ─────────────── */}
+      <PhotoPrompt text={photoPrompts[1]} />
       <EditorialPhoto
         uri={photos[1]}
         testID="discover-photo-1"
@@ -288,6 +332,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       </Section>
 
       {/* ─────────────── 7. THIRD IMAGE ─────────────── */}
+      <PhotoPrompt text={photoPrompts[2]} />
       <EditorialPhoto
         uri={photos[2]}
         testID="discover-photo-2"
@@ -325,11 +370,22 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         kicker="LANGUAGES & FAITH"
         testID="discover-lang-religion"
       >
-        <DetailRow Icon={LanguagesIcon} label="Languages" value={languages} />
-        <DetailRow Icon={Sparkles} label="Religion / Faith" value={religion} last />
+        <View style={styles.langRow}>
+          <Text style={styles.langLabel}>Languages</Text>
+          <Text style={styles.langValue} numberOfLines={2}>
+            {languages}
+          </Text>
+        </View>
+        <View style={[styles.langRow, styles.langRowLast]}>
+          <Text style={styles.langLabel}>Religion / Faith</Text>
+          <Text style={styles.langValue} numberOfLines={2}>
+            {religion}
+          </Text>
+        </View>
       </Section>
 
       {/* ─────────────── 10. FOURTH IMAGE ─────────────── */}
+      <PhotoPrompt text={photoPrompts[3]} />
       <EditorialPhoto
         uri={photos[3]}
         testID="discover-photo-3"
@@ -337,6 +393,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       />
 
       {/* ─────────────── 11. FIFTH IMAGE ─────────────── */}
+      <PhotoPrompt text={photoPrompts[4]} />
       <EditorialPhoto
         uri={photos[4]}
         testID="discover-photo-4"
@@ -506,28 +563,13 @@ function EditorialPhoto({
   );
 }
 
-function DetailRow({
-  Icon,
-  label,
-  value,
-  last,
-}: {
-  Icon: LucideIcon;
-  label: string;
-  value: string;
-  last?: boolean;
-}) {
+/** Small editorial caption that sits above each photo — e.g. "Me during chai". */
+function PhotoPrompt({ text }: { text: string }) {
   return (
-    <View style={[styles.detailRow, last && { borderBottomWidth: 0 }]}>
-      <View style={styles.detailIcon}>
-        <Icon size={16} color={PURPLE} strokeWidth={1.8} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.detailLabel}>{label}</Text>
-        <Text style={styles.detailValue} numberOfLines={2}>
-          {value}
-        </Text>
-      </View>
+    <View style={styles.photoPromptWrap}>
+      <Text style={styles.photoPromptText} numberOfLines={2}>
+        {text}
+      </Text>
     </View>
   );
 }
@@ -651,6 +693,47 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
+  // Hero prompt — small editorial caption floating top-left of the cover.
+  heroPromptWrap: {
+    position: "absolute",
+    top: 18,
+    left: 20,
+    zIndex: 2,
+  },
+  heroPromptText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    letterSpacing: 0.2,
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+
+  // Languages & Faith — icon-less rows (label above value).
+  langRow: {
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: HAIRLINE,
+  },
+  langRowLast: {
+    borderBottomWidth: 0,
+  },
+  langLabel: {
+    fontSize: 11.5,
+    fontWeight: "500",
+    color: SOFT,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  langValue: {
+    marginTop: 4,
+    fontSize: 14.5,
+    fontWeight: "500",
+    color: TEXT,
+    letterSpacing: -0.1,
+  },
+
   // ─── Section (whitespace-driven, no cards) ───
   section: {
     paddingHorizontal: PAD_X,
@@ -725,6 +808,21 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
 
+  // ─── Profession & Income rows (icon + value, full width) ───
+  professionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 8,
+  },
+  professionText: {
+    flex: 1,
+    fontSize: 14.5,
+    fontWeight: "500",
+    color: TEXT,
+    letterSpacing: -0.1,
+  },
+
   // ─── Detail rows (Profession/Income · Languages/Religion) ───
   detailRow: {
     flexDirection: "row",
@@ -782,13 +880,26 @@ const styles = StyleSheet.create({
 
   // ─── Editorial photos (edge-to-edge, no radius) ───
   editorialPhotoWrap: {
-    marginTop: 32,
+    marginTop: 12,
   },
   editorialPhoto: {
     width: SCREEN_W,
     height: Math.round(SCREEN_W * 1.15),
     overflow: "hidden",
     backgroundColor: LIGHT_PURPLE,
+  },
+
+  // ─── Photo prompt caption — sits above each editorial photo ───
+  photoPromptWrap: {
+    marginTop: 32,
+    paddingHorizontal: PAD_X,
+  },
+  photoPromptText: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: TEXT,
+    letterSpacing: -0.4,
+    lineHeight: 26,
   },
 
   // ─── Align chips (outlined, HeartHandshake, premium & lightweight) ───

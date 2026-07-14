@@ -663,15 +663,15 @@ const styles = StyleSheet.create({
 
   empty: { padding: 32, textAlign: "center", color: MUTED },
 
-  // Floating action pill — sits above the FloatingNav (72px above bottom-safe).
+  // Floating action pill — sits above the FloatingNav.
   actionFloat: {
     position: "absolute",
     left: 0,
     right: 0,
+    paddingHorizontal: 28,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 14,
+    justifyContent: "space-between",
     zIndex: 6,
   },
   actionFloatBtn: {
