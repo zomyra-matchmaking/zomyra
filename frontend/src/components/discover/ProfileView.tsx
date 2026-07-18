@@ -197,13 +197,6 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
           resizeMode="cover"
         />
 
-        {/* Photo prompt — top-left caption, complements the tier chip on the right. */}
-        <View pointerEvents="none" style={styles.heroPromptWrap}>
-          <Text style={styles.heroPromptText} numberOfLines={1}>
-            {photoPrompts[0]}
-          </Text>
-        </View>
-
         {/* Compatibility chip — floats top-right; auto-collapses to icon-only. */}
         <Pressable
           testID="discover-tier-chip"
@@ -314,9 +307,9 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       </Section>
 
       {/* ─────────────── 5. SECOND IMAGE ─────────────── */}
-      <PhotoPrompt text={photoPrompts[1]} />
       <EditorialPhoto
         uri={photos[1]}
+        caption={photoPrompts[1]}
         testID="discover-photo-1"
         onOpen={() => setViewerPhoto(photos[1])}
       />
@@ -332,9 +325,9 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       </Section>
 
       {/* ─────────────── 7. THIRD IMAGE ─────────────── */}
-      <PhotoPrompt text={photoPrompts[2]} />
       <EditorialPhoto
         uri={photos[2]}
+        caption={photoPrompts[2]}
         testID="discover-photo-2"
         onOpen={() => setViewerPhoto(photos[2])}
       />
@@ -385,17 +378,17 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
       </Section>
 
       {/* ─────────────── 10. FOURTH IMAGE ─────────────── */}
-      <PhotoPrompt text={photoPrompts[3]} />
       <EditorialPhoto
         uri={photos[3]}
+        caption={photoPrompts[3]}
         testID="discover-photo-3"
         onOpen={() => setViewerPhoto(photos[3])}
       />
 
       {/* ─────────────── 11. FIFTH IMAGE ─────────────── */}
-      <PhotoPrompt text={photoPrompts[4]} />
       <EditorialPhoto
         uri={photos[4]}
+        caption={photoPrompts[4]}
         testID="discover-photo-4"
         onOpen={() => setViewerPhoto(photos[4])}
         last
@@ -536,11 +529,13 @@ function ExpandableText({ text }: { text: string }) {
 
 function EditorialPhoto({
   uri,
+  caption,
   onOpen,
   testID,
   last,
 }: {
   uri: string;
+  caption?: string;
   onOpen?: () => void;
   testID?: string;
   last?: boolean;
@@ -558,18 +553,22 @@ function EditorialPhoto({
           style={StyleSheet.absoluteFill as never}
           resizeMode="cover"
         />
+        {caption ? (
+          <>
+            <LinearGradient
+              pointerEvents="none"
+              colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.62)"]}
+              locations={[0, 1]}
+              style={styles.photoCaptionScrim}
+            />
+            <View pointerEvents="none" style={styles.photoCaptionWrap}>
+              <Text style={styles.photoCaptionText} numberOfLines={2}>
+                {caption}
+              </Text>
+            </View>
+          </>
+        ) : null}
       </TouchableOpacity>
-    </View>
-  );
-}
-
-/** Small editorial caption that sits above each photo — e.g. "Me during chai". */
-function PhotoPrompt({ text }: { text: string }) {
-  return (
-    <View style={styles.photoPromptWrap}>
-      <Text style={styles.photoPromptText} numberOfLines={2}>
-        {text}
-      </Text>
     </View>
   );
 }
@@ -691,23 +690,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFF",
     letterSpacing: 0.2,
-  },
-
-  // Hero prompt — small editorial caption floating top-left of the cover.
-  heroPromptWrap: {
-    position: "absolute",
-    top: 18,
-    left: 20,
-    zIndex: 2,
-  },
-  heroPromptText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    letterSpacing: 0.2,
-    textShadowColor: "rgba(0,0,0,0.35)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
   },
 
   // Languages & Faith — icon-less rows (label above value).
@@ -880,26 +862,37 @@ const styles = StyleSheet.create({
 
   // ─── Editorial photos (edge-to-edge, no radius) ───
   editorialPhotoWrap: {
-    marginTop: 12,
+    marginTop: 24,
   },
   editorialPhoto: {
     width: SCREEN_W,
     height: Math.round(SCREEN_W * 1.15),
     overflow: "hidden",
     backgroundColor: LIGHT_PURPLE,
+    position: "relative",
   },
-
-  // ─── Photo prompt caption — sits above each editorial photo ───
-  photoPromptWrap: {
-    marginTop: 32,
-    paddingHorizontal: PAD_X,
+  photoCaptionScrim: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: "38%",
   },
-  photoPromptText: {
-    fontSize: 20,
+  photoCaptionWrap: {
+    position: "absolute",
+    left: PAD_X,
+    right: PAD_X,
+    bottom: 20,
+  },
+  photoCaptionText: {
+    fontSize: 18,
     fontWeight: "600",
-    color: TEXT,
-    letterSpacing: -0.4,
-    lineHeight: 26,
+    color: "#FFFFFF",
+    letterSpacing: -0.2,
+    lineHeight: 24,
+    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 8,
   },
 
   // ─── Align chips (outlined, HeartHandshake, premium & lightweight) ───

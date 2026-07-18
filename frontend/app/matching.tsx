@@ -19,7 +19,7 @@ export default function Matching() {
   useEffect(() => {
     const t1 = setTimeout(() => setActive(1), 1100);
     const t2 = setTimeout(() => setActive(2), 2200);
-    const t3 = setTimeout(() => router.replace("/discover"), 3400);
+    const t3 = setTimeout(() => router.replace("/discovery-mode"), 3400);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);

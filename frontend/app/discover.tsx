@@ -30,6 +30,7 @@ import { MatchOverlay } from "@/src/components/discover/MatchOverlay";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { discoverService } from "@/src/services/discover";
+import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
 
 const PURPLE = "#5B2C6F";
 const LIGHT_PURPLE = "#F5F3FF";
@@ -81,7 +82,9 @@ export default function Discover() {
     queryKey: ["discover-profiles"],
     queryFn: () => discoverService.list(),
   });
-  const [dimension, setDimension] = useState<CompatibilityDimension>("all");
+  const initialMode = useDiscoveryModeStore((s) => s.mode);
+  const setStoreMode = useDiscoveryModeStore((s) => s.setMode);
+  const [dimension, setDimension] = useState<CompatibilityDimension>(initialMode ?? "all");
   const [idx, setIdx] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [quickKey, setQuickKey] = useState<QuickKey | null>(null);
@@ -311,7 +314,10 @@ export default function Discover() {
         visible={sheetOpen}
         selected={dimension}
         onClose={() => setSheetOpen(false)}
-        onApply={(next) => setDimension(next)}
+        onApply={(next) => {
+          setDimension(next);
+          setStoreMode(next);
+        }}
       />
 
       {/* ── Premium filter dialogs — Apply routes to /premium ── */}

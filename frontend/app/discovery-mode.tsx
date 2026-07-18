@@ -1,0 +1,291 @@
+/**
+ * Discovery Mode picker — one-time screen shown after matching completes.
+ *
+ * Presents the same four options as the Discover header sheet (All /
+ * Compatibility / Lifestyle / Marriage Goals) so the user can seed their
+ * initial feed lens. Selection persists via `useDiscoveryModeStore`, so on
+ * subsequent app launches we bounce straight to `/discover`.
+ */
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import {
+  Heart,
+  Home,
+  Leaf,
+  Users,
+  type LucideIcon,
+} from "lucide-react-native";
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import type { CompatibilityDimension } from "@/src/lib/discover/mock";
+import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
+
+const PURPLE = "#5B2C6F";
+const PURPLE_DEEP = "#3D1A4A";
+const LIGHT_PURPLE = "#F5F3FF";
+const BORDER = "#ECEAF7";
+const TEXT = "#111827";
+const MUTED = "#6B7280";
+
+type Option = {
+  key: CompatibilityDimension;
+  title: string;
+  subtitle: string;
+  Icon: LucideIcon;
+  recommended?: boolean;
+};
+
+const OPTIONS: Option[] = [
+  {
+    key: "all",
+    title: "All",
+    subtitle: "Best overall matches using every profile signal.",
+    Icon: Users,
+    recommended: true,
+  },
+  {
+    key: "personality",
+    title: "Compatibility",
+    subtitle: "Personality, values and long-term compatibility.",
+    Icon: Heart,
+  },
+  {
+    key: "lifestyle",
+    title: "Lifestyle",
+    subtitle: "Daily habits, diet, fitness and routines.",
+    Icon: Leaf,
+  },
+  {
+    key: "priorities",
+    title: "Marriage Goals",
+    subtitle: "Family expectations, children, relocation and future plans.",
+    Icon: Home,
+  },
+];
+
+export default function DiscoveryMode() {
+  const router = useRouter();
+  const mode = useDiscoveryModeStore((s) => s.mode);
+  const setMode = useDiscoveryModeStore((s) => s.setMode);
+  const hasHydrated = useDiscoveryModeStore((s) => s._hasHydrated);
+  const [draft, setDraft] = useState<CompatibilityDimension>("all");
+
+  // Skip this screen if the user already picked once.
+  useEffect(() => {
+    if (hasHydrated && mode) {
+      router.replace("/discover");
+    }
+  }, [hasHydrated, mode, router]);
+
+  const apply = () => {
+    setMode(draft);
+    router.replace("/discover");
+  };
+
+  return (
+    <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.kicker}>ONE LAST THING</Text>
+        <Text style={styles.title} testID="discovery-mode-title">
+          Show me matches based on…
+        </Text>
+        <Text style={styles.subtitle}>
+          Pick the lens for your first set of matches. You can change this any
+          time from Discover.
+        </Text>
+
+        <View style={styles.options}>
+          {OPTIONS.map((opt) => {
+            const active = draft === opt.key;
+            return (
+              <Pressable
+                key={opt.key}
+                testID={`discovery-mode-${opt.key}`}
+                onPress={() => setDraft(opt.key)}
+                style={({ pressed }) => [
+                  styles.option,
+                  active && styles.optionActive,
+                  pressed && { opacity: 0.92 },
+                ]}
+              >
+                <View
+                  style={[styles.optionIconWrap, active && styles.optionIconWrapActive]}
+                >
+                  <opt.Icon
+                    size={20}
+                    color={active ? "#FFF" : PURPLE}
+                    strokeWidth={2}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.optionTitleRow}>
+                    <Text style={styles.optionTitle}>{opt.title}</Text>
+                    {opt.recommended ? (
+                      <Text style={styles.recommendedTag}>Recommended</Text>
+                    ) : null}
+                  </View>
+                  <Text style={styles.optionSubtitle}>{opt.subtitle}</Text>
+                </View>
+                <View style={[styles.radio, active && styles.radioActive]}>
+                  {active ? <View style={styles.radioDot} /> : null}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <Pressable
+          testID="discovery-mode-continue"
+          onPress={apply}
+          style={({ pressed }) => [
+            styles.cta,
+            pressed && { transform: [{ scale: 0.98 }] },
+          ]}
+        >
+          <LinearGradient
+            colors={[PURPLE, PURPLE_DEEP]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.ctaGradient}
+          >
+            <Text style={styles.ctaText}>Show me matches</Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  scroll: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 24,
+  },
+  kicker: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.6,
+    color: PURPLE,
+    textTransform: "uppercase",
+  },
+  title: {
+    marginTop: 8,
+    fontSize: 28,
+    fontWeight: "700",
+    color: TEXT,
+    letterSpacing: -0.6,
+    lineHeight: 34,
+  },
+  subtitle: {
+    marginTop: 10,
+    fontSize: 14.5,
+    fontWeight: "500",
+    color: MUTED,
+    lineHeight: 22,
+    letterSpacing: -0.1,
+  },
+  options: {
+    marginTop: 28,
+    gap: 12,
+  },
+  option: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: "#FFFFFF",
+  },
+  optionActive: {
+    borderColor: PURPLE,
+    backgroundColor: LIGHT_PURPLE,
+  },
+  optionIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    backgroundColor: LIGHT_PURPLE,
+    borderWidth: 1,
+    borderColor: BORDER,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  optionIconWrapActive: {
+    backgroundColor: PURPLE,
+    borderColor: PURPLE,
+  },
+  optionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  optionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: TEXT,
+    letterSpacing: -0.2,
+  },
+  recommendedTag: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: PURPLE,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: "#EDE7F6",
+  },
+  optionSubtitle: {
+    marginTop: 3,
+    fontSize: 13,
+    fontWeight: "500",
+    color: MUTED,
+    letterSpacing: -0.1,
+  },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: "#D1D5DB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioActive: { borderColor: PURPLE },
+  radioDot: { width: 10, height: 10, borderRadius: 999, backgroundColor: PURPLE },
+
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 12,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: BORDER,
+    backgroundColor: "#FFFFFF",
+  },
+  cta: { borderRadius: 999, overflow: "hidden" },
+  ctaGradient: {
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ctaText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 0.2,
+  },
+});
