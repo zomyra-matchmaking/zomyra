@@ -393,8 +393,18 @@ Play Console but never shipped, packages permanently burned by a deleted app, or
 registered under any developer account. **The definitive checks are registering the App ID in the
 Apple Developer Portal and claiming the package on first Play Console upload — both gated on O-2.**
 
-**Change window:** freely changeable until the *first store upload*. After that it is permanent —
-on Google Play a package name can never be changed or reused, even if the app is deleted.
+**Change window — the lock points are not account creation:**
+
+| Stage | Changeable? |
+|---|---|
+| `app.json` only | Yes — one line, plus a credentials refresh on the next EAS build |
+| Store account created, App ID not yet registered | Yes |
+| App ID registered in Apple Developer Portal | Yes — simply register a different one |
+| **App record created in App Store Connect** | **No** — permanently bound to that record; a change means a new record, and the name reservation stays on the old one |
+| **First bundle uploaded to Google Play** | **No, ever** — a package name can never be changed or reused, even if the app is deleted |
+
+Cheap to change during Modules 0–9. After Modules 10–11 it also means regenerating
+`google-services.json`, `GoogleService-Info.plist` and the RevenueCat configuration.
 
 **Related but separate:** the App Store *display name* "Zomyra" is a different namespace, is
 first-come, and is more prone to squatting than the bundle ID. Creating the app record in App Store
