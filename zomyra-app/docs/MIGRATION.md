@@ -60,9 +60,30 @@ yarn) and the superseded `PersonalityChat.tsx`.
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
 | 9 | Chat & realtime | Not started | Largest single feature; independent once the core loop is proven |
-| 10 | Premium & entitlements | Not started | Needs the dev build and every gated surface to already exist |
-| 11 | Push notifications | Not started | Cross-cutting: routes into chat, requests, verification, premium |
+| 10 | Premium & entitlements | Not started | ⛔ **Gated — see §2.1.** Needs the dev build and every gated surface to already exist |
+| 11 | Push notifications | Not started | ⛔ **Gated — see §2.1.** Cross-cutting: routes into chat, requests, verification, premium |
 | 12 | Hardening | Not started | Accessibility, offline, Sentry, tests — applies across finished screens |
+
+### 2.1 ⛔ Store-account gate — must clear before Module 10 starts
+
+**Do not begin Module 10 until every item below is done.** Modules 0–9 need none of it and run
+entirely on the EAS dev client, so this can be arranged in parallel with that work — but Modules 10
+and 11 cannot be built, tested, or meaningfully verified without it. Starting Module 10 early means
+writing purchase and push code that cannot be run even once.
+
+| Prerequisite | Cost | Why it blocks |
+|---|---|---|
+| **Apple Developer Program** enrolment | $99/year | No RevenueCat iOS products, no StoreKit sandbox testing, no push via APNs, no physical-iPhone builds |
+| **Google Play Console** account | $25 one-time | No Play Billing products, no `com.zomyra.app` package claim |
+| **`com.zomyra.app` registered on both** | — | Apple: register the App ID in Developer Portal → Identifiers. Google: claimed on first Play Console bundle upload. Until then O-1 is chosen but unconfirmed (§9) |
+| **"Zomyra" display name reserved** on App Store Connect | — | Separate namespace from the bundle ID, first-come, and more prone to squatting. Reserved by creating the app record |
+| **In-app purchase products created** — the four FR-29c fixed-term tiers (1 week / 1 month / 3 month / 6 month), non-renewing | — | RevenueCat maps its offerings onto real store products; API-30's plans merge by `revenueCatProductId` client-side (FE TDD §9.11) |
+| **RevenueCat account**, apps linked to both stores, entitlements configured | Free under $2.5k/mo tracked revenue | Module 10's entire purchase flow runs through its SDK |
+| **`google-services.json` + `GoogleService-Info.plist`** from Firebase | Free | Generated *per package name* — a bundle-ID change after this point invalidates both files |
+| **Apple paid-applications agreement** signed + banking/tax details | — | Easy to overlook: StoreKit products stay unavailable and return empty product lists until this is accepted, which reads as a code bug |
+
+**Owner note:** obtaining the Apple account earlier than this gate is worth it purely to reserve
+the "Zomyra" name (§9), even though no engineering work depends on it before Module 10.
 
 ---
 
@@ -153,7 +174,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | ID | Item | Needed by | Owner |
 |---|---|---|---|
 | O-1 | ~~Real bundle identifier / package name~~ **→ `com.zomyra.app`** (2026-07-28). See §9. Applied in Module 0; still needs registering with both stores once O-2 lands. | Module 0 | ✅ Decided |
-| O-2 | Apple Developer account ($99/yr) + Play Console ($25), and `google-services.json` / `GoogleService-Info.plist`. Modules 1–9 run on the dev client without these. | Modules 10–11 | Product owner |
+| O-2 | **Hard gate on Module 10 — see §2.1.** Apple Developer account ($99/yr) + Play Console ($25), `com.zomyra.app` registered on both, the "Zomyra" display name reserved on App Store Connect, and `google-services.json` / `GoogleService-Info.plist` in hand. Modules 0–9 run on the dev client without any of it. | **Before Module 10** | Product owner |
 | O-3 | **API-32 field-name conflict:** FE TDD §9.12 sends/returns `{ pushEnabled }`; BE TDD §14.13 uses `{ notificationsEnabled }`. A real contract conflict, not a doc paraphrase. | Module 11 | FE + BE |
 | O-4 | **`accountStatus` routing gap:** BE `GET /me` returns `active \| suspended \| banned`, but FE §9.1's routing table defines no destination for suspended/banned. | Module 3 | FE + product |
 | O-5 | Express Interest daily cap value `N` (FR-17a) is still "to be set by product". | Module 7 | Product owner |
