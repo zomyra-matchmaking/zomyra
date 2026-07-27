@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "zomyra",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
@@ -14,12 +14,12 @@
         "NSPhotoLibraryUsageDescription": "Add profile photos to share with matches",
         "NSCameraUsageDescription": "Take photos to share on your profile"
       },
-      "bundleIdentifier": "com.emergent.zomyraapppreview.q3b1np"
+      "bundleIdentifier": "com.zomyra.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
@@ -27,7 +27,7 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.CAMERA"
       ],
-      "package": "com.emergent.zomyraapppreview.q3b1np"
+      "package": "com.zomyra.app"
     },
     "web": {
       "bundler": "metro",
@@ -39,10 +39,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-image.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000000"
+          "backgroundColor": "#FFFFFF"
         }
       ]
     ],

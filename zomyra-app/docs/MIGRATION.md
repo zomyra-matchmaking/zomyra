@@ -10,7 +10,8 @@ Append a "Module log" entry at the end of every module, in the same session that
 - Started: 2026-07-27
 - Codebase: `zomyra/zomyra-app` (Expo SDK 54, RN 0.81.5, React 19.1, expo-router v6)
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
-- Status: **Module 0 not yet started.** Baseline below is the untouched Emergent output.
+- Status: **Module 0 complete** (2026-07-28). §3's baseline still describes the untouched Emergent
+  output and is kept as the historical reference point; §6 records what Module 0 changed.
 
 ---
 
@@ -50,7 +51,7 @@ yarn) and the superseded `PersonalityChat.tsx`.
 
 | # | Module | Status | One-line rationale for its position |
 |---|---|---|---|
-| 0 | Build & project foundation | Not started | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
+| 0 | Build & project foundation | **Complete** (2026-07-28) | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
 | 1 | Design system & theming | Not started | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
 | 2 | State & data layer | Not started | Every subsequent module plugs into it; nothing can reach the backend until it exists |
 | 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me` |
@@ -277,7 +278,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | ID | Item | Needed by | Owner |
 |---|---|---|---|
-| O-1 | ~~Real bundle identifier / package name~~ **→ `com.zomyra.app`** (2026-07-28). See §9. Applied in Module 0; still needs registering with both stores once O-2 lands. | Module 0 | ✅ Decided |
+| O-1 | ~~Real bundle identifier / package name~~ **→ `com.zomyra.app`** (2026-07-28). See §9. **Applied in Module 0**; still needs registering with both stores once O-2 lands. | Module 0 | ✅ Done |
 | O-2 | **Hard gate on Module 10 — see §2.1.** Apple Developer account ($99/yr) + Play Console ($25), `com.zomyra.app` registered on both, the "Zomyra" display name reserved on App Store Connect, and `google-services.json` / `GoogleService-Info.plist` in hand. Modules 0–9 run on the dev client without any of it. | **Before Module 10** | Product owner |
 | O-3 | **API-32 field-name conflict:** FE TDD §9.12 sends/returns `{ pushEnabled }`; BE TDD §14.13 uses `{ notificationsEnabled }`. A real contract conflict, not a doc paraphrase. | Module 11 | FE + BE |
 | O-4 | **`accountStatus` routing gap:** BE `GET /me` returns `active \| suspended \| banned`, but FE §9.1's routing table defines no destination for suspended/banned. | Module 3 | FE + product |
@@ -288,6 +289,10 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
 | O-8 | **Backend base URL + OpenAPI spec.** Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
 | O-11 | **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
+
+| O-12 | **Is web still a target?** The prototype was built for browser preview and still carries `app/+html.tsx`, `src/utils/storage/index.web.ts`, an `expo.web` config block and a `yarn web` script. Nothing in the module plan targets web, and C-2 makes the dev client the verification surface. Not cosmetic: §3 records that `zustand/middleware`'s `persist` was avoided because of an `import.meta` failure **in the web bundle** — drop web and Module 2's persistence layer stops being shaped by a platform we do not ship. Decide before Module 2 designs it. Module 0 left every web file untouched. | Module 2 | FE + product |
+| O-13 | **`ios.supportsTablet` is `true`** (Emergent default, untouched by Module 0). Leaving it on means App Review tests the app on iPad and the listing needs iPad screenshots — for a phone-designed UI. One line to turn off now; a listing change later. | Module 12 (cheap to change any time) | Product owner |
+| O-14 | **Final icon and splash artwork.** Module 0 replaced the Expo/Emergent defaults with assets generated from `assets/images/zomyra-logo.png`, but that file's actual mark is only 304×217px, so the 1024×1024 outputs are upscaled and slightly soft. Fine for dev builds; a designed 1024×1024 icon — and a splash treatment beyond a centred mark — is wanted before submission. The `#FFFFFF` splash and adaptive-icon backgrounds were picked to satisfy C-3, not from the palette. | Module 12 (Module 1 if the palette settles the backgrounds) | Product owner |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 
@@ -320,7 +325,86 @@ The two documents are genuinely aligned; the backend was revised to match the fr
 Append one entry per completed module. Keep entries short and factual: what changed, what is
 deliberately still stubbed, and anything the next module inherits.
 
-_(No entries yet — Module 0 has not started.)_
+### Module 0 — Build & project foundation (completed 2026-07-28)
+
+**Changed:**
+
+- **Bundle identifier applied (O-1, §9).** `ios.bundleIdentifier` and `android.package` are both
+  `com.zomyra.app`, replacing Emergent's `com.emergent.zomyraapppreview.q3b1np`.
+- **`userInterfaceStyle` → `"light"`** (C-3).
+- **Dev-client conversion (C-2).** `expo-dev-client@~6.0.21` installed and `eas.json` added with
+  four profiles: `development` (dev client, internal, Android APK), `development-simulator` (the
+  same for the iOS Simulator — **builds with no Apple account**, which is what makes O-10's
+  Simulator-only iOS period workable), `preview`, `production`. Node pinned to 20.19.6 so cloud
+  builds match local; `appVersionSource: "remote"`.
+- **First lockfile in the repo's history.** There was none — not tracked, not even on disk. Expo's
+  tooling consequently chose npm over the declared `packageManager: yarn@1.22.22`, and npm then
+  failed outright on a peer conflict. `yarn.lock` is now committed and yarn is the only supported
+  package manager.
+- **`expo-doctor` now passes 18/18** (was 16/18):
+  - Deduplicated two native modules that were installed twice — `@react-navigation/native` (exact
+    pins `7.1.8`/`7.3.16`/`7.4.0` relaxed to the `^` ranges Expo expects) and `@expo/vector-icons`
+    (`15.0.3` → `^15.1.1`, the version `expo` itself ships). Two copies of a native module is a
+    build-failure risk, not a warning.
+  - Fixed `icon.png` and `adaptive-icon.png`, which were 512×513 and failed config-schema
+    validation outright.
+- **Emergent/Expo branding removed from the launch experience** — not recorded in §3's baseline, so
+  noting it here: the app icon was Expo's default blue "e", and the splash was Emergent's logo above
+  the words *"Start building apps on emergent"* on black. Both regenerated from the real brand mark
+  in `assets/images/zomyra-logo.png`: `icon.png` (1024×1024, **opaque** — iOS rejects alpha),
+  `adaptive-icon.png` (1024×1024, mark kept inside Android's centre-66% safe zone), a new
+  `splash-icon.png`, and `favicon.png`. Splash and adaptive-icon backgrounds `#000000` → `#FFFFFF`
+  (C-3). Deleted `splash-image.png` and `app-image.png`. Resolution caveat → **O-14**.
+- **`tsc --noEmit` wired in, deliberately not gating on the three known errors** — this was the call
+  §3 left to Module 0. `yarn typecheck` runs tsc raw; `yarn typecheck:baseline` allows exactly the
+  three errors recorded in `scripts/typecheck-baseline.json` and fails on anything new (verified in
+  both directions with a deliberate probe error). Errors are keyed by file + TS code rather than
+  line number, so ordinary edits do not churn the baseline. Fixing the three stays with Modules 6, 7
+  and 9; each should re-run `yarn typecheck:baseline --update` and commit the smaller baseline.
+- **`yarn lint` is green** (0 errors, 15 pre-existing warnings). All 6 errors were
+  `react/no-unescaped-entities`, now disabled project-wide: it is an HTML-oriented rule, and its
+  suggested fix (`&apos;`) renders **literally** inside RN `<Text>` — applying it would have shipped
+  visible defects into six screens. No source files were touched.
+- **README replaced** (Expo template → actual build/run doc: yarn-only, dev-client-only, the
+  profiles, the checks, and the `eas init` step). **`.gitignore`:** added `/ios` and `/android`
+  (CNG output), and re-included `.env.example`, which the repo-root `.gitignore` would otherwise
+  swallow silently before Module 2 needs it. Removed the `reset-project` template script, which
+  moves `app/` aside — no value here and a live hazard.
+
+**Still stubbed / deferred:**
+
+- **No EAS project link, and therefore no build has actually run.** `app.json` has no
+  `extra.eas.projectId` / `owner`; writing one requires an EAS account, so `eas init` is an owner
+  step (documented in the README). Everything else is verified locally: `expo config` resolves the
+  new identity, `expo export --platform ios` bundles clean (6.43 MB), doctor 18/18, lint green,
+  typecheck baseline green.
+- No native `ios/` or `android/` directories — continuous native generation, produced at build time.
+- **`X-App-Version` / `X-Bundle-Update-Id` (§5) are not wired.** `expo-updates` was deliberately not
+  installed: it is only meaningful once an EAS project exists, and it drags in `runtimeVersion`
+  policy decisions. Module 2 inherits this with the API client.
+- **Web left entirely untouched** — `+html.tsx`, `storage/index.web.ts`, the `web` script and the
+  `expo.web` block all remain. See **O-12**; it is a real fork for Module 2's persistence design.
+
+**Inherited by next module:**
+
+- Module 1 receives a light-mode-locked, doctor-clean, lint-clean project. The `#FFFFFF` splash and
+  adaptive-icon backgrounds are placeholders chosen to satisfy C-3 — revisit them when the palette
+  lands (O-14).
+- Module 2 receives `.env.example` un-ignored, and owns adding `expo-updates` once the EAS project
+  exists, plus the O-12 web decision before it designs persistence.
+- Module 12: add `ITSAppUsesNonExemptEncryption: false` to `ios.infoPlist` before submission — it is
+  a compliance declaration, so it was left for the owner rather than asserted here. Without it every
+  TestFlight upload stops for an export-compliance prompt.
+
+**Decisions made:**
+
+- Typecheck does **not** gate on the three inherited errors; a baseline guard catches new ones
+  instead. A permanently-red `yarn typecheck` would simply be ignored.
+- `react/no-unescaped-entities` off project-wide (reason above).
+- Icon and splash regenerated from the existing brand mark rather than left as Expo/Emergent
+  defaults — owner-approved mid-module; the resolution caveat is recorded as O-14.
+- Dependency version pins relaxed to Expo's expected `^` ranges where exact pins were forcing
+  duplicate native modules.
 
 <!--
 Template:
