@@ -83,6 +83,28 @@ writing purchase and push code that cannot be run even once.
 | **Apple Paid Applications Agreement** signed + payout banking/tax details on both stores | — | Easy to overlook: StoreKit returns **empty product lists** until this agreement is active, which reads exactly like a code bug and can burn a day of Module 10. Google needs an equivalent payments/merchant profile. Neither store needs banking to *create* the account — only to sell, which Premium requires |
 | **Current account in the LLP's name** | — | Serial dependency, often underestimated: LLP certificate → PAN/TAN → current account → store payout setup, roughly 2–4 weeks *after* incorporation. Payout accounts must be in the entity's name, not personal. Start PAN/TAN the day incorporation completes |
 
+**The two gated modules are not equally gated — 11 can run before 10.**
+
+| | Module 11 (Push) | Module 10 (Premium) |
+|---|---|---|
+| Store account | Required | Required |
+| Bundle ID registered | Required | Required |
+| D-U-N-S / LLP | Only if Organization | Only if Organization |
+| PAN → current account | **Not needed** | **Required** |
+| Paid Applications Agreement | **Not needed** | **Required** |
+| IAP products + RevenueCat | Not needed | Required |
+| Also needs | APNs key, Firebase config files (free) | — |
+
+Because the India banking chain (PAN → current account → payout setup) trails incorporation by
+another 2–4 weeks, the account will almost certainly be live before the financial side is. **When
+that happens, run Module 11 first and Module 10 after** — they are independent, and reordering
+converts a hard wait into finished work. The numbering is a default, not a dependency.
+
+**Why Module 10 truly blocks on banking, not just on an account:** until the Paid Applications
+Agreement is active, StoreKit returns an **empty product list** — no prices, no tiers, no purchase
+to test, and RevenueCat has nothing to map entitlements onto. Module 10's code can be written
+beforehand, but none of it can be verified, which makes writing it first a poor use of the time.
+
 **Owner note on timing (O-10):** the accounts must be **Organization**, which requires the LLP to
 exist first — so the real lead time is LLP → D-U-N-S → Apple verification, roughly 6–10 weeks. Start
 that track now, in parallel with Modules 0–9, rather than at this gate. An Individual account was
