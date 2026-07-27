@@ -82,8 +82,22 @@ writing purchase and push code that cannot be run even once.
 | **`google-services.json` + `GoogleService-Info.plist`** from Firebase | Free | Generated *per package name* — a bundle-ID change after this point invalidates both files |
 | **Apple paid-applications agreement** signed + banking/tax details | — | Easy to overlook: StoreKit products stay unavailable and return empty product lists until this is accepted, which reads as a code bug |
 
-**Owner note:** obtaining the Apple account earlier than this gate is worth it purely to reserve
-the "Zomyra" name (§9), even though no engineering work depends on it before Module 10.
+**Owner note on timing (O-10):** the accounts must be **Organization**, which requires the LLP to
+exist first — so the real lead time is LLP → D-U-N-S → Apple verification, roughly 6–10 weeks. Start
+that track now, in parallel with Modules 0–9, rather than at this gate. An Individual account was
+considered as a placeholder to reserve the "Zomyra" name early and **rejected** — see O-10 for why.
+
+**Claiming the App Store name (only possible once Apple enrolment is approved):** register the
+bundle ID first — Developer Portal → Certificates, Identifiers & Profiles → Identifiers → **+** →
+App IDs → App → **Explicit**, `com.zomyra.app`, enabling *In-App Purchase* and *Push Notifications*
+at creation so provisioning profiles don't need regenerating later. Then App Store Connect → My Apps
+→ **+** → New App, name `Zomyra` (30-char limit), that bundle ID, any SKU. **App Store Connect
+rejects the name on that screen if it is taken — that rejection is the only definitive availability
+check that exists.** Note the reservation is not indefinite: Apple may release the name if the app
+is not submitted for review within ~180 days, which is why reserving it long before submission is
+not the free option it appears to be. Google Play does not enforce app-name uniqueness at all; there
+the unique identifier is the package name, bound at first App Bundle upload, so nothing is claimable
+in advance.
 
 ---
 
@@ -180,6 +194,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-5 | Express Interest daily cap value `N` (FR-17a) is still "to be set by product". | Module 7 | Product owner |
 | O-6 | Height filter bounds inconsistent across wireframes (140–210cm vs 140–200cm), FE TDD §8. | Module 7 | Product owner |
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
+| O-10 | **Store account entity type → Organization, deferred until the LLP exists** (decided 2026-07-28). The LLP is not yet formed, so neither store account can be opened as an Organization yet. Deliberately *not* taking an Individual account as a placeholder: it would publish the seller name as a person rather than "Zomyra", pull a personal Play account into the multi-tester/14-day pre-publication requirement, and require a later account conversion or app transfer. Critical-path check: LLP (~2–4 wks) → D-U-N-S (5–14 business days) → Apple org approval (1–4 wks) ≈ 6–10 weeks total, which fits inside the Modules 0–9 window since none of them need an account. **Owner track, in parallel with engineering:** start LLP formation, buy `zomyra.com`, file the India trademark (stronger and more durable protection than an App Store name reservation), set up `developer@zomyra.com` as the account holder rather than a personal inbox. | Before the §2.1 gate | Product owner |
 | O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
 | O-8 | **Where the real backend lives, and its base URL(s)** per environment (dev/staging/prod). Note `zomyra/backend/` is *not* it — see §7. If no server exists yet, Module 2 builds the RTK Query layer against the BE TDD §14 contract with a mock/MSW-style handler behind the same base query, so swapping in a live URL is config-only. | Module 2 | FE + BE |
 
