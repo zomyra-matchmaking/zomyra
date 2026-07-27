@@ -161,6 +161,21 @@ under Guideline 4.3, which FE TDD §12 flags as a live risk for this category �
 cycle; and review turnaround between modules, the cheapest week available to reclaim.
 **Pressure valve:** if Premium's banking chain slips, ship free-tier and fast-follow Module 10.
 
+**Submission checklist (Module 12) — two items that cost a full review cycle if missed:**
+
+1. **Guideline 4.3 (Spam).** Apple rejects apps it considers undifferentiated in saturated
+   categories, and applies it hard to dating/matchmaking. Paste FE TDD §12's drafted text into App
+   Store Connect's **Notes for Review** — most 4.3 rejections come from leaving that field blank.
+   The differentiators are real product decisions, not positioning: no swipe deck (FR-13), quiz-driven
+   scoring (FR-6), Discovery Modes (FR-15), mandatory verification before matching (FR-11).
+2. **A working demo account.** App Review cannot receive your OTP SMS, so phone-auth apps must ship
+   a **production** test number with a fixed OTP that bypasses SMS — distinct from the staging bypass
+   in §2.3. Apps are routinely rejected for reviewers being unable to log in.
+
+Adjacent guidelines this app already satisfies, worth not regressing: **1.2** (UGC safety — needs
+reporting, blocking and moderation: FR-25b and FR-9 cover it) and **5.1.1(v)** (in-app account
+deletion: FR-28).
+
 ### 2.3 Staging environment — joint ask for the backend side
 
 Needed before Module 4 can be *verified* rather than merely written:
