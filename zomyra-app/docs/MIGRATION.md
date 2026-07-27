@@ -25,6 +25,24 @@ These are decided, not open. Do not relitigate them without the owner saying so.
 | C-3 | **Light mode only** | No dark palette, no `useColorScheme` branching. `app.json` `userInterfaceStyle` set to `"light"`. |
 | C-4 | **Semantic design tokens** | Tokens named by role (`colors.text.primary`, `colors.border.subtle`), never by value (`colors.purple700`) — so a theme change stays a one-file change even with a single theme. |
 | C-5 | **One module at a time** | Finish, summarize, append to this log, stop. Never auto-continue into the next module. |
+| C-6 | **Branch per module, merged by PR** | `master` is the integration branch and takes no direct commits. Each module gets its own branch (`module/<n>-<slug>`, e.g. `module/0-build-foundation`), opened as a PR against `master`. The owner pushes; do not push or open PRs without being asked. |
+
+### Repository state (as of 2026-07-27)
+
+`origin` is `git@github.com:niharshah25/zomyra.git`. **`master` is the live line** — it carries the
+Discovery Mode work (FR-15a) and the `PersonalityChat` → `PersonalityQuiz` rewrite (FR-7) that
+`main` lacks. Everything in this document was assessed against `master`.
+
+`main` is a **separate, unrelated history** (no common ancestor with `master`) last touched
+2026-07-09, and is still GitHub's configured default branch. It is stale — treat it as an archive,
+never as a merge target. Because the histories are unrelated, git cannot merge the two without
+`--allow-unrelated-histories` and an artificial merge commit; there is no reason to attempt it,
+since `master` already contains everything `main` has except `package-lock.json` (the project uses
+yarn) and the superseded `PersonalityChat.tsx`.
+
+> **Outstanding manual step for the owner:** switch the GitHub default branch to `master` in repo
+> settings. Until that happens, new PRs default to targeting the stale `main`, and the repo's
+> landing page shows 9-day-old code.
 
 ---
 
