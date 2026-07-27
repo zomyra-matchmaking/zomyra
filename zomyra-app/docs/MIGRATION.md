@@ -25,7 +25,7 @@ These are decided, not open. Do not relitigate them without the owner saying so.
 | C-3 | **Light mode only** | No dark palette, no `useColorScheme` branching. `app.json` `userInterfaceStyle` set to `"light"`. |
 | C-4 | **Semantic design tokens** | Tokens named by role (`colors.text.primary`, `colors.border.subtle`), never by value (`colors.purple700`) — so a theme change stays a one-file change even with a single theme. |
 | C-5 | **One module at a time** | Finish, summarize, append to this log, stop. Never auto-continue into the next module. |
-| C-6 | **Branch per module, merged by PR** | `master` is the integration branch and takes no direct commits. Each module gets its own branch (`module/<n>-<slug>`, e.g. `module/0-build-foundation`), opened as a PR against `master`. The owner pushes; do not push or open PRs without being asked. |
+| C-6 | **Branch per module, merged by PR** | `master` is the integration branch and takes no direct commits. **Create the branch at the *start* of a module, before any file changes** — `module/<n>-<slug>`, e.g. `module/0-build-foundation` — so no work ever lands on `master` by accident. At module end: commit, append the §6 log entry, summarise, and **stop**. **The owner pushes and opens the PR against `master`** — never push, force-push, or open PRs unless explicitly asked. *(Pre-Module-0 setup docs were committed directly to `master`; this rule applies from Module 0 onward.)* |
 
 ### Repository state (as of 2026-07-27)
 
