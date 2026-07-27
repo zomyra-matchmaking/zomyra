@@ -152,7 +152,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | ID | Item | Needed by | Owner |
 |---|---|---|---|
-| O-1 | **Real bundle identifier / package name**, replacing `com.emergent.zomyraapppreview.q3b1np` (e.g. `com.zomyra.app`). Must be final before the dev build — RevenueCat and FCM bind to it in Modules 10–11 and changing it later invalidates both. *Still open;* the rest of the app identity (name/slug/scheme) was settled on 2026-07-27, see §8. | Module 0 | Product owner |
+| O-1 | ~~Real bundle identifier / package name~~ **→ `com.zomyra.app`** (2026-07-28). See §9. Applied in Module 0; still needs registering with both stores once O-2 lands. | Module 0 | ✅ Decided |
 | O-2 | Apple Developer account ($99/yr) + Play Console ($25), and `google-services.json` / `GoogleService-Info.plist`. Modules 1–9 run on the dev client without these. | Modules 10–11 | Product owner |
 | O-3 | **API-32 field-name conflict:** FE TDD §9.12 sends/returns `{ pushEnabled }`; BE TDD §14.13 uses `{ notificationsEnabled }`. A real contract conflict, not a doc paraphrase. | Module 11 | FE + BE |
 | O-4 | **`accountStatus` routing gap:** BE `GET /me` returns `active \| suspended \| banned`, but FE §9.1's routing table defines no destination for suspended/banned. | Module 3 | FE + product |
@@ -235,7 +235,40 @@ values yet. This was the cheapest possible moment to do it.
 | `app.json` `slug` | `frontend` | `zomyra` | Identifies the EAS project. Changing it after a project exists means re-linking, so it had to precede Module 0 |
 | `app.json` `scheme` | `frontend` | `zomyra` | **Deep-link scheme** (`zomyra://`). Module 11 routes push notifications through this (FE TDD §6.10); getting it wrong later means reissuing links |
 
-**Deliberately unchanged:** `ios.bundleIdentifier` / `android.package` are still
-`com.emergent.zomyraapppreview.q3b1np` — that is O-1 and needs the owner's decision, not a guess.
-Also unchanged: `userInterfaceStyle` is still `"automatic"` despite constraint C-3; flipping it to
-`"light"` is Module 0's job, kept out of this rename so the commit stays single-purpose.
+**Deliberately unchanged in that commit:** `ios.bundleIdentifier` / `android.package` (see §9 —
+decided, applied in Module 0), and `userInterfaceStyle`, still `"automatic"` despite constraint
+C-3; flipping it to `"light"` is Module 0's job, kept out of the rename so the commit stays
+single-purpose.
+
+---
+
+## 9. Bundle identifier (O-1, decided 2026-07-28)
+
+**`com.zomyra.app`** — the same string for both `ios.bundleIdentifier` and `android.package`.
+Replaces Emergent's `com.emergent.zomyraapppreview.q3b1np`.
+
+Rationale: canonical reverse-DNS for the owned domain `zomyra.com`. One identical string on both
+platforms keeps RevenueCat, FCM and deep links from diverging. It uses only lowercase letters,
+digits and periods, which is the intersection of both platforms' rules — **iOS forbids underscores,
+Android forbids hyphens**, so anything outside that set breaks one of them.
+
+Availability evidence gathered 2026-07-28 (indicative, not conclusive):
+
+| Check | Result |
+|---|---|
+| Play Store `com.zomyra.app` | HTTP 404 — no published app on that package |
+| Play Store `com.zomyra` | HTTP 404 |
+| App Store name search "zomyra" (IN / US) | 0 real matches |
+
+Those probes only see *published* apps and *display names*. They cannot see packages reserved in
+Play Console but never shipped, packages permanently burned by a deleted app, or Apple App IDs
+registered under any developer account. **The definitive checks are registering the App ID in the
+Apple Developer Portal and claiming the package on first Play Console upload — both gated on O-2.**
+
+**Change window:** freely changeable until the *first store upload*. After that it is permanent —
+on Google Play a package name can never be changed or reused, even if the app is deleted.
+
+**Related but separate:** the App Store *display name* "Zomyra" is a different namespace, is
+first-come, and is more prone to squatting than the bundle ID. Creating the app record in App Store
+Connect reserves it — a reason to obtain the Apple account earlier than Module 10, even though no
+technical work blocks on it.
