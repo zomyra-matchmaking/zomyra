@@ -131,6 +131,51 @@ in advance.
 
 ---
 
+## 2.2 Target schedule (set 2026-07-28)
+
+**Launch target: late September / early October 2026.** Estimates are for build time and will be
+refined as modules land; elapsed time runs longer because of review turnaround and backend pace.
+
+| Module | Est. build | | Module | Est. build |
+|---|---|---|---|---|
+| 0 · Build foundation | 1 day | | 5 · Onboarding & schema | 3–4 days |
+| 1 · Design system | 1–2 days | | 6 · Photos & verification | 3–4 days |
+| 2 · State & data layer | 3–5 days | | 7 · Discover / interest | 4–6 days |
+| 3 · Navigation | 2–3 days | | 8 · Requests | 1–2 days |
+| 4 · Auth | 2–3 days | | 9 · Chat & realtime | 4–6 days |
+| | | | **0–9 total** | **24–36 days (5–7 wks build, 7–10 elapsed)** |
+
+| Window | Engineering | Legal / accounts |
+|---|---|---|
+| Jul 29 – Aug 4 | Modules 0, 1 | Apple + Play enrolled · LLP filed · name reserved |
+| Aug 5 – 18 | Modules 2, 3 | LLP certificate → PAN/TAN → D-U-N-S |
+| **~Aug 18** | **First build → Play closed testing** | **14-day clock starts (see O-10)** |
+| Aug 19 – Sep 1 | Modules 4, 5 | Current account opened |
+| Sep 2 – 15 | Modules 6, 7 | Paid Apps Agreement, IAP products |
+| Sep 16 – 22 | Modules 8, 9 | — |
+| Sep 23 – 29 | Modules 11, 12 (10 if banking ready) | — |
+| Sep 30 – Oct 7 | Submission + review | — |
+
+**Known risks to this schedule:** backend pace (Modules 4–9 all depend on it); an Apple rejection
+under Guideline 4.3, which FE TDD §12 flags as a live risk for this category — budget one rejection
+cycle; and review turnaround between modules, the cheapest week available to reclaim.
+**Pressure valve:** if Premium's banking chain slips, ship free-tier and fast-follow Module 10.
+
+### 2.3 Staging environment — joint ask for the backend side
+
+Needed before Module 4 can be *verified* rather than merely written:
+
+- **Deployed `/v1` API** with a reachable base URL, plus the served OpenAPI schema (O-8, O-11)
+- **OTP bypass or a fixed test code** — otherwise every login test sends a real SMS. A five-minute
+  backend change that saves days
+- **Seeded profile data** — Module 7 cannot test pagination without enough profiles to page through
+- **Ably staging keys** and an S3 bucket for photos
+- **Deterministic stubs for both ML services** if photo moderation and selfie face-match aren't
+  ready — Module 6 needs *a* response, not a real one. Staging should be able to return
+  approved/rejected and verified/mismatch on demand
+
+---
+
 ## 3. Baseline: what the code actually was at start
 
 Verified by reading the code on 2026-07-27, before any changes. **The app is a UI prototype,
@@ -224,7 +269,8 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-5 | Express Interest daily cap value `N` (FR-17a) is still "to be set by product". | Module 7 | Product owner |
 | O-6 | Height filter bounds inconsistent across wireframes (140–210cm vs 140–200cm), FE TDD §8. | Module 7 | Product owner |
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
-| O-10 | **Store account entity type → Organization, deferred until the LLP exists** (decided 2026-07-28). The LLP is not yet formed, so neither store account can be opened as an Organization yet. Deliberately *not* taking an Individual account as a placeholder: it would publish the seller name as a person rather than "Zomyra", pull a personal Play account into the multi-tester/14-day pre-publication requirement, and require a later account conversion or app transfer. Critical-path check: LLP (~2–4 wks) → D-U-N-S (5–14 business days) → Apple org approval (1–4 wks) ≈ 6–10 weeks total, which fits inside the Modules 0–9 window since none of them need an account. **Owner track, in parallel with engineering:** start LLP formation, buy `zomyra.com`, file the India trademark (stronger and more durable protection than an App Store name reservation), set up `developer@zomyra.com` as the account holder rather than a personal inbox. | Before the §2.1 gate | Product owner |
+| O-10 **(revised 2026-07-28)** | **→ Individual accounts now, Organization migration later.** Supersedes the original decision below. A launch target of late Sep / early Oct was set after that decision, and the Organization chain (LLP → D-U-N-S → Apple verification) lands mid-Sep to mid-Oct — at or after launch. **Actions this week:** enrol Apple as Individual ($99, 24–48h) and register Play ($25); reserve the "Zomyra" name; keep the LLP running for the later migration and entity-name payouts. **Critical, easily missed:** a personal Play account cannot publish publicly until closed testing has run **14 continuous days** — but the track accepts *any* build, so push one as soon as Module 3/4 lands (~mid-Aug) and let the clock run in parallel with Modules 5–9 instead of appending two dead weeks to the schedule. *Open for the owner's CA:* an Individual account can take payouts to a personal bank account, which would remove the LLP from Premium's critical path — a tax question, not an engineering one. | Immediate | Product owner |
+| ~~O-10 (original)~~ | ~~**Store account entity type → Organization, deferred until the LLP exists** (decided 2026-07-28).~~ *Superseded — retained for the reasoning.* The LLP is not yet formed, so neither store account can be opened as an Organization yet. Deliberately *not* taking an Individual account as a placeholder: it would publish the seller name as a person rather than "Zomyra", pull a personal Play account into the multi-tester/14-day pre-publication requirement, and require a later account conversion or app transfer. Critical-path check: LLP (~2–4 wks) → D-U-N-S (5–14 business days) → Apple org approval (1–4 wks) ≈ 6–10 weeks total, which fits inside the Modules 0–9 window since none of them need an account. **Owner track, in parallel with engineering:** start LLP formation, buy `zomyra.com`, file the India trademark (stronger and more durable protection than an App Store name reservation), set up `developer@zomyra.com` as the account holder rather than a personal inbox. | Before the §2.1 gate | Product owner |
 | O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
 | O-8 | **Backend base URL + OpenAPI spec.** Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
 | O-11 | **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
