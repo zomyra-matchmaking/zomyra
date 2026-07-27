@@ -180,6 +180,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-5 | Express Interest daily cap value `N` (FR-17a) is still "to be set by product". | Module 7 | Product owner |
 | O-6 | Height filter bounds inconsistent across wireframes (140–210cm vs 140–200cm), FE TDD §8. | Module 7 | Product owner |
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
+| O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
 | O-8 | **Where the real backend lives, and its base URL(s)** per environment (dev/staging/prod). Note `zomyra/backend/` is *not* it — see §7. If no server exists yet, Module 2 builds the RTK Query layer against the BE TDD §14 contract with a mock/MSW-style handler behind the same base query, so swapping in a live URL is config-only. | Module 2 | FE + BE |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
