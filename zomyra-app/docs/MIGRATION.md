@@ -100,6 +100,13 @@ another 2–4 weeks, the account will almost certainly be live before the financ
 that happens, run Module 11 first and Module 10 after** — they are independent, and reordering
 converts a hard wait into finished work. The numbering is a default, not a dependency.
 
+**Caveat when running 11 first:** FR-29c's "premium pass expiring soon" push routes to the Premium
+screen (§6.10). The routing itself is testable — `app/premium.tsx` exists as a route from the
+prototype onward — but the trigger is not, since there is no real subscription with an expiry until
+Module 10. Re-verify that one notification category after Module 10; every other category
+(match, message, request, verification result, moderation) tests fully without it. Treat the swap as
+conditional on what is actually ready, not as a fixed reordering.
+
 **Why Module 10 truly blocks on banking, not just on an account:** until the Paid Applications
 Agreement is active, StoreKit returns an **empty product list** — no prices, no tiers, no purchase
 to test, and RevenueCat has nothing to map entitlements onto. Module 10's code can be written
