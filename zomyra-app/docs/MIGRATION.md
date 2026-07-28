@@ -17,8 +17,9 @@ Append a "Module log" entry at the end of every module, in the same session that
   `master`. `git log master..module/0-build-foundation` shows what is pending.
 - **Verified green as of 2026-07-28:** `yarn doctor` 18/18 · `yarn lint` 0 errors (15 pre-existing
   warnings) · `yarn typecheck:baseline` clean · `expo export --platform ios` bundles.
-  **No EAS build has ever run** — the dev-client conversion is configured and locally verified but
-  unproven on hardware. See §6's Module 0 entry.
+- **C-2 is now proven, not just configured.** The first EAS build ran on 2026-07-28
+  (`development-simulator`, build 1) and the app launched on an iPhone 16 Plus simulator against
+  Metro. See §6's "First build" entry. iOS *device* and Android builds remain unrun.
 - **Next up: Module 1 — Design system & theming.** Confirmed by the owner 2026-07-28; the sequence
   in §2 is being followed in order. §3's new provenance subsection is written for this module.
 - **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
@@ -535,6 +536,38 @@ stays Simulator-only until the Apple Organization account exists, exactly as O-1
 *Housekeeping:* a stray project `@zomyra002/zomyra002` was auto-created under the personal account
 during signup. It is unrelated to this repo and can be deleted from its project settings.
 
+#### First build — C-2 verified end to end (2026-07-28)
+
+Profile `development-simulator`, build 1, no Apple account involved (simulator builds are unsigned).
+The `.app` was installed on a booted iPhone 16 Plus simulator, connected to Metro at
+`localhost:8081`, and **bundled and rendered the login screen successfully** — 3536 modules, no
+errors. This closes the "configured but unproven" caveat that Module 0 shipped with.
+
+Confirmed in the built binary's `Info.plist`, i.e. Module 0's config actually reached the app rather
+than just the config file:
+
+| Key | Value | Proves |
+|---|---|---|
+| `CFBundleIdentifier` | `com.zomyra.app` | O-1 applied |
+| `CFBundleDisplayName` | `Zomyra` | no longer "frontend" (§8) |
+| `UIUserInterfaceStyle` | `Light` | C-3 |
+| `ITSAppUsesNonExemptEncryption` | `false` | export-compliance declaration |
+| `UIDeviceFamily` | `[1]` — iPhone only | O-13 reversal took effect |
+| `CFBundleURLSchemes` | `zomyra`, `com.zomyra.app` | deep-link scheme for Module 11 |
+| `CFBundleVersion` | `1` | EAS now owns build numbers (`appVersionSource: remote`) |
+
+**Still unrun:** Android (needs no account — the obvious next one) and iOS *device* (blocked on the
+Apple account, O-10).
+
+**Bonus finding for Module 1 — there are four purples, not three.** Sampling the rendered login
+screen pixel-by-pixel: the Z mark is `#5B2C70`, the `Zomyra` wordmark `#7C3AED`, the heading
+`#1F1235`, and the primary button **`#5B2C6F`** — one hex digit from the brand mark (blue 111 vs
+112). `#5B2C6F` is `colors.primary` *and* the hardcoded `const PURPLE` in 10+ files, so it is the
+one that actually dominates the UI. Visually identical to the brand, textually distinct — a
+find-and-replace on `#5B2C70` would miss every occurrence. Corroborating the §3 provenance note,
+`src/theme/colors.ts` line 1 states outright that its tokens were *"extracted from the original
+Tailwind config"*.
+
 <!--
 Template:
 
@@ -657,10 +690,20 @@ circular launchers; 51% clears it with 7.4px of margin. Re-measure if the artwor
 the check is furthest non-transparent pixel from centre vs. `width × 0.66 / 2`.
 
 **Brand colour for Module 1: `#5B2C70`.** This is the *only* fill in the delivered artwork, so it is
-the authoritative brand purple. Note the drift it exposes: `src/components/brand/Logo.tsx`'s
-`Wordmark` hardcodes `#7C3AED` — Tailwind's violet-600, more residue from the web original (§3) —
-and `src/theme/colors.ts` is purple-tinted around `#1F1235`. Three different purples. Module 1 owns
-reconciling them onto `#5B2C70`.
+the authoritative brand purple. It exposes **four** competing purples, confirmed by sampling the
+rendered login screen on the simulator (§6, "First build"):
+
+| Hex | Where | Note |
+|---|---|---|
+| `#5B2C70` | delivered logo artwork | authoritative brand |
+| **`#5B2C6F`** | `colors.primary` + hardcoded `const PURPLE` in 10+ files | **one hex digit off the brand** — dominates the actual UI |
+| `#7C3AED` | `Logo.tsx` `Wordmark` | Tailwind violet-600, web residue (§3) |
+| `#1F1235` | `colors.foreground` | near-black heading tone |
+
+The `#5B2C6F` / `#5B2C70` pair is the trap: visually indistinguishable, textually distinct, so a
+find-and-replace on the brand value silently misses every real usage. Module 1 owns reconciling all
+four. Corroborating §3, `src/theme/colors.ts` line 1 says its tokens were *"extracted from the
+original Tailwind config"*.
 
 *Possible palette hints, unconfirmed:* the SVG's `<style>` block declares eight classes but uses only
 one. The seven unused fills — `#4A202A`, `#FAD5E1`, `#FDFDFD`, `#111113`, `#F2EBE0`, `#F6F5F5`,
