@@ -680,7 +680,50 @@ to satisfy C-3 rather than from a palette — a Module 1 decision.
 **Icon treatment:** currently purple-on-white, faithful to the supplied artwork. White-on-purple
 would be more striking on a home screen. Nobody has made that call.
 
-### 10.3 Spec for any future artwork
+### 10.3 Colour tokens — guidance for Module 1 (owner discussion, 2026-07-28)
+
+**A numbered ramp is wanted, but it must stay private.** The owner raised naming steps
+`purple-600` / `purple-800` rather than inventing values ad hoc. That is right in spirit, and it
+does **not** require changing C-4 — it requires two layers, which is how Radix, Material 3 and
+shadcn all work:
+
+| Layer | Example | Who imports it |
+|---|---|---|
+| **1 · Ramp** (private) | `purple[600]`, `purple[800]` | Only layer 2. **Never a screen or component.** |
+| **2 · Semantic** (public) | `colors.text.primary`, `colors.brand.default`, `colors.surface.subtle` | Everything else |
+
+C-4 forbids *components* consuming value-named tokens, so a theme change stays a one-file edit. It
+does not forbid a ramp existing underneath. Keeping both gives Module 1 somewhere to land the 51
+unique hexes systematically instead of mapping them one by one.
+**If the owner ever wants components using `purple600` directly, that is a real C-4 change and only
+the owner can make it.**
+
+⚠️ **Do not anchor the brand at "600".** `#5B2C70` is dark — on a Tailwind-style scale it sits around
+**800–900** (Tailwind `purple-900` is `#581C87`, nearly identical). Numbering it 600 would leave no
+room below it and mislead every later module.
+
+**Measured contrast against white (NFR-6a), computed 2026-07-28:**
+
+| Colour | Ratio | Verdict |
+|---|---|---|
+| `#5B2C70` brand purple | **10.30:1** | AAA — safe for body text |
+| `#7C3AED` `Logo.tsx` Wordmark | 5.70:1 | AA only |
+| `#1F1235` theme foreground | 17.56:1 | AAA |
+| `#4A202A` unused — plum | 13.71:1 | AAA |
+| `#111113` unused — near-black | 18.86:1 | AAA |
+| `#FAD5E1` unused — pink | 1.34:1 | **surface only, never text** |
+| `#F2EBE0` unused — cream | 1.18:1 | **surface only, never text** |
+
+Two consequences. First, **reconciling onto `#5B2C70` improves accessibility** rather than trading it
+away — §3 records four *current* theme colours failing NFR-6a, and the brand purple passes AAA.
+Second, the contrast split makes the unused fills look like a **deliberate palette** — two dark text
+tones, one brand, several light surfaces — which is the shape a designed system has, not artboard
+leftovers. Still confirm with the designer (§10.1), but treat it as likely rather than speculative.
+
+A numbered ramp also makes NFR-6a auditing systematic: once steps are fixed, "step N and above passes
+AA on white" is a rule Module 12 can check mechanically instead of colour by colour.
+
+### 10.4 Spec for any future artwork
 
 **The single most useful deliverable is the vector source** — with an SVG or PDF every size below can
 be regenerated exactly, and none of it needs revisiting when a new density or store requirement
