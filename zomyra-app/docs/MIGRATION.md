@@ -727,7 +727,41 @@ leftovers from an unrelated artboard.
 
 **A purpose-designed splash.** The current `splash-icon.png` is an interim render of the full lockup,
 drawn at `imageWidth: 200` over `#FFFFFF`. It is honest placeholder quality, not a designed launch
-screen.
+screen. The designer is also producing a **splash animation** — see §10.2a for what that requires.
+
+#### 10.2a Animated splash — how it actually works, and the designer brief
+
+**An animated splash is two stages, not one.** Worth understanding before briefing anyone, because
+the constraint below is easy to miss and expensive to re-do.
+
+1. **Native splash — static image only.** It is displayed while the app binary boots, before any JS
+   exists to animate. Neither OS allows skipping it, and `expo-splash-screen` exposes only a
+   fade-out, which is **iOS-only** (verified against the SDK docs, 2026-07-28). Android 12+ also
+   shows its own system splash with the app icon.
+2. **JS-rendered animation.** After the native splash hides, a React component plays the animation.
+   Standard pattern: `preventAutoHideAsync()` → render → hide the native splash underneath.
+   `app/_layout.tsx` already calls `preventAutoHideAsync()`.
+
+| Option | Format | Cost |
+|---|---|---|
+| **Lottie** — recommended, the only one a designer can export to | `.json` (After Effects → Bodymovin) | `lottie-react-native`: native module, needs a fresh dev build; install via `npx expo install` for the SDK-54 build, and confirm New Architecture support since `newArchEnabled: true` |
+| Reanimated | hand-coded | Already installed, no new dependency — but nothing exports to it |
+| Rive | `.riv` | Another native module; more runtime control, less common |
+| GIF / video | — | Poor fit: quality, size, no transparency |
+
+⚠️ **The constraint most people miss: the animation's first frame must match the static splash
+exactly.** The native splash is on screen first, so if the animation opens on a different
+composition the user sees a visible jump at the handoff. Brief the animation as starting *from* the
+resting lockup.
+
+**Designer brief:** export Lottie JSON via the Bodymovin/LottieFiles plugin · shape layers,
+transforms, trim paths and opacity only (Lottie does not support AE expressions or most effects;
+mattes and masks are patchy) · **convert the ZOMYRA wordmark to outlines**, not a text layer ·
+transparent background, we paint the colour · **under ~1.5s, one-shot, not looping** — it gates
+first paint · supply the AE project file alongside the JSON.
+
+**Owner note:** the same animation is wanted in-app beyond the splash (e.g. the login hero), which
+is another reason to favour Lottie — one JSON can be reused at any size.
 
 **Both background colours** (`expo-splash-screen` and `android.adaptiveIcon`) are `#FFFFFF`, chosen
 to satisfy C-3 rather than from a palette — a Module 1 decision.
