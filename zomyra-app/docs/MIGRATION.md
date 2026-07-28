@@ -367,7 +367,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | O-12 | ~~Is web still a target?~~ **→ No. Web is out of scope** (2026-07-28, owner). Removed in Module 0: the `expo.web` config block, the `yarn web` script, `react-dom` + `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts`, `favicon.png`, and the RN-Web font-injection block in `app/_layout.tsx`. `platforms: ["ios", "android"]` now declares this in config, and `expo export --platform web` refuses. **Consequence for Module 2:** the `import.meta` workaround in `onboarding-store.ts` was a *web-bundle* problem only — it is no longer a constraint on the persistence design. | Module 0 | ✅ Decided |
 | O-13 | ~~`ios.supportsTablet`~~ **→ Stays `true`. iPad and Android tablets are a target** (2026-07-28, owner). Accepted trade-offs, none of them blockers: App Store Connect will require 13-inch iPad screenshots at submission, App Review will exercise the app on iPad, and the phone-designed layouts need to hold up on a large screen — that is real layout work for Modules 1 and 3 and QA in 12, not a config flag. Android tablets need no flag (supported by default) but carry Play's large-screen quality guidelines. Reversible any time before the first submission. | Modules 1/3 (layout), 12 (screenshots) | ✅ Decided |
-| O-14 | **Final icon and splash artwork — awaiting delivery.** Module 0's assets are generated from `assets/images/zomyra-logo.png`, which the owner has confirmed is **not the final mark**; a designer is producing a new logo and splash, to be supplied directly. Treat the current icon/splash as a placeholder good enough for dev builds only. Required formats are listed in §10. Also still open: the `#FFFFFF` splash and adaptive-icon backgrounds were picked to satisfy C-3, not from the palette. | Before submission (Module 12) | Product owner — in progress |
+| O-14 | **Logo delivered 2026-07-28 — splash artwork still pending.** The designer's vector lockup is in-tree (`assets/brand/zomyra-lockup.svg`), and the icon, adaptive icon and in-app logo are now generated from it at full sharpness — see §10. **Still open:** (a) a purpose-designed splash from the designer; the current splash is an interim render of the lockup; (b) the `#FFFFFF` splash and adaptive-icon backgrounds, still C-3 placeholders rather than palette decisions — Module 1 should settle these; (c) whether the app icon should be purple-on-white (current, faithful to the supplied artwork) or inverted white-on-purple, which is a design call nobody has made. | Splash: before submission · backgrounds: Module 1 | Product owner |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -626,12 +626,65 @@ technical work blocks on it.
 
 ---
 
-## 10. Brand assets — what the designer needs to deliver (O-14)
+## 10. Brand assets (O-14)
 
-Module 0 shipped placeholders generated from the old `zomyra-logo.png`. A new logo and splash are
-being designed and will replace them. **The single most useful deliverable is the vector source**
-— with an SVG or PDF every size below can be regenerated exactly, and none of it needs revisiting
-when a new density or store requirement appears.
+### 10.1 Delivered 2026-07-28 — the vector lockup
+
+The designer supplied `Logo_zomayra_.svgz` (note: the filename misspells the brand; the artwork does
+not). It is vendored as **`assets/brand/zomyra-lockup.svg`** — decompressed, because the compressed
+form is opaque to diffs and review — with the original `.svgz` kept alongside it.
+
+- Illustrator export, `viewBox 0 0 1080 1080`, **7 paths, one fill: `#5B2C70`**
+- Paths 0–5 are the ZOMYRA wordmark letters (all at y≈777, ~90 units tall)
+- **Path 6 is the Z mark** (508×534 at 286,212) — separated programmatically for the icon, since a
+  wordmark lockup is illegible at 48×48
+
+**`scripts/make-brand-assets.js` regenerates every raster from that vector.** Run it only when the
+artwork changes — it needs `sharp`, which is deliberately *not* a project dependency (large native
+package, run perhaps twice a year): `npm i --no-save sharp && node scripts/make-brand-assets.js`.
+
+| Generated | Size | Alpha | From |
+|---|---|---|---|
+| `icon.png` | 1024×1024 | **none** (Apple rejects alpha) | mark @ 72% on white |
+| `adaptive-icon.png` | 1024×1024 | yes | mark @ **51%** — see below |
+| `splash-icon.png` | 795×1024 | yes | full lockup — **interim** |
+| `zomyra-logo.png` | 1024×1024 | yes | mark @ 92%, drives in-app `<Logo/>` |
+
+⚠️ **The adaptive-icon scale is measured, not guessed.** Android masks the foreground to a circle of
+66% diameter, and *a bounding box that fits the square can still have corners outside the circle*.
+At 55% the Z's bottom-left sat **18.6px beyond** the safe radius and would have been clipped on
+circular launchers; 51% clears it with 7.4px of margin. Re-measure if the artwork ever changes —
+the check is furthest non-transparent pixel from centre vs. `width × 0.66 / 2`.
+
+**Brand colour for Module 1: `#5B2C70`.** This is the *only* fill in the delivered artwork, so it is
+the authoritative brand purple. Note the drift it exposes: `src/components/brand/Logo.tsx`'s
+`Wordmark` hardcodes `#7C3AED` — Tailwind's violet-600, more residue from the web original (§3) —
+and `src/theme/colors.ts` is purple-tinted around `#1F1235`. Three different purples. Module 1 owns
+reconciling them onto `#5B2C70`.
+
+*Possible palette hints, unconfirmed:* the SVG's `<style>` block declares eight classes but uses only
+one. The seven unused fills — `#4A202A`, `#FAD5E1`, `#FDFDFD`, `#111113`, `#F2EBE0`, `#F6F5F5`,
+`#F2F2F2` — look like a deep plum, a soft pink and a cream, i.e. plausibly the intended supporting
+palette. **Confirm with the designer before treating them as brand colours**; they may equally be
+leftovers from an unrelated artboard.
+
+### 10.2 Still outstanding
+
+**A purpose-designed splash.** The current `splash-icon.png` is an interim render of the full lockup,
+drawn at `imageWidth: 200` over `#FFFFFF`. It is honest placeholder quality, not a designed launch
+screen.
+
+**Both background colours** (`expo-splash-screen` and `android.adaptiveIcon`) are `#FFFFFF`, chosen
+to satisfy C-3 rather than from a palette — a Module 1 decision.
+
+**Icon treatment:** currently purple-on-white, faithful to the supplied artwork. White-on-purple
+would be more striking on a home screen. Nobody has made that call.
+
+### 10.3 Spec for any future artwork
+
+**The single most useful deliverable is the vector source** — with an SVG or PDF every size below can
+be regenerated exactly, and none of it needs revisiting when a new density or store requirement
+appears.
 
 | Asset | Spec | Why the spec is what it is |
 |---|---|---|
@@ -643,8 +696,7 @@ when a new density or store requirement appears.
 | ~~Favicon~~ | Not needed | Web is out of scope (O-12) |
 
 Two constraints worth passing to the designer up front: the icon must stay legible at **48×48**
-(Android launcher) and the mark must read against **white**, since C-3 fixes a light theme. The
-current placeholder's mark is only 304×217 real pixels, which is why it looks soft when scaled.
+(Android launcher) and the mark must read against **white**, since C-3 fixes a light theme.
 
 ---
 
