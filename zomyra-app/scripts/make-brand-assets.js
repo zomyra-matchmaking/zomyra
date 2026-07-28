@@ -2,11 +2,18 @@
  * Generate Zomyra brand assets from the designer's vector lockup.
  *
  * Run it only when the artwork changes:
- *     npm i --no-save sharp && node scripts/make-brand-assets.js
  *
- * `sharp` is deliberately NOT a project dependency — it is a large native package and
- * this script runs perhaps twice a year. Install it ad hoc, or delete node_modules/sharp
- * afterwards. Nothing in the app imports it.
+ *     npm --prefix /tmp/zomyra-brand-tools i sharp
+ *     NODE_PATH=/tmp/zomyra-brand-tools/node_modules node scripts/make-brand-assets.js
+ *
+ * `sharp` is deliberately NOT a project dependency — it is a large native package and this
+ * script runs perhaps twice a year. Nothing in the app imports it.
+ *
+ * ⚠️ Do NOT install it into this project, not even with `npm i --no-save`. npm 7+ reads an
+ * existing yarn.lock and rewrites it in npm's own style — converting every `resolved` URL
+ * from registry.yarnpkg.com to registry.npmjs.org and dropping the integrity fragments.
+ * That silently churns thousands of lines and undermines the lockfile (§11). Installing to
+ * a prefix outside the repo and pointing NODE_PATH at it leaves this project untouched.
  *
  * Source: Logo_zomayra_.svgz (Illustrator, viewBox 0 0 1080 1080, single fill #5B2C70).
  * It contains 7 paths: indices 0-5 are the ZOMYRA wordmark letters, index 6 is the Z mark.

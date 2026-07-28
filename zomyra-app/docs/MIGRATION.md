@@ -828,6 +828,18 @@ this dependency tree (it fails on a `@react-navigation/native` peer conflict), a
 present Expo's own tooling silently picks npm — which is how the repo ended up with duplicate native
 modules before Module 0.
 
+⚠️ **Never run `npm install` in this project — not even `npm i --no-save`.** npm 7+ reads an
+existing `yarn.lock` and rewrites it in npm's own style, converting every `resolved` URL from
+`registry.yarnpkg.com` to `registry.npmjs.org` and dropping the integrity fragments. It happened
+once during Module 0 (a one-off `sharp` install for `scripts/make-brand-assets.js`) and churned
+2,492 lines before being caught and reverted. The `--no-save` flag does **not** protect you. When a
+tool is needed transiently, install it to a prefix outside the repo and point `NODE_PATH` at it:
+
+```
+npm --prefix /tmp/zomyra-brand-tools i sharp
+NODE_PATH=/tmp/zomyra-brand-tools/node_modules node scripts/make-brand-assets.js
+```
+
 **Do not reintroduce `save-exact`.** `.npmrc` carried `save-exact=true` and was removed in Module 0.
 The reasoning inverted once a lockfile existed: `save-exact` guards against version drift only when
 there is *no* lockfile, and `yarn.lock` now pins every package — transitive included — to an exact
