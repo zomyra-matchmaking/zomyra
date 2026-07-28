@@ -784,9 +784,23 @@ That is what took `expo-doctor` to 16/18 before Module 0. It also fights Expo di
 **Use `yarn install --frozen-lockfile`** for the guarantee `save-exact` was reaching for; it fails
 loudly if `package.json` and `yarn.lock` ever disagree.
 
-**Known wart — the `resolutions` block in `package.json`** (`@eslint/plugin-kit`, `postcss`,
-`uuid`) is inherited from Emergent and partly stale. `@eslint/plugin-kit` is forced to `0.3.4`
-while `eslint@9.25.0` requests `^0.4.1`, so every install prints an incompatibility warning and the
-package is held *back*. Dev-only and harmless today (lint passes), but it should be re-evaluated
-rather than copied forward. `postcss` is still genuinely required — `@expo/metro-config` depends on
-it, web removal notwithstanding.
+**The `resolutions` block in `package.json` is inherited from Emergent — investigated 2026-07-28.**
+One entry was removed, two were kept, and the reasoning matters because the remaining two still warn
+on every install:
+
+- ~~`@eslint/plugin-kit: 0.3.4`~~ **removed.** It satisfied *neither* consumer: the tree held two
+  eslints — our exactly-pinned `9.25.0` (wanting `^0.2.8`) and a nested `9.39.5` pulled in via
+  `eslint-config-expo → eslint-plugin-expo` (wanting `^0.4.1`). Forcing `0.3.4` matched no range and
+  worked only by luck. **Root cause was the exact pin on eslint** — another `save-exact` artifact.
+  Relaxing to `^9.39.5` deduplicated both packages to one copy each, and the resolution became
+  unnecessary. Lint findings are byte-identical before and after (15 warnings, 0 errors).
+- `postcss: 8.5.10` **kept.** `@expo/metro-config@54.0.17` asks for `~8.4.32`; 8.4→8.5 is a minor
+  bump within the same major and API-compatible.
+- `uuid: 11.1.1` **kept.** `xcode@3.0.1` (used by `@expo/config-plugins` during prebuild) asks for
+  `^7.0.3` — four majors behind. **Verified safe rather than assumed:** `xcode` does
+  `require('uuid')` and calls only `uuid.v4()`, which is stable across those versions, and uuid 11's
+  CJS build still exports it. It does *not* use the `uuid/v4` deep import that uuid 9 removed, which
+  would have thrown during the first EAS iOS build.
+
+Both surviving entries look like deliberate security bumps. They warn but are harmless; **verify
+before removing either**, and re-check `uuid` if `xcode`/`@expo/config-plugins` is ever upgraded.
