@@ -366,7 +366,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-11 | **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
 
 | O-12 | ~~Is web still a target?~~ **→ No. Web is out of scope** (2026-07-28, owner). Removed in Module 0: the `expo.web` config block, the `yarn web` script, `react-dom` + `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts`, `favicon.png`, and the RN-Web font-injection block in `app/_layout.tsx`. `platforms: ["ios", "android"]` now declares this in config, and `expo export --platform web` refuses. **Consequence for Module 2:** the `import.meta` workaround in `onboarding-store.ts` was a *web-bundle* problem only — it is no longer a constraint on the persistence design. | Module 0 | ✅ Decided |
-| O-13 | ~~`ios.supportsTablet`~~ **→ Stays `true`. iPad and Android tablets are a target** (2026-07-28, owner). Accepted trade-offs, none of them blockers: App Store Connect will require 13-inch iPad screenshots at submission, App Review will exercise the app on iPad, and the phone-designed layouts need to hold up on a large screen — that is real layout work for Modules 1 and 3 and QA in 12, not a config flag. Android tablets need no flag (supported by default) but carry Play's large-screen quality guidelines. Reversible any time before the first submission. | Modules 1/3 (layout), 12 (screenshots) | ✅ Decided |
+| O-13 | ~~`ios.supportsTablet`~~ **→ `false`. iPad is out of MVP scope** (2026-07-28, owner — reversed the same day during Module 0 PR review; the earlier "tablets are a target" note in §6 is superseded). What this buys the MVP: no 13-inch iPad screenshots required at submission, App Review stops exercising a phone-designed UI on iPad, and Modules 1/3 owe no large-screen layout work. **iPad users can still install** — iOS runs it letterboxed in iPhone-compatibility mode; `false` means "not optimised for iPad", not "blocked". **Android needs no equivalent change** — there is no phone-only flag in `app.json`, tablets are supported by default, and Play requires no tablet screenshots. Re-enabling post-MVP is one line plus the layout work. | Post-MVP if revisited | ✅ Decided |
 | O-14 | **Logo delivered 2026-07-28 — splash artwork still pending.** The designer's vector lockup is in-tree (`assets/brand/zomyra-lockup.svg`), and the icon, adaptive icon and in-app logo are now generated from it at full sharpness — see §10. **Still open:** (a) a purpose-designed splash from the designer; the current splash is an interim render of the lockup; (b) the `#FFFFFF` splash and adaptive-icon backgrounds, still C-3 placeholders rather than palette decisions — Module 1 should settle these; (c) whether the app icon should be purple-on-white (current, faithful to the supplied artwork) or inverted white-on-purple, which is a design call nobody has made. | Splash: before submission · backgrounds: Module 1 | Product owner |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
@@ -468,7 +468,8 @@ deliberately still stubbed, and anything the next module inherits.
   lands (O-14).
 - Module 2 receives `.env.example` un-ignored, an iOS/Android-only project (no web constraint on
   persistence — see the addendum), and owns adding `expo-updates` once the EAS project exists.
-- Modules 1 and 3 inherit tablet layout work from O-13; Module 12 inherits the iPad screenshots.
+- ~~Modules 1 and 3 inherit tablet layout work from O-13~~ — **withdrawn: iPad is out of MVP
+  (O-13 reversed 2026-07-28). Phone layouts only.**
 - ~~Module 12: add `ITSAppUsesNonExemptEncryption`~~ — **done in the addendum below.**
 
 **Decisions made:**
@@ -498,10 +499,9 @@ before the PR:
   **Module 2 inherits the real payoff:** `onboarding-store.ts`'s hand-rolled persistence exists only
   because `zustand/middleware`'s `persist` broke the *web* bundle via `import.meta`. That reason is
   gone; the note in the file has been updated so it is not preserved out of caution.
-- **iPad and Android tablets confirmed as targets (O-13).** `ios.supportsTablet` stays `true`. This
-  is not free: iPad screenshots are required at submission, App Review will run the app on iPad, and
-  the phone-designed layouts have to hold up on a large screen — layout work for Modules 1 and 3,
-  QA in Module 12.
+- ~~**iPad and Android tablets confirmed as targets (O-13).**~~ **Superseded during PR review the
+  same day: iPad is out of MVP and `ios.supportsTablet` is now `false`.** See O-13 in §4. Modules 1
+  and 3 owe no large-screen layout work, and Module 12 needs no iPad screenshots.
 - **`ITSAppUsesNonExemptEncryption: false` added** to `ios.infoPlist`. Owner confirmed the app uses
   only standard HTTPS — image *compression* is not encryption, and there is no chat encryption
   anywhere. **Revisit if Module 9 ever adds end-to-end encrypted messaging.** Without this every

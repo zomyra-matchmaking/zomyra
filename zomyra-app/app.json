@@ -14,7 +14,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Add profile photos to share with matches",
         "NSCameraUsageDescription": "Take photos to share on your profile",
