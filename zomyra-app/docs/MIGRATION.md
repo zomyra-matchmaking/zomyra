@@ -682,6 +682,18 @@ package, run perhaps twice a year): `npm i --no-save sharp && node scripts/make-
 | `adaptive-icon.png` | 1024×1024 | yes | mark @ **51%** — see below |
 | `splash-icon.png` | 795×1024 | yes | full lockup — **interim** |
 | `zomyra-logo.png` | 1024×1024 | yes | mark @ 92%, drives in-app `<Logo/>` |
+| `zomyra-lockup.png` | 795×1024 | yes | full lockup for in-app use (login hero) |
+
+`splash-icon.png` and `zomyra-lockup.png` are the same artwork today but deliberately separate
+files, so the designer's purpose-built splash can replace the former without disturbing screens
+that want the lockup.
+
+**Login screen (owner tweak, 2026-07-28):** the header `<Logo/> + <Wordmark/>` row was removed and
+the couple illustration replaced by the lockup as the hero — `assets/images/login-illustration.png`
+is deleted. Side effect worth keeping: that screen previously rendered the `#7C3AED` wordmark beside
+the `#5B2C70` mark, so swapping in the single-fill lockup removed two of the four competing purples
+from it. `app/index.tsx` still renders the `<Logo/> + <Wordmark/>` pair and retains the mismatch —
+Module 1's to resolve.
 
 ⚠️ **The adaptive-icon scale is measured, not guessed.** Android masks the foreground to a circle of
 66% diameter, and *a bounding box that fits the square can still have corners outside the circle*.

@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Logo, Wordmark } from "@/src/components/brand/Logo";
 import { toast } from "@/src/components/ui/Toast";
 import { colors, radii } from "@/src/theme/colors";
 
@@ -12,23 +11,16 @@ export default function Login() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.container}>
-        {/* Top — brand mark sits high on the screen */}
-        <View style={styles.brand}>
-          <View style={styles.logoRow}>
-            <Logo size={56} />
-            <Wordmark fontSize={36} />
-          </View>
-        </View>
-
-        {/* Middle — tagline + illustration occupy the visual breathing room */}
+        {/* Middle — the brand lockup is the hero; no separate header mark. */}
         <View style={styles.middle}>
-          <View style={styles.illustrationWrap}>
-            <Image
-              source={require("../assets/images/login-illustration.png")}
-              style={styles.illustration}
-              resizeMode="contain"
-            />
-          </View>
+          <Image
+            source={require("../assets/images/zomyra-lockup.png")}
+            style={styles.lockup}
+            resizeMode="contain"
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel="Zomyra"
+          />
           <Text style={styles.title}>Find a partner who shares your values.</Text>
           <Text style={styles.subtitle}>Meaningful matchmaking for modern Indians.</Text>
         </View>
@@ -98,29 +90,15 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
   },
-  // Brand sits at the very top of the safe area.
-  brand: {
-    alignItems: "center",
-    paddingTop: 12,
-  },
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
   // Middle absorbs all the spare vertical space so the CTAs stay anchored.
   middle: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  illustrationWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 24,
-  },
-  illustration: { width: 280, height: 210 },
+  // Lockup aspect is 795x1024 (mark over wordmark) — height/width kept in that
+  // ratio so `contain` leaves no dead space around it.
+  lockup: { width: 202, height: 260, marginBottom: 28 },
   title: {
     fontSize: 26,
     lineHeight: 32,

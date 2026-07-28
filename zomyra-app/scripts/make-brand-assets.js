@@ -96,7 +96,15 @@ async function onSquare(art, fraction, background) {
     .png()
     .toFile(`${OUT}splash-icon.png`);
 
-  for (const f of ['icon.png', 'adaptive-icon.png', 'splash-icon.png', 'zomyra-logo.png']) {
+  // Full lockup for in-app use (currently the login screen hero). Same artwork as
+  // the splash today, but kept separate: the designer's purpose-built splash will
+  // replace splash-icon.png without disturbing screens that want the lockup.
+  await sharp(lockup)
+    .resize({ height: 1024, fit: 'inside' })
+    .png()
+    .toFile(`${OUT}zomyra-lockup.png`);
+
+  for (const f of ['icon.png', 'adaptive-icon.png', 'splash-icon.png', 'zomyra-logo.png', 'zomyra-lockup.png']) {
     const m = await sharp(OUT + f).metadata();
     console.log(
       `${f.padEnd(18)} ${m.width}x${m.height}  channels=${m.channels}  alpha=${m.hasAlpha}`,
