@@ -290,11 +290,12 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-8 | **Backend base URL + OpenAPI spec.** Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
 | O-11 | **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
 
-| O-12 | **Is web still a target?** The prototype was built for browser preview and still carries `app/+html.tsx`, `src/utils/storage/index.web.ts`, an `expo.web` config block and a `yarn web` script. Nothing in the module plan targets web, and C-2 makes the dev client the verification surface. Not cosmetic: §3 records that `zustand/middleware`'s `persist` was avoided because of an `import.meta` failure **in the web bundle** — drop web and Module 2's persistence layer stops being shaped by a platform we do not ship. Decide before Module 2 designs it. Module 0 left every web file untouched. | Module 2 | FE + product |
-| O-13 | **`ios.supportsTablet` is `true`** (Emergent default, untouched by Module 0). Leaving it on means App Review tests the app on iPad and the listing needs iPad screenshots — for a phone-designed UI. One line to turn off now; a listing change later. | Module 12 (cheap to change any time) | Product owner |
-| O-14 | **Final icon and splash artwork.** Module 0 replaced the Expo/Emergent defaults with assets generated from `assets/images/zomyra-logo.png`, but that file's actual mark is only 304×217px, so the 1024×1024 outputs are upscaled and slightly soft. Fine for dev builds; a designed 1024×1024 icon — and a splash treatment beyond a centred mark — is wanted before submission. The `#FFFFFF` splash and adaptive-icon backgrounds were picked to satisfy C-3, not from the palette. | Module 12 (Module 1 if the palette settles the backgrounds) | Product owner |
+| O-12 | ~~Is web still a target?~~ **→ No. Web is out of scope** (2026-07-28, owner). Removed in Module 0: the `expo.web` config block, the `yarn web` script, `react-dom` + `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts`, `favicon.png`, and the RN-Web font-injection block in `app/_layout.tsx`. `platforms: ["ios", "android"]` now declares this in config, and `expo export --platform web` refuses. **Consequence for Module 2:** the `import.meta` workaround in `onboarding-store.ts` was a *web-bundle* problem only — it is no longer a constraint on the persistence design. | Module 0 | ✅ Decided |
+| O-13 | ~~`ios.supportsTablet`~~ **→ Stays `true`. iPad and Android tablets are a target** (2026-07-28, owner). Accepted trade-offs, none of them blockers: App Store Connect will require 13-inch iPad screenshots at submission, App Review will exercise the app on iPad, and the phone-designed layouts need to hold up on a large screen — that is real layout work for Modules 1 and 3 and QA in 12, not a config flag. Android tablets need no flag (supported by default) but carry Play's large-screen quality guidelines. Reversible any time before the first submission. | Modules 1/3 (layout), 12 (screenshots) | ✅ Decided |
+| O-14 | **Final icon and splash artwork — awaiting delivery.** Module 0's assets are generated from `assets/images/zomyra-logo.png`, which the owner has confirmed is **not the final mark**; a designer is producing a new logo and splash, to be supplied directly. Treat the current icon/splash as a placeholder good enough for dev builds only. Required formats are listed in §10. Also still open: the `#FFFFFF` splash and adaptive-icon backgrounds were picked to satisfy C-3, not from the palette. | Before submission (Module 12) | Product owner — in progress |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
+**Web is out of scope** — iOS and Android only (2026-07-28, O-12).
 
 ---
 
@@ -382,19 +383,18 @@ deliberately still stubbed, and anything the next module inherits.
 - **`X-App-Version` / `X-Bundle-Update-Id` (§5) are not wired.** `expo-updates` was deliberately not
   installed: it is only meaningful once an EAS project exists, and it drags in `runtimeVersion`
   policy decisions. Module 2 inherits this with the API client.
-- **Web left entirely untouched** — `+html.tsx`, `storage/index.web.ts`, the `web` script and the
-  `expo.web` block all remain. See **O-12**; it is a real fork for Module 2's persistence design.
+- ~~Web left entirely untouched~~ — **superseded the same day: web was removed outright once the
+  owner decided O-12. See the addendum below.**
 
 **Inherited by next module:**
 
 - Module 1 receives a light-mode-locked, doctor-clean, lint-clean project. The `#FFFFFF` splash and
   adaptive-icon backgrounds are placeholders chosen to satisfy C-3 — revisit them when the palette
   lands (O-14).
-- Module 2 receives `.env.example` un-ignored, and owns adding `expo-updates` once the EAS project
-  exists, plus the O-12 web decision before it designs persistence.
-- Module 12: add `ITSAppUsesNonExemptEncryption: false` to `ios.infoPlist` before submission — it is
-  a compliance declaration, so it was left for the owner rather than asserted here. Without it every
-  TestFlight upload stops for an export-compliance prompt.
+- Module 2 receives `.env.example` un-ignored, an iOS/Android-only project (no web constraint on
+  persistence — see the addendum), and owns adding `expo-updates` once the EAS project exists.
+- Modules 1 and 3 inherit tablet layout work from O-13; Module 12 inherits the iPad screenshots.
+- ~~Module 12: add `ITSAppUsesNonExemptEncryption`~~ — **done in the addendum below.**
 
 **Decisions made:**
 
@@ -405,6 +405,42 @@ deliberately still stubbed, and anything the next module inherits.
   defaults — owner-approved mid-module; the resolution caveat is recorded as O-14.
 - Dependency version pins relaxed to Expo's expected `^` ranges where exact pins were forcing
   duplicate native modules.
+
+#### Module 0 addendum — owner decisions applied same day (2026-07-28)
+
+Four items raised at the end of Module 0 were decided by the owner and applied on the same branch,
+before the PR:
+
+- **Web removed entirely (O-12).** Deleted the `expo.web` config block, the `yarn web` script,
+  `react-dom` and `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts` and
+  `favicon.png`; dropped the RN-Web font-injection block from `app/_layout.tsx` and the now-dead
+  `Platform` import; refreshed the stale web comments in `storage-base.ts` and `storage/index.ts`.
+  Added `"platforms": ["ios", "android"]` so the decision lives in config rather than by omission —
+  `expo export --platform web` now refuses outright. `@expo/metro-runtime` was **kept**: it is a
+  hard dependency and non-optional peer of `expo-router`, unlike `react-dom`/`react-native-web`
+  which are optional peers. `expo-web-browser` and `react-native-webview` also stay — both are
+  native components, unrelated to the web target.
+  **Module 2 inherits the real payoff:** `onboarding-store.ts`'s hand-rolled persistence exists only
+  because `zustand/middleware`'s `persist` broke the *web* bundle via `import.meta`. That reason is
+  gone; the note in the file has been updated so it is not preserved out of caution.
+- **iPad and Android tablets confirmed as targets (O-13).** `ios.supportsTablet` stays `true`. This
+  is not free: iPad screenshots are required at submission, App Review will run the app on iPad, and
+  the phone-designed layouts have to hold up on a large screen — layout work for Modules 1 and 3,
+  QA in Module 12.
+- **`ITSAppUsesNonExemptEncryption: false` added** to `ios.infoPlist`. Owner confirmed the app uses
+  only standard HTTPS — image *compression* is not encryption, and there is no chat encryption
+  anywhere. **Revisit if Module 9 ever adds end-to-end encrypted messaging.** Without this every
+  TestFlight upload stalls on an export-compliance prompt.
+- **Brand assets (O-14):** the current icon and splash are confirmed placeholders — a new logo and
+  splash are being produced by a designer and will be supplied later. Required formats and the
+  reasoning behind each are now in **§10**.
+
+Verified after these changes: doctor 18/18, lint green, typecheck baseline green, iOS bundle exports
+clean (6.43 MB), and `expo export --platform web` correctly fails.
+
+**Still not done — the one thing blocking a real build:** `eas init` under a **Zomyra Expo
+organization** (free, and unlike the store accounts it needs no LLP or D-U-N-S — so there is no
+reason to take the personal-account shortcut O-10 rejected for Apple and Google). Owner action.
 
 <!--
 Template:
@@ -494,3 +530,25 @@ Cheap to change during Modules 0–9. After Modules 10–11 it also means regene
 first-come, and is more prone to squatting than the bundle ID. Creating the app record in App Store
 Connect reserves it — a reason to obtain the Apple account earlier than Module 10, even though no
 technical work blocks on it.
+
+---
+
+## 10. Brand assets — what the designer needs to deliver (O-14)
+
+Module 0 shipped placeholders generated from the old `zomyra-logo.png`. A new logo and splash are
+being designed and will replace them. **The single most useful deliverable is the vector source**
+— with an SVG or PDF every size below can be regenerated exactly, and none of it needs revisiting
+when a new density or store requirement appears.
+
+| Asset | Spec | Why the spec is what it is |
+|---|---|---|
+| **Vector source** | SVG (or PDF/AI), logo mark and full lockup as separate files | Everything else derives from it |
+| **App icon** | 1024×1024 PNG, **fully opaque — no alpha channel**, square, **no rounded corners**, no drop shadow | Apple rejects icons containing transparency; iOS and Android apply their own corner mask, so pre-rounding shows as a double-rounded edge |
+| **Android adaptive foreground** | 1024×1024 PNG **with** transparency, artwork inside the centre 66% (≈676px) | Android masks the outer third into circles/squircles/squares per launcher — anything outside that ring gets clipped on some devices |
+| **Adaptive background** | A solid colour (or a 1024×1024 image) | Supplied separately from the foreground; currently `#FFFFFF` as a C-3 placeholder |
+| **Splash mark** | PNG with transparency, ≥1024px on its long edge, plus the intended background colour | Drawn centred over a solid colour by `expo-splash-screen`; it is not a full-bleed image |
+| ~~Favicon~~ | Not needed | Web is out of scope (O-12) |
+
+Two constraints worth passing to the designer up front: the icon must stay legible at **48×48**
+(Android launcher) and the mark must read against **white**, since C-3 fixes a light theme. The
+current placeholder's mark is only 304×217 real pixels, which is why it looks soft when scaled.

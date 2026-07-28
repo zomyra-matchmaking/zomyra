@@ -5,7 +5,7 @@ const { FileStore } = require('metro-cache');
 
 const config = getDefaultConfig(__dirname);
 
-// Use a stable on-disk store (shared across web/android)
+// Use a stable on-disk store (shared across iOS/Android)
 const root = process.env.METRO_CACHE_ROOT || path.join(__dirname, '.metro-cache');
 config.cacheStores = [
   new FileStore({ root: path.join(root, 'cache') }),

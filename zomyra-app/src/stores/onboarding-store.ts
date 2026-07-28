@@ -3,9 +3,12 @@
  *
  * We persist manually (instead of using `zustand/middleware`'s `persist`)
  * because the middleware's ESM build references `import.meta.env`, which
- * crashes Metro's web bundle at runtime ("Cannot use 'import.meta' outside
- * a module"). The hand-rolled version is small and works identically on
- * web, iOS and Android.
+ * crashed Metro's *web* bundle at runtime ("Cannot use 'import.meta' outside
+ * a module").
+ *
+ * NOTE (Module 0, 2026-07-28): web is no longer a target, so that reason no
+ * longer applies — this workaround is not a constraint on Module 2's
+ * persistence design. See MIGRATION.md O-12.
  *
  * Persists:
  *   - `state`     : all answers entered so far

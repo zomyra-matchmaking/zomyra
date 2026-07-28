@@ -3,6 +3,7 @@
     "name": "Zomyra",
     "slug": "zomyra",
     "version": "1.0.0",
+    "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "zomyra",
@@ -12,7 +13,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Add profile photos to share with matches",
-        "NSCameraUsageDescription": "Take photos to share on your profile"
+        "NSCameraUsageDescription": "Take photos to share on your profile",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.zomyra.app"
     },
@@ -28,11 +30,6 @@
         "android.permission.CAMERA"
       ],
       "package": "com.zomyra.app"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "single",
-      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
