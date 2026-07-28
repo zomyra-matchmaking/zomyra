@@ -19,6 +19,8 @@ Append a "Module log" entry at the end of every module, in the same session that
   warnings) · `yarn typecheck:baseline` clean · `expo export --platform ios` bundles.
   **No EAS build has ever run** — the dev-client conversion is configured and locally verified but
   unproven on hardware. See §6's Module 0 entry.
+- **Next up: Module 1 — Design system & theming.** Confirmed by the owner 2026-07-28; the sequence
+  in §2 is being followed in order. §3's new provenance subsection is written for this module.
 - **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
   §4 (open items), then §6's Module 0 entry. §3 is history, not current state.
 
@@ -675,3 +677,21 @@ inlined into the shipped bundle** — correct for O-8's API base URL, never for 
 this dependency tree (it fails on a `@react-navigation/native` peer conflict), and with no lockfile
 present Expo's own tooling silently picks npm — which is how the repo ended up with duplicate native
 modules before Module 0.
+
+**Do not reintroduce `save-exact`.** `.npmrc` carried `save-exact=true` and was removed in Module 0.
+The reasoning inverted once a lockfile existed: `save-exact` guards against version drift only when
+there is *no* lockfile, and `yarn.lock` now pins every package — transitive included — to an exact
+resolved version, so `^7.4.0` installs exactly as deterministically as `7.4.0`. What exact pins
+still do is **prevent deduplication**: a pinned `7.1.8` cannot satisfy a transitive `^7.1.14`, so
+yarn installs both, and for *native* modules two copies is a build failure rather than a warning.
+That is what took `expo-doctor` to 16/18 before Module 0. It also fights Expo directly —
+`expo install` deliberately writes SDK-compatible ranges, and `expo-doctor` validates against them.
+**Use `yarn install --frozen-lockfile`** for the guarantee `save-exact` was reaching for; it fails
+loudly if `package.json` and `yarn.lock` ever disagree.
+
+**Known wart — the `resolutions` block in `package.json`** (`@eslint/plugin-kit`, `postcss`,
+`uuid`) is inherited from Emergent and partly stale. `@eslint/plugin-kit` is forced to `0.3.4`
+while `eslint@9.25.0` requests `^0.4.1`, so every install prints an incompatibility warning and the
+package is held *back*. Dev-only and harmless today (lint passes), but it should be re-evaluated
+rather than copied forward. `postcss` is still genuinely required — `@expo/metro-config` depends on
+it, web removal notwithstanding.
