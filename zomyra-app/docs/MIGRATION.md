@@ -438,9 +438,27 @@ before the PR:
 Verified after these changes: doctor 18/18, lint green, typecheck baseline green, iOS bundle exports
 clean (6.43 MB), and `expo export --platform web` correctly fails.
 
-**Still not done — the one thing blocking a real build:** `eas init` under a **Zomyra Expo
-organization** (free, and unlike the store accounts it needs no LLP or D-U-N-S — so there is no
-reason to take the personal-account shortcut O-10 rejected for Apple and Google). Owner action.
+#### EAS project linked (2026-07-28)
+
+**`@zomyra/zomyra`** — `owner: "zomyra"`, `extra.eas.projectId: 143317a3-7ae8-4e58-a0c1-482ae287cc19`.
+Dashboard: <https://expo.dev/accounts/zomyra/projects/zomyra>
+
+Created under a Zomyra **organization**, not the personal account. Expo orgs are free and need no
+LLP or D-U-N-S, so none of what makes O-10 slow for Apple and Google applies — there was no reason
+to take the personal-account shortcut O-10 rejected. `owner` stores the **org name, not an email**,
+so handing administration to `developer@zomyra.com` later is a membership change: no project
+transfer, no new `projectId`, no rebuild.
+
+Account structure: personal login `zomyra002` (`zomyra002@gmail.com`, Owner) → organization
+`zomyra` → project `zomyra`. `owner` and `slug` were pinned in `app.json` *before* `eas init` so the
+project could not be created under the personal account by a mis-picked prompt.
+
+**Consequence — Modules 0–9 no longer wait on anything external.** An EAS **Android** dev-client
+build needs only this Expo account: no Play Console, no Apple account, none of the §2.1 gate. iOS
+stays Simulator-only until the Apple Organization account exists, exactly as O-10 predicted.
+
+*Housekeeping:* a stray project `@zomyra002/zomyra002` was auto-created under the personal account
+during signup. It is unrelated to this repo and can be deleted from its project settings.
 
 <!--
 Template:
