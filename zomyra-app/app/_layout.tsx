@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { LogBox, Platform, Text, TextInput } from "react-native";
+import { LogBox, Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,16 +13,9 @@ import { ToastHost } from "@/src/components/ui/Toast";
 LogBox.ignoreAllLogs(true);
 SplashScreen.preventAutoHideAsync();
 
-// Apply Plus Jakarta Sans across the whole app.
-//
-// Native (iOS/Android): set Text/TextInput defaultProps. RN merges
-// defaultProps before per-instance props, so the family flows down unless
-// a child explicitly overrides it.
-//
-// Web: RN-Web rewrites Text to a div with its own CSS classes and ignores
-// defaultProps for fontFamily, so we additionally inject a global CSS rule
-// targeting React Native Web's text containers. `!important` beats the
-// auto-generated atomic class rules from RN-Web's StyleSheet.
+// Apply Plus Jakarta Sans across the whole app by setting Text/TextInput
+// defaultProps. RN merges defaultProps before per-instance props, so the family
+// flows down unless a child explicitly overrides it.
 type WithDefaultProps = { defaultProps?: { style?: unknown } };
 const TextAny = Text as unknown as WithDefaultProps;
 const TextInputAny = TextInput as unknown as WithDefaultProps;
@@ -36,20 +29,6 @@ TextInputAny.defaultProps.style = [
   { fontFamily: FONT_FAMILY },
   (TextInputAny.defaultProps as { style?: unknown }).style,
 ];
-
-if (Platform.OS === "web" && typeof document !== "undefined") {
-  const STYLE_ID = "zomyra-global-font";
-  if (!document.getElementById(STYLE_ID)) {
-    const styleEl = document.createElement("style");
-    styleEl.id = STYLE_ID;
-    styleEl.textContent = `
-      html, body, #root, button, input, textarea, select, [class*="css-text"], [class*="css-view"] {
-        font-family: ${FONT_FAMILY}, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-      }
-    `;
-    document.head.appendChild(styleEl);
-  }
-}
 
 const queryClient = new QueryClient({
   defaultOptions: {

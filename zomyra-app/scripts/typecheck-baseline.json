@@ -1,0 +1,24 @@
+{
+  "_comment": "Known-failing typecheck errors, allowed until the owning module fixes them. Regenerate with `yarn typecheck:baseline --update`. See scripts/typecheck-baseline.js.",
+  "updated": "2026-07-28",
+  "errors": {
+    "app/edit-profile.tsx::TS2304": {
+      "file": "app/edit-profile.tsx",
+      "code": "TS2304",
+      "count": 1,
+      "sample": "Cannot find name 'setPhotoIdxToReplace'."
+    },
+    "app/filters.tsx::TS2345": {
+      "file": "app/filters.tsx",
+      "code": "TS2345",
+      "count": 1,
+      "sample": "Argument of type 'RowKey' is not assignable to parameter of type 'MultiFilterKey'."
+    },
+    "src/lib/chats/mock.ts::TS2739": {
+      "file": "src/lib/chats/mock.ts",
+      "code": "TS2739",
+      "count": 1,
+      "sample": "Type '{ id: string; name: string; age: number; location: string; compatibility: CompatibilityTier; hero: string; gallery: string[]; summary: string; lifestyle: string[]; snapshot: CompatibilitySignal[]; values: string[]; facts: { ...; }[]; }' is missing the following properties from type 'DiscoverProfile': matchReason, scores"
+    }
+  }
+}

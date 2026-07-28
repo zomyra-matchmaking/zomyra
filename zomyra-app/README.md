@@ -1,50 +1,97 @@
-# Welcome to your Expo app 👋
+# Zomyra — mobile app
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo SDK 54 · React Native 0.81 · React 19 · expo-router v6 · TypeScript (strict).
 
-## Get started
+Migration status, module sequence and standing constraints live in
+[`docs/MIGRATION.md`](docs/MIGRATION.md). Read that before starting a module.
 
-1. Install dependencies
+> **This app does not run in Expo Go.** It is an EAS **development build** (constraint C-2) —
+> RevenueCat's purchase SDK and push notifications need native code Expo Go cannot load.
+> Every on-device check is a dev-client build.
 
-   ```bash
-   npm install
-   ```
+## Requirements
 
-2. Start the app
+| Tool | Version | Notes |
+|---|---|---|
+| Node | 20.19.6 | Pinned in `eas.json` so cloud builds match local |
+| Yarn | 1.22.x | **Use yarn, not npm.** `yarn.lock` is the only lockfile; npm also fails to resolve this dependency tree |
+| eas-cli | ≥ 16 | `npm i -g eas-cli` |
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Install
 
 ```bash
-npm run reset-project
+yarn install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## One-time EAS setup
 
-## Learn more
+The project is not yet linked to an EAS account, so `app.json` carries no `extra.eas.projectId`
+and builds will fail until someone runs:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+eas login && eas init
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+That writes `extra.eas.projectId` (and `owner`) into `app.json` — commit the result.
 
-## Join the community
+## Building the dev client
 
-Join our community of developers creating universal apps.
+Install the resulting build once per device; after that only `yarn start` is needed unless a
+native dependency changes.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+yarn build:dev:android
+```
+
+```bash
+yarn build:dev:ios-sim
+```
+
+`build:dev:ios-sim` produces a Simulator build and needs no Apple Developer account.
+`yarn build:dev:ios` targets a physical iPhone and **is blocked until the Apple Organization
+account exists** (see MIGRATION.md O-10) — expect Simulator-only iOS coverage until then.
+
+## Daily loop
+
+```bash
+yarn start
+```
+
+## Checks
+
+```bash
+yarn lint
+```
+
+```bash
+yarn typecheck
+```
+
+`yarn typecheck` runs `tsc --noEmit` raw, and currently reports three pre-existing errors
+inherited from the prototype (MIGRATION.md §3), each owned by a later module.
+
+```bash
+yarn typecheck:baseline
+```
+
+`yarn typecheck:baseline` is the one to gate on: it allows exactly those three known errors and
+fails on anything new. When a module fixes one, run `yarn typecheck:baseline --update` and commit
+the smaller baseline.
+
+```bash
+yarn doctor
+```
+
+`yarn doctor` runs `expo-doctor` (18 checks — config schema, dependency versions, duplicate native
+modules). It passes clean; keep it that way.
+
+## Build profiles
+
+Defined in `eas.json`:
+
+| Profile | Purpose |
+|---|---|
+| `development` | Dev client, internal distribution, Android APK |
+| `development-simulator` | Same, but an iOS Simulator build |
+| `preview` | Release-style internal build, no dev client |
+| `production` | Store build, auto-incrementing version |

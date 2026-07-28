@@ -2,24 +2,30 @@
   "expo": {
     "name": "Zomyra",
     "slug": "zomyra",
+    "owner": "zomyra",
     "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "zomyra",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Add profile photos to share with matches",
-        "NSCameraUsageDescription": "Take photos to share on your profile"
+        "NSCameraUsageDescription": "Take photos to share on your profile",
+        "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.emergent.zomyraapppreview.q3b1np"
+      "bundleIdentifier": "com.zomyra.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
@@ -27,27 +33,28 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.CAMERA"
       ],
-      "package": "com.emergent.zomyraapppreview.q3b1np"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "package": "com.zomyra.app"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-image.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000000"
+          "backgroundColor": "#FFFFFF"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "143317a3-7ae8-4e58-a0c1-482ae287cc19"
+      }
     }
   }
 }

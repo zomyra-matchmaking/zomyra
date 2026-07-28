@@ -10,7 +10,20 @@ Append a "Module log" entry at the end of every module, in the same session that
 - Started: 2026-07-27
 - Codebase: `zomyra/zomyra-app` (Expo SDK 54, RN 0.81.5, React 19.1, expo-router v6)
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
-- Status: **Module 0 not yet started.** Baseline below is the untouched Emergent output.
+- Status: **Module 0 complete** (2026-07-28). §3's baseline still describes the untouched Emergent
+  output and is kept as the historical reference point; §6 records what Module 0 changed.
+- **Handoff state:** six commits sit on `module/0-build-foundation`, **committed but not pushed and
+  with no PR open** — per C-6 the owner does both. A new session must not assume this work is on
+  `master`. `git log master..module/0-build-foundation` shows what is pending.
+- **Verified green as of 2026-07-28:** `yarn doctor` 18/18 · `yarn lint` 0 errors (15 pre-existing
+  warnings) · `yarn typecheck:baseline` clean · `expo export --platform ios` bundles.
+- **C-2 is now proven, not just configured.** The first EAS build ran on 2026-07-28
+  (`development-simulator`, build 1) and the app launched on an iPhone 16 Plus simulator against
+  Metro. See §6's "First build" entry. iOS *device* and Android builds remain unrun.
+- **Next up: Module 1 — Design system & theming.** Confirmed by the owner 2026-07-28; the sequence
+  in §2 is being followed in order. §3's new provenance subsection is written for this module.
+- **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
+  §4 (open items), then §6's Module 0 entry. §3 is history, not current state.
 
 ---
 
@@ -50,7 +63,7 @@ yarn) and the superseded `PersonalityChat.tsx`.
 
 | # | Module | Status | One-line rationale for its position |
 |---|---|---|---|
-| 0 | Build & project foundation | Not started | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
+| 0 | Build & project foundation | **Complete** (2026-07-28) | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
 | 1 | Design system & theming | Not started | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
 | 2 | State & data layer | Not started | Every subsequent module plugs into it; nothing can reach the backend until it exists |
 | 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me` |
@@ -176,6 +189,44 @@ Adjacent guidelines this app already satisfies, worth not regressing: **1.2** (U
 reporting, blocking and moderation: FR-25b and FR-9 cover it) and **5.1.1(v)** (in-app account
 deletion: FR-28).
 
+### 2.2a Store accounts — the Organization decision in full (O-10)
+
+*Promoted out of the O-10 table cell on 2026-07-28. The cell had accumulated three extra columns,
+and because Markdown drops cells beyond the header count, everything below was **invisible in the
+rendered document** while still present in the source.*
+
+**Decision (final):** both store accounts are **Organization**, opened once the LLP and D-U-N-S
+exist. The LLP is not yet formed, so neither can be opened yet.
+
+**An Individual account as a placeholder was considered twice and rejected both times.** It would
+publish the seller name as a person rather than "Zomyra" — on a product asking strangers for their
+religion, income and biometric selfies — pull a personal Play account into the multi-tester /
+14-day pre-publication requirement, and force a later account conversion or app transfer.
+
+**Critical path:** LLP (~2–4 wks) → D-U-N-S (5–14 business days) → Apple Org approval (1–4 wks)
+≈ **6–10 weeks total**, which fits inside the Modules 0–9 window because none of those modules need
+a store account. Request D-U-N-S the day the LLP certificate lands — it is the one pure-waiting link
+in the chain.
+
+**Genuine upside of this path:** Organization accounts are **exempt from Play's 14-day closed-testing
+requirement**, which a personal account would have carried — so the delay costs roughly two weeks
+less than it appears.
+
+**Cost to plan around:** no iOS physical-device testing until the Apple account exists. Android
+device builds and the iOS Simulator cover the gap, but device-only behaviour — safe areas, keyboard
+avoidance, Dynamic Type (NFR-6a), haptics (FR-25a), permission dialogs — stays unverified until
+~September. **Do not let App Review be the first real iOS hardware the app runs on.**
+
+**Owner track, to run in parallel with engineering:**
+
+- Start LLP formation
+- Buy `zomyra.com` — gates `developer@zomyra.com`, and it is the cheapest, fastest item in the chain
+- File the India trademark — stronger and more durable than an App Store name reservation
+- Set up `developer@zomyra.com` as the store account holder rather than a personal inbox. The
+  asymmetry matters: the **Expo** account email is trivially changed later, while Apple and Google
+  account-holder transfers are formal, bureaucratic processes. Be relaxed about the first, strict
+  about the second.
+
 ### 2.3 Staging environment — joint ask for the backend side
 
 Needed before Module 4 can be *verified* rather than merely written:
@@ -247,6 +298,32 @@ not a partially-integrated app.** Do not assume the TDD-described architecture e
   4.9:1 PASS · `foregroundSubtle` **2.6:1 FAIL** · `primarySoft` **4.2:1 FAIL** ·
   `accent` **2.6:1 FAIL** · `warning` **2.2:1 FAIL**. All four failures are used as text colors.
 
+#### Why the design layer looks like this — provenance (established 2026-07-28)
+
+Useful for Module 1, because it changes the remap from an audit into a mechanical substitution.
+The app began as a **React web project** (Lovable-style: Vite + React + Tailwind/shadcn) and was
+later converted to React Native by Emergent on an explicit "convert to React Native" prompt.
+
+The conversion swapped the build system cleanly — there is **no** `vite.config`, `tailwind.config`,
+`postcss.config`, `index.html` or Babel config anywhere in the repo — but it carried the *styling
+vocabulary* across verbatim. The screen-local grays are not arbitrary picks; they are **Tailwind's
+default gray ramp**, counted in the tree on 2026-07-28:
+
+| Hex | Tailwind name | Occurrences |
+|---|---|---|
+| `#111827` | gray-900 | 12 |
+| `#6B7280` | gray-500 | 12 |
+| `#E5E7EB` | gray-200 | 5 |
+| `#F3F4F6` | gray-100 | 1 |
+| `#9CA3AF` | gray-400 | 1 |
+
+**Two consequences for Module 1.** First, the 281 hex literals are a *translation artifact*, not
+carelessness: web CSS has variables, RN `StyleSheet` has none until a token layer exists, so a
+mechanical conversion inlines every value — which is exactly the debt C-4 exists to stop recurring.
+Second, because these are Tailwind defaults rather than hand-picked colours, they map
+**systematically** onto semantic tokens — `#111827` is consistently primary text, `#6B7280`
+consistently muted text. Remap by role, not file by file.
+
 ### Type safety
 `tsconfig.json` sets `strict: true`, but **the project does not typecheck.** `npx tsc --noEmit`
 reports 3 errors, all pre-existing in the Emergent output (verified against `HEAD` on 2026-07-27,
@@ -277,19 +354,24 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | ID | Item | Needed by | Owner |
 |---|---|---|---|
-| O-1 | ~~Real bundle identifier / package name~~ **→ `com.zomyra.app`** (2026-07-28). See §9. Applied in Module 0; still needs registering with both stores once O-2 lands. | Module 0 | ✅ Decided |
+| O-1 | ~~Real bundle identifier / package name~~ **→ `com.zomyra.app`** (2026-07-28). See §9. **Applied in Module 0**; still needs registering with both stores once O-2 lands. | Module 0 | ✅ Done |
 | O-2 | **Hard gate on Module 10 — see §2.1.** Apple Developer account ($99/yr) + Play Console ($25), `com.zomyra.app` registered on both, the "Zomyra" display name reserved on App Store Connect, and `google-services.json` / `GoogleService-Info.plist` in hand. Modules 0–9 run on the dev client without any of it. | **Before Module 10** | Product owner |
 | O-3 | **API-32 field-name conflict:** FE TDD §9.12 sends/returns `{ pushEnabled }`; BE TDD §14.13 uses `{ notificationsEnabled }`. A real contract conflict, not a doc paraphrase. | Module 11 | FE + BE |
 | O-4 | **`accountStatus` routing gap:** BE `GET /me` returns `active \| suspended \| banned`, but FE §9.1's routing table defines no destination for suspended/banned. | Module 3 | FE + product |
 | O-5 | Express Interest daily cap value `N` (FR-17a) is still "to be set by product". | Module 7 | Product owner |
 | O-6 | Height filter bounds inconsistent across wireframes (140–210cm vs 140–200cm), FE TDD §8. | Module 7 | Product owner |
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
-| O-10 | **Store accounts → Organization, registered once the LLP and D-U-N-S exist. Final (2026-07-28).** An Individual placeholder account was considered twice and rejected both times: it publishes the seller name as a person rather than "Zomyra" on a product asking strangers to share religion, income and biometric selfies, and it forces a later account conversion or app transfer. **Sequence:** LLP → D-U-N-S (request the day the certificate lands — the one pure-waiting link in the chain) → Apple Org + Play Org enrolment → reserve the "Zomyra" name immediately → PAN/TAN and current account applied for in parallel. **Genuine upside of this path:** Organization accounts are **exempt from Play's 14-day closed-testing requirement**, which a personal account would have carried — so the delay costs roughly two weeks less than it appears. **Cost to plan around:** no iOS physical-device testing until the Apple account exists — Android device builds and the iOS Simulator work throughout, but device-only behaviour (safe areas, keyboard avoidance, Dynamic Type per NFR-6a, haptics per FR-25a, permission dialogs) stays unverified until ~September. Do not let App Review be the first real iOS hardware the app runs on. | Before the §2.1 gate | Product owner | The LLP is not yet formed, so neither store account can be opened as an Organization yet. Deliberately *not* taking an Individual account as a placeholder: it would publish the seller name as a person rather than "Zomyra", pull a personal Play account into the multi-tester/14-day pre-publication requirement, and require a later account conversion or app transfer. Critical-path check: LLP (~2–4 wks) → D-U-N-S (5–14 business days) → Apple org approval (1–4 wks) ≈ 6–10 weeks total, which fits inside the Modules 0–9 window since none of them need an account. **Owner track, in parallel with engineering:** start LLP formation, buy `zomyra.com`, file the India trademark (stronger and more durable protection than an App Store name reservation), set up `developer@zomyra.com` as the account holder rather than a personal inbox. | Before the §2.1 gate | Product owner |
+| O-10 | **Store accounts → Organization, registered once the LLP and D-U-N-S exist. Final (2026-07-28).** Long-form rationale, critical path and the parallel owner track are in **§2.2a** — the detail outgrew a table cell. | Before the §2.1 gate | Product owner |
 | O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
 | O-8 | **Backend base URL + OpenAPI spec.** Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
 | O-11 | **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
 
+| O-12 | ~~Is web still a target?~~ **→ No. Web is out of scope** (2026-07-28, owner). Removed in Module 0: the `expo.web` config block, the `yarn web` script, `react-dom` + `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts`, `favicon.png`, and the RN-Web font-injection block in `app/_layout.tsx`. `platforms: ["ios", "android"]` now declares this in config, and `expo export --platform web` refuses. **Consequence for Module 2:** the `import.meta` workaround in `onboarding-store.ts` was a *web-bundle* problem only — it is no longer a constraint on the persistence design. | Module 0 | ✅ Decided |
+| O-13 | ~~`ios.supportsTablet`~~ **→ `false`. iPad is out of MVP scope** (2026-07-28, owner — reversed the same day during Module 0 PR review; the earlier "tablets are a target" note in §6 is superseded). What this buys the MVP: no 13-inch iPad screenshots required at submission, App Review stops exercising a phone-designed UI on iPad, and Modules 1/3 owe no large-screen layout work. **iPad users can still install** — iOS runs it letterboxed in iPhone-compatibility mode; `false` means "not optimised for iPad", not "blocked". **Android needs no equivalent change** — there is no phone-only flag in `app.json`, tablets are supported by default, and Play requires no tablet screenshots. Re-enabling post-MVP is one line plus the layout work. | Post-MVP if revisited | ✅ Decided |
+| O-14 | **Logo delivered 2026-07-28 — splash artwork still pending.** The designer's vector lockup is in-tree (`assets/brand/zomyra-lockup.svg`), and the icon, adaptive icon and in-app logo are now generated from it at full sharpness — see §10. **Still open:** (a) a purpose-designed splash from the designer; the current splash is an interim render of the lockup; (b) the `#FFFFFF` splash and adaptive-icon backgrounds, still C-3 placeholders rather than palette decisions — Module 1 should settle these; (c) whether the app icon should be purple-on-white (current, faithful to the supplied artwork) or inverted white-on-purple, which is a design call nobody has made. | Splash: before submission · backgrounds: Module 1 | Product owner |
+
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
+**Web is out of scope** — iOS and Android only (2026-07-28, O-12).
 
 ---
 
@@ -320,7 +402,171 @@ The two documents are genuinely aligned; the backend was revised to match the fr
 Append one entry per completed module. Keep entries short and factual: what changed, what is
 deliberately still stubbed, and anything the next module inherits.
 
-_(No entries yet — Module 0 has not started.)_
+### Module 0 — Build & project foundation (completed 2026-07-28)
+
+**Changed:**
+
+- **Bundle identifier applied (O-1, §9).** `ios.bundleIdentifier` and `android.package` are both
+  `com.zomyra.app`, replacing Emergent's `com.emergent.zomyraapppreview.q3b1np`.
+- **`userInterfaceStyle` → `"light"`** (C-3).
+- **Dev-client conversion (C-2).** `expo-dev-client@~6.0.21` installed and `eas.json` added with
+  four profiles: `development` (dev client, internal, Android APK), `development-simulator` (the
+  same for the iOS Simulator — **builds with no Apple account**, which is what makes O-10's
+  Simulator-only iOS period workable), `preview`, `production`. Node pinned to 20.19.6 so cloud
+  builds match local; `appVersionSource: "remote"`.
+- **First lockfile in the repo's history.** There was none — not tracked, not even on disk. Expo's
+  tooling consequently chose npm over the declared `packageManager: yarn@1.22.22`, and npm then
+  failed outright on a peer conflict. `yarn.lock` is now committed and yarn is the only supported
+  package manager.
+- **`expo-doctor` now passes 18/18** (was 16/18):
+  - Deduplicated two native modules that were installed twice — `@react-navigation/native` (exact
+    pins `7.1.8`/`7.3.16`/`7.4.0` relaxed to the `^` ranges Expo expects) and `@expo/vector-icons`
+    (`15.0.3` → `^15.1.1`, the version `expo` itself ships). Two copies of a native module is a
+    build-failure risk, not a warning.
+  - Fixed `icon.png` and `adaptive-icon.png`, which were 512×513 and failed config-schema
+    validation outright.
+- **Emergent/Expo branding removed from the launch experience** — not recorded in §3's baseline, so
+  noting it here: the app icon was Expo's default blue "e", and the splash was Emergent's logo above
+  the words *"Start building apps on emergent"* on black. Both regenerated from the real brand mark
+  in `assets/images/zomyra-logo.png`: `icon.png` (1024×1024, **opaque** — iOS rejects alpha),
+  `adaptive-icon.png` (1024×1024, mark kept inside Android's centre-66% safe zone), a new
+  `splash-icon.png`, and `favicon.png`. Splash and adaptive-icon backgrounds `#000000` → `#FFFFFF`
+  (C-3). Deleted `splash-image.png` and `app-image.png`. Resolution caveat → **O-14**.
+- **`tsc --noEmit` wired in, deliberately not gating on the three known errors** — this was the call
+  §3 left to Module 0. `yarn typecheck` runs tsc raw; `yarn typecheck:baseline` allows exactly the
+  three errors recorded in `scripts/typecheck-baseline.json` and fails on anything new (verified in
+  both directions with a deliberate probe error). Errors are keyed by file + TS code rather than
+  line number, so ordinary edits do not churn the baseline. Fixing the three stays with Modules 6, 7
+  and 9; each should re-run `yarn typecheck:baseline --update` and commit the smaller baseline.
+- **`yarn lint` is green** (0 errors, 15 pre-existing warnings). All 6 errors were
+  `react/no-unescaped-entities`, now disabled project-wide: it is an HTML-oriented rule, and its
+  suggested fix (`&apos;`) renders **literally** inside RN `<Text>` — applying it would have shipped
+  visible defects into six screens. No source files were touched.
+- **README replaced** (Expo template → actual build/run doc: yarn-only, dev-client-only, the
+  profiles, the checks, and the `eas init` step). **`.gitignore`:** added `/ios` and `/android`
+  (CNG output), and re-included `.env.example`, which the repo-root `.gitignore` would otherwise
+  swallow silently before Module 2 needs it. Removed the `reset-project` template script, which
+  moves `app/` aside — no value here and a live hazard.
+
+**Still stubbed / deferred:**
+
+- **No EAS project link, and therefore no build has actually run.** `app.json` has no
+  `extra.eas.projectId` / `owner`; writing one requires an EAS account, so `eas init` is an owner
+  step (documented in the README). Everything else is verified locally: `expo config` resolves the
+  new identity, `expo export --platform ios` bundles clean (6.43 MB), doctor 18/18, lint green,
+  typecheck baseline green.
+- No native `ios/` or `android/` directories — continuous native generation, produced at build time.
+- **`X-App-Version` / `X-Bundle-Update-Id` (§5) are not wired.** `expo-updates` was deliberately not
+  installed: it is only meaningful once an EAS project exists, and it drags in `runtimeVersion`
+  policy decisions. Module 2 inherits this with the API client.
+- ~~Web left entirely untouched~~ — **superseded the same day: web was removed outright once the
+  owner decided O-12. See the addendum below.**
+
+**Inherited by next module:**
+
+- Module 1 receives a light-mode-locked, doctor-clean, lint-clean project. The `#FFFFFF` splash and
+  adaptive-icon backgrounds are placeholders chosen to satisfy C-3 — revisit them when the palette
+  lands (O-14).
+- Module 2 receives `.env.example` un-ignored, an iOS/Android-only project (no web constraint on
+  persistence — see the addendum), and owns adding `expo-updates` once the EAS project exists.
+- ~~Modules 1 and 3 inherit tablet layout work from O-13~~ — **withdrawn: iPad is out of MVP
+  (O-13 reversed 2026-07-28). Phone layouts only.**
+- ~~Module 12: add `ITSAppUsesNonExemptEncryption`~~ — **done in the addendum below.**
+
+**Decisions made:**
+
+- Typecheck does **not** gate on the three inherited errors; a baseline guard catches new ones
+  instead. A permanently-red `yarn typecheck` would simply be ignored.
+- `react/no-unescaped-entities` off project-wide (reason above).
+- Icon and splash regenerated from the existing brand mark rather than left as Expo/Emergent
+  defaults — owner-approved mid-module; the resolution caveat is recorded as O-14.
+- Dependency version pins relaxed to Expo's expected `^` ranges where exact pins were forcing
+  duplicate native modules.
+
+#### Module 0 addendum — owner decisions applied same day (2026-07-28)
+
+Four items raised at the end of Module 0 were decided by the owner and applied on the same branch,
+before the PR:
+
+- **Web removed entirely (O-12).** Deleted the `expo.web` config block, the `yarn web` script,
+  `react-dom` and `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts` and
+  `favicon.png`; dropped the RN-Web font-injection block from `app/_layout.tsx` and the now-dead
+  `Platform` import; refreshed the stale web comments in `storage-base.ts` and `storage/index.ts`.
+  Added `"platforms": ["ios", "android"]` so the decision lives in config rather than by omission —
+  `expo export --platform web` now refuses outright. `@expo/metro-runtime` was **kept**: it is a
+  hard dependency and non-optional peer of `expo-router`, unlike `react-dom`/`react-native-web`
+  which are optional peers. `expo-web-browser` and `react-native-webview` also stay — both are
+  native components, unrelated to the web target.
+  **Module 2 inherits the real payoff:** `onboarding-store.ts`'s hand-rolled persistence exists only
+  because `zustand/middleware`'s `persist` broke the *web* bundle via `import.meta`. That reason is
+  gone; the note in the file has been updated so it is not preserved out of caution.
+- ~~**iPad and Android tablets confirmed as targets (O-13).**~~ **Superseded during PR review the
+  same day: iPad is out of MVP and `ios.supportsTablet` is now `false`.** See O-13 in §4. Modules 1
+  and 3 owe no large-screen layout work, and Module 12 needs no iPad screenshots.
+- **`ITSAppUsesNonExemptEncryption: false` added** to `ios.infoPlist`. Owner confirmed the app uses
+  only standard HTTPS — image *compression* is not encryption, and there is no chat encryption
+  anywhere. **Revisit if Module 9 ever adds end-to-end encrypted messaging.** Without this every
+  TestFlight upload stalls on an export-compliance prompt.
+- **Brand assets (O-14):** the current icon and splash are confirmed placeholders — a new logo and
+  splash are being produced by a designer and will be supplied later. Required formats and the
+  reasoning behind each are now in **§10**.
+
+Verified after these changes: doctor 18/18, lint green, typecheck baseline green, iOS bundle exports
+clean (6.43 MB), and `expo export --platform web` correctly fails.
+
+#### EAS project linked (2026-07-28)
+
+**`@zomyra/zomyra`** — `owner: "zomyra"`, `extra.eas.projectId: 143317a3-7ae8-4e58-a0c1-482ae287cc19`.
+Dashboard: <https://expo.dev/accounts/zomyra/projects/zomyra>
+
+Created under a Zomyra **organization**, not the personal account. Expo orgs are free and need no
+LLP or D-U-N-S, so none of what makes O-10 slow for Apple and Google applies — there was no reason
+to take the personal-account shortcut O-10 rejected. `owner` stores the **org name, not an email**,
+so handing administration to `developer@zomyra.com` later is a membership change: no project
+transfer, no new `projectId`, no rebuild.
+
+Account structure: personal login `zomyra002` (`zomyra002@gmail.com`, Owner) → organization
+`zomyra` → project `zomyra`. `owner` and `slug` were pinned in `app.json` *before* `eas init` so the
+project could not be created under the personal account by a mis-picked prompt.
+
+**Consequence — Modules 0–9 no longer wait on anything external.** An EAS **Android** dev-client
+build needs only this Expo account: no Play Console, no Apple account, none of the §2.1 gate. iOS
+stays Simulator-only until the Apple Organization account exists, exactly as O-10 predicted.
+
+*Housekeeping:* a stray project `@zomyra002/zomyra002` was auto-created under the personal account
+during signup. It is unrelated to this repo and can be deleted from its project settings.
+
+#### First build — C-2 verified end to end (2026-07-28)
+
+Profile `development-simulator`, build 1, no Apple account involved (simulator builds are unsigned).
+The `.app` was installed on a booted iPhone 16 Plus simulator, connected to Metro at
+`localhost:8081`, and **bundled and rendered the login screen successfully** — 3536 modules, no
+errors. This closes the "configured but unproven" caveat that Module 0 shipped with.
+
+Confirmed in the built binary's `Info.plist`, i.e. Module 0's config actually reached the app rather
+than just the config file:
+
+| Key | Value | Proves |
+|---|---|---|
+| `CFBundleIdentifier` | `com.zomyra.app` | O-1 applied |
+| `CFBundleDisplayName` | `Zomyra` | no longer "frontend" (§8) |
+| `UIUserInterfaceStyle` | `Light` | C-3 |
+| `ITSAppUsesNonExemptEncryption` | `false` | export-compliance declaration |
+| `UIDeviceFamily` | `[1]` — iPhone only | O-13 reversal took effect |
+| `CFBundleURLSchemes` | `zomyra`, `com.zomyra.app` | deep-link scheme for Module 11 |
+| `CFBundleVersion` | `1` | EAS now owns build numbers (`appVersionSource: remote`) |
+
+**Still unrun:** Android (needs no account — the obvious next one) and iOS *device* (blocked on the
+Apple account, O-10).
+
+**Bonus finding for Module 1 — there are four purples, not three.** Sampling the rendered login
+screen pixel-by-pixel: the Z mark is `#5B2C70`, the `Zomyra` wordmark `#7C3AED`, the heading
+`#1F1235`, and the primary button **`#5B2C6F`** — one hex digit from the brand mark (blue 111 vs
+112). `#5B2C6F` is `colors.primary` *and* the hardcoded `const PURPLE` in 10+ files, so it is the
+one that actually dominates the UI. Visually identical to the brand, textually distinct — a
+find-and-replace on `#5B2C70` would miss every occurrence. Corroborating the §3 provenance note,
+`src/theme/colors.ts` line 1 states outright that its tokens were *"extracted from the original
+Tailwind config"*.
 
 <!--
 Template:
@@ -410,3 +656,252 @@ Cheap to change during Modules 0–9. After Modules 10–11 it also means regene
 first-come, and is more prone to squatting than the bundle ID. Creating the app record in App Store
 Connect reserves it — a reason to obtain the Apple account earlier than Module 10, even though no
 technical work blocks on it.
+
+---
+
+## 10. Brand assets (O-14)
+
+### 10.1 Delivered 2026-07-28 — the vector lockup
+
+The designer supplied `Logo_zomayra_.svgz` (note: the filename misspells the brand; the artwork does
+not). It is vendored as **`assets/brand/zomyra-lockup.svg`** — decompressed, because the compressed
+form is opaque to diffs and review — with the original `.svgz` kept alongside it.
+
+- Illustrator export, `viewBox 0 0 1080 1080`, **7 paths, one fill: `#5B2C70`**
+- Paths 0–5 are the ZOMYRA wordmark letters (all at y≈777, ~90 units tall)
+- **Path 6 is the Z mark** (508×534 at 286,212) — separated programmatically for the icon, since a
+  wordmark lockup is illegible at 48×48
+
+**`scripts/make-brand-assets.js` regenerates every raster from that vector.** Run it only when the
+artwork changes — it needs `sharp`, which is deliberately *not* a project dependency (large native
+package, run perhaps twice a year): `npm i --no-save sharp && node scripts/make-brand-assets.js`.
+
+| Generated | Size | Alpha | From |
+|---|---|---|---|
+| `icon.png` | 1024×1024 | **none** (Apple rejects alpha) | mark @ 72% on white |
+| `adaptive-icon.png` | 1024×1024 | yes | mark @ **51%** — see below |
+| `splash-icon.png` | 795×1024 | yes | full lockup — **interim** |
+| `zomyra-logo.png` | 1024×1024 | yes | mark @ 92%, drives in-app `<Logo/>` |
+| `zomyra-lockup.png` | 795×1024 | yes | full lockup for in-app use (login hero) |
+
+`splash-icon.png` and `zomyra-lockup.png` are the same artwork today but deliberately separate
+files, so the designer's purpose-built splash can replace the former without disturbing screens
+that want the lockup.
+
+**Login screen (owner tweak, 2026-07-28):** the header `<Logo/> + <Wordmark/>` row was removed and
+the couple illustration replaced by the lockup as the hero — `assets/images/login-illustration.png`
+is deleted. Side effect worth keeping: that screen previously rendered the `#7C3AED` wordmark beside
+the `#5B2C70` mark, so swapping in the single-fill lockup removed two of the four competing purples
+from it. `app/index.tsx` still renders the `<Logo/> + <Wordmark/>` pair and retains the mismatch —
+Module 1's to resolve.
+
+⚠️ **The adaptive-icon scale is measured, not guessed.** Android masks the foreground to a circle of
+66% diameter, and *a bounding box that fits the square can still have corners outside the circle*.
+At 55% the Z's bottom-left sat **18.6px beyond** the safe radius and would have been clipped on
+circular launchers; 51% clears it with 7.4px of margin. Re-measure if the artwork ever changes —
+the check is furthest non-transparent pixel from centre vs. `width × 0.66 / 2`.
+
+**Brand colour for Module 1: `#5B2C70`.** This is the *only* fill in the delivered artwork, so it is
+the authoritative brand purple. It exposes **four** competing purples, confirmed by sampling the
+rendered login screen on the simulator (§6, "First build"):
+
+| Hex | Where | Note |
+|---|---|---|
+| `#5B2C70` | delivered logo artwork | authoritative brand |
+| **`#5B2C6F`** | `colors.primary` + hardcoded `const PURPLE` in 10+ files | **one hex digit off the brand** — dominates the actual UI |
+| `#7C3AED` | `Logo.tsx` `Wordmark` | Tailwind violet-600, web residue (§3) |
+| `#1F1235` | `colors.foreground` | near-black heading tone |
+
+The `#5B2C6F` / `#5B2C70` pair is the trap: visually indistinguishable, textually distinct, so a
+find-and-replace on the brand value silently misses every real usage. Module 1 owns reconciling all
+four. Corroborating §3, `src/theme/colors.ts` line 1 says its tokens were *"extracted from the
+original Tailwind config"*.
+
+*Possible palette hints, unconfirmed:* the SVG's `<style>` block declares eight classes but uses only
+one. The seven unused fills — `#4A202A`, `#FAD5E1`, `#FDFDFD`, `#111113`, `#F2EBE0`, `#F6F5F5`,
+`#F2F2F2` — look like a deep plum, a soft pink and a cream, i.e. plausibly the intended supporting
+palette. **Confirm with the designer before treating them as brand colours**; they may equally be
+leftovers from an unrelated artboard.
+
+### 10.2 Still outstanding
+
+**A purpose-designed splash.** The current `splash-icon.png` is an interim render of the full lockup,
+drawn at `imageWidth: 200` over `#FFFFFF`. It is honest placeholder quality, not a designed launch
+screen. The designer is also producing a **splash animation** — see §10.2a for what that requires.
+
+#### 10.2a Animated splash — how it actually works, and the designer brief
+
+**An animated splash is two stages, not one.** Worth understanding before briefing anyone, because
+the constraint below is easy to miss and expensive to re-do.
+
+1. **Native splash — static image only.** It is displayed while the app binary boots, before any JS
+   exists to animate. Neither OS allows skipping it, and `expo-splash-screen` exposes only a
+   fade-out, which is **iOS-only** (verified against the SDK docs, 2026-07-28). Android 12+ also
+   shows its own system splash with the app icon.
+2. **JS-rendered animation.** After the native splash hides, a React component plays the animation.
+   Standard pattern: `preventAutoHideAsync()` → render → hide the native splash underneath.
+   `app/_layout.tsx` already calls `preventAutoHideAsync()`.
+
+| Option | Format | Cost |
+|---|---|---|
+| **Lottie** — recommended, the only one a designer can export to | `.json` (After Effects → Bodymovin) | `lottie-react-native`: native module, needs a fresh dev build; install via `npx expo install` for the SDK-54 build, and confirm New Architecture support since `newArchEnabled: true` |
+| Reanimated | hand-coded | Already installed, no new dependency — but nothing exports to it |
+| Rive | `.riv` | Another native module; more runtime control, less common |
+| GIF / video | — | Poor fit: quality, size, no transparency |
+
+⚠️ **The constraint most people miss: the animation's first frame must match the static splash
+exactly.** The native splash is on screen first, so if the animation opens on a different
+composition the user sees a visible jump at the handoff. Brief the animation as starting *from* the
+resting lockup.
+
+**Designer brief:** export Lottie JSON via the Bodymovin/LottieFiles plugin · shape layers,
+transforms, trim paths and opacity only (Lottie does not support AE expressions or most effects;
+mattes and masks are patchy) · **convert the ZOMYRA wordmark to outlines**, not a text layer ·
+transparent background, we paint the colour · **under ~1.5s, one-shot, not looping** — it gates
+first paint · supply the AE project file alongside the JSON.
+
+**Owner note:** the same animation is wanted in-app beyond the splash (e.g. the login hero), which
+is another reason to favour Lottie — one JSON can be reused at any size.
+
+**Both background colours** (`expo-splash-screen` and `android.adaptiveIcon`) are `#FFFFFF`, chosen
+to satisfy C-3 rather than from a palette — a Module 1 decision.
+
+**Icon treatment:** currently purple-on-white, faithful to the supplied artwork. White-on-purple
+would be more striking on a home screen. Nobody has made that call.
+
+### 10.3 Colour tokens — guidance for Module 1 (owner discussion, 2026-07-28)
+
+**A numbered ramp is wanted, but it must stay private.** The owner raised naming steps
+`purple-600` / `purple-800` rather than inventing values ad hoc. That is right in spirit, and it
+does **not** require changing C-4 — it requires two layers, which is how Radix, Material 3 and
+shadcn all work:
+
+| Layer | Example | Who imports it |
+|---|---|---|
+| **1 · Ramp** (private) | `purple[600]`, `purple[800]` | Only layer 2. **Never a screen or component.** |
+| **2 · Semantic** (public) | `colors.text.primary`, `colors.brand.default`, `colors.surface.subtle` | Everything else |
+
+C-4 forbids *components* consuming value-named tokens, so a theme change stays a one-file edit. It
+does not forbid a ramp existing underneath. Keeping both gives Module 1 somewhere to land the 51
+unique hexes systematically instead of mapping them one by one.
+**If the owner ever wants components using `purple600` directly, that is a real C-4 change and only
+the owner can make it.**
+
+⚠️ **Do not anchor the brand at "600".** `#5B2C70` is dark — on a Tailwind-style scale it sits around
+**800–900** (Tailwind `purple-900` is `#581C87`, nearly identical). Numbering it 600 would leave no
+room below it and mislead every later module.
+
+**Measured contrast against white (NFR-6a), computed 2026-07-28:**
+
+| Colour | Ratio | Verdict |
+|---|---|---|
+| `#5B2C70` brand purple | **10.30:1** | AAA — safe for body text |
+| `#7C3AED` `Logo.tsx` Wordmark | 5.70:1 | AA only |
+| `#1F1235` theme foreground | 17.56:1 | AAA |
+| `#4A202A` unused — plum | 13.71:1 | AAA |
+| `#111113` unused — near-black | 18.86:1 | AAA |
+| `#FAD5E1` unused — pink | 1.34:1 | **surface only, never text** |
+| `#F2EBE0` unused — cream | 1.18:1 | **surface only, never text** |
+
+Two consequences. First, **reconciling onto `#5B2C70` improves accessibility** rather than trading it
+away — §3 records four *current* theme colours failing NFR-6a, and the brand purple passes AAA.
+Second, the contrast split makes the unused fills look like a **deliberate palette** — two dark text
+tones, one brand, several light surfaces — which is the shape a designed system has, not artboard
+leftovers. Still confirm with the designer (§10.1), but treat it as likely rather than speculative.
+
+A numbered ramp also makes NFR-6a auditing systematic: once steps are fixed, "step N and above passes
+AA on white" is a rule Module 12 can check mechanically instead of colour by colour.
+
+### 10.4 Spec for any future artwork
+
+**The single most useful deliverable is the vector source** — with an SVG or PDF every size below can
+be regenerated exactly, and none of it needs revisiting when a new density or store requirement
+appears.
+
+| Asset | Spec | Why the spec is what it is |
+|---|---|---|
+| **Vector source** | SVG (or PDF/AI), logo mark and full lockup as separate files | Everything else derives from it |
+| **App icon** | 1024×1024 PNG, **fully opaque — no alpha channel**, square, **no rounded corners**, no drop shadow | Apple rejects icons containing transparency; iOS and Android apply their own corner mask, so pre-rounding shows as a double-rounded edge |
+| **Android adaptive foreground** | 1024×1024 PNG **with** transparency, artwork inside the centre 66% (≈676px) | Android masks the outer third into circles/squircles/squares per launcher — anything outside that ring gets clipped on some devices |
+| **Adaptive background** | A solid colour (or a 1024×1024 image) | Supplied separately from the foreground; currently `#FFFFFF` as a C-3 placeholder |
+| **Splash mark** | PNG with transparency, ≥1024px on its long edge, plus the intended background colour | Drawn centred over a solid colour by `expo-splash-screen`; it is not a full-bleed image |
+| ~~Favicon~~ | Not needed | Web is out of scope (O-12) |
+
+Two constraints worth passing to the designer up front: the icon must stay legible at **48×48**
+(Android launcher) and the mark must read against **white**, since C-3 fixes a light theme.
+
+---
+
+## 11. Build internals — non-obvious facts, verified 2026-07-28
+
+Four things about how this project builds that are easy to get wrong and expensive to rediscover.
+
+**There is no `babel.config.js`, and that is correct — do not "fix" it.** Metro is the bundler, not
+the transpiler; it delegates per-file transformation to `@expo/metro-config`'s babel-transformer,
+whose `loadBabelConfig` looks for `.babelrc` / `.babelrc.js` / `babel.config.js` and, **finding
+none, injects `babel-preset-expo` itself**. That preset supplies the JSX transform,
+`@babel/preset-typescript`, the expo-router plugin, and `WorkletsBabelPlugin` — which is what makes
+the ~74 Reanimated worklet calls in Discover, ProfileView and MatchOverlay work.
+⚠️ **The footgun:** the moment *any* Babel config file exists, Expo stops injecting the default. If
+a module ever needs one (a module resolver, a custom plugin), it **must** list `babel-preset-expo`
+explicitly, or JSX, TypeScript and worklets silently stop being transformed.
+
+**Types are stripped, never checked.** `@babel/preset-typescript` deletes annotations without any
+type checking, so a bundle will build cleanly over type errors — which is exactly why the three
+inherited errors do not break `expo export`, and why `tsc --noEmit` has to be its own step. Run
+`yarn typecheck:baseline`; it is green today and fails on anything new.
+
+**Environment variables:** use Expo's built-in `.env` support with the `EXPO_PUBLIC_*` prefix.
+`react-native-dotenv` was removed in Module 0 (unwired and superseded). **`EXPO_PUBLIC_*` values are
+inlined into the shipped bundle** — correct for O-8's API base URL, never for a secret.
+`.env.example` is deliberately un-ignored in `zomyra-app/.gitignore`, overriding the repo-root
+`.gitignore`, which would otherwise swallow it silently.
+
+**Package manager is yarn, and only yarn.** `yarn.lock` is the only lockfile. npm cannot resolve
+this dependency tree (it fails on a `@react-navigation/native` peer conflict), and with no lockfile
+present Expo's own tooling silently picks npm — which is how the repo ended up with duplicate native
+modules before Module 0.
+
+⚠️ **Never run `npm install` in this project — not even `npm i --no-save`.** npm 7+ reads an
+existing `yarn.lock` and rewrites it in npm's own style, converting every `resolved` URL from
+`registry.yarnpkg.com` to `registry.npmjs.org` and dropping the integrity fragments. It happened
+once during Module 0 (a one-off `sharp` install for `scripts/make-brand-assets.js`) and churned
+2,492 lines before being caught and reverted. The `--no-save` flag does **not** protect you. When a
+tool is needed transiently, install it to a prefix outside the repo and point `NODE_PATH` at it:
+
+```
+npm --prefix /tmp/zomyra-brand-tools i sharp
+NODE_PATH=/tmp/zomyra-brand-tools/node_modules node scripts/make-brand-assets.js
+```
+
+**Do not reintroduce `save-exact`.** `.npmrc` carried `save-exact=true` and was removed in Module 0.
+The reasoning inverted once a lockfile existed: `save-exact` guards against version drift only when
+there is *no* lockfile, and `yarn.lock` now pins every package — transitive included — to an exact
+resolved version, so `^7.4.0` installs exactly as deterministically as `7.4.0`. What exact pins
+still do is **prevent deduplication**: a pinned `7.1.8` cannot satisfy a transitive `^7.1.14`, so
+yarn installs both, and for *native* modules two copies is a build failure rather than a warning.
+That is what took `expo-doctor` to 16/18 before Module 0. It also fights Expo directly —
+`expo install` deliberately writes SDK-compatible ranges, and `expo-doctor` validates against them.
+**Use `yarn install --frozen-lockfile`** for the guarantee `save-exact` was reaching for; it fails
+loudly if `package.json` and `yarn.lock` ever disagree.
+
+**The `resolutions` block in `package.json` is inherited from Emergent — investigated 2026-07-28.**
+One entry was removed, two were kept, and the reasoning matters because the remaining two still warn
+on every install:
+
+- ~~`@eslint/plugin-kit: 0.3.4`~~ **removed.** It satisfied *neither* consumer: the tree held two
+  eslints — our exactly-pinned `9.25.0` (wanting `^0.2.8`) and a nested `9.39.5` pulled in via
+  `eslint-config-expo → eslint-plugin-expo` (wanting `^0.4.1`). Forcing `0.3.4` matched no range and
+  worked only by luck. **Root cause was the exact pin on eslint** — another `save-exact` artifact.
+  Relaxing to `^9.39.5` deduplicated both packages to one copy each, and the resolution became
+  unnecessary. Lint findings are byte-identical before and after (15 warnings, 0 errors).
+- `postcss: 8.5.10` **kept.** `@expo/metro-config@54.0.17` asks for `~8.4.32`; 8.4→8.5 is a minor
+  bump within the same major and API-compatible.
+- `uuid: 11.1.1` **kept.** `xcode@3.0.1` (used by `@expo/config-plugins` during prebuild) asks for
+  `^7.0.3` — four majors behind. **Verified safe rather than assumed:** `xcode` does
+  `require('uuid')` and calls only `uuid.v4()`, which is stable across those versions, and uuid 11's
+  CJS build still exports it. It does *not* use the `uuid/v4` deep import that uuid 9 removed, which
+  would have thrown during the first EAS iOS build.
+
+Both surviving entries look like deliberate security bumps. They warn but are harmless; **verify
+before removing either**, and re-check `uuid` if `xcode`/`@expo/config-plugins` is ever upgraded.
