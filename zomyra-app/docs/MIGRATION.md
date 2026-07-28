@@ -12,6 +12,15 @@ Append a "Module log" entry at the end of every module, in the same session that
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
 - Status: **Module 0 complete** (2026-07-28). §3's baseline still describes the untouched Emergent
   output and is kept as the historical reference point; §6 records what Module 0 changed.
+- **Handoff state:** six commits sit on `module/0-build-foundation`, **committed but not pushed and
+  with no PR open** — per C-6 the owner does both. A new session must not assume this work is on
+  `master`. `git log master..module/0-build-foundation` shows what is pending.
+- **Verified green as of 2026-07-28:** `yarn doctor` 18/18 · `yarn lint` 0 errors (15 pre-existing
+  warnings) · `yarn typecheck:baseline` clean · `expo export --platform ios` bundles.
+  **No EAS build has ever run** — the dev-client conversion is configured and locally verified but
+  unproven on hardware. See §6's Module 0 entry.
+- **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
+  §4 (open items), then §6's Module 0 entry. §3 is history, not current state.
 
 ---
 
@@ -177,6 +186,44 @@ Adjacent guidelines this app already satisfies, worth not regressing: **1.2** (U
 reporting, blocking and moderation: FR-25b and FR-9 cover it) and **5.1.1(v)** (in-app account
 deletion: FR-28).
 
+### 2.2a Store accounts — the Organization decision in full (O-10)
+
+*Promoted out of the O-10 table cell on 2026-07-28. The cell had accumulated three extra columns,
+and because Markdown drops cells beyond the header count, everything below was **invisible in the
+rendered document** while still present in the source.*
+
+**Decision (final):** both store accounts are **Organization**, opened once the LLP and D-U-N-S
+exist. The LLP is not yet formed, so neither can be opened yet.
+
+**An Individual account as a placeholder was considered twice and rejected both times.** It would
+publish the seller name as a person rather than "Zomyra" — on a product asking strangers for their
+religion, income and biometric selfies — pull a personal Play account into the multi-tester /
+14-day pre-publication requirement, and force a later account conversion or app transfer.
+
+**Critical path:** LLP (~2–4 wks) → D-U-N-S (5–14 business days) → Apple Org approval (1–4 wks)
+≈ **6–10 weeks total**, which fits inside the Modules 0–9 window because none of those modules need
+a store account. Request D-U-N-S the day the LLP certificate lands — it is the one pure-waiting link
+in the chain.
+
+**Genuine upside of this path:** Organization accounts are **exempt from Play's 14-day closed-testing
+requirement**, which a personal account would have carried — so the delay costs roughly two weeks
+less than it appears.
+
+**Cost to plan around:** no iOS physical-device testing until the Apple account exists. Android
+device builds and the iOS Simulator cover the gap, but device-only behaviour — safe areas, keyboard
+avoidance, Dynamic Type (NFR-6a), haptics (FR-25a), permission dialogs — stays unverified until
+~September. **Do not let App Review be the first real iOS hardware the app runs on.**
+
+**Owner track, to run in parallel with engineering:**
+
+- Start LLP formation
+- Buy `zomyra.com` — gates `developer@zomyra.com`, and it is the cheapest, fastest item in the chain
+- File the India trademark — stronger and more durable than an App Store name reservation
+- Set up `developer@zomyra.com` as the store account holder rather than a personal inbox. The
+  asymmetry matters: the **Expo** account email is trivially changed later, while Apple and Google
+  account-holder transfers are formal, bureaucratic processes. Be relaxed about the first, strict
+  about the second.
+
 ### 2.3 Staging environment — joint ask for the backend side
 
 Needed before Module 4 can be *verified* rather than merely written:
@@ -248,6 +295,32 @@ not a partially-integrated app.** Do not assume the TDD-described architecture e
   4.9:1 PASS · `foregroundSubtle` **2.6:1 FAIL** · `primarySoft` **4.2:1 FAIL** ·
   `accent` **2.6:1 FAIL** · `warning` **2.2:1 FAIL**. All four failures are used as text colors.
 
+#### Why the design layer looks like this — provenance (established 2026-07-28)
+
+Useful for Module 1, because it changes the remap from an audit into a mechanical substitution.
+The app began as a **React web project** (Lovable-style: Vite + React + Tailwind/shadcn) and was
+later converted to React Native by Emergent on an explicit "convert to React Native" prompt.
+
+The conversion swapped the build system cleanly — there is **no** `vite.config`, `tailwind.config`,
+`postcss.config`, `index.html` or Babel config anywhere in the repo — but it carried the *styling
+vocabulary* across verbatim. The screen-local grays are not arbitrary picks; they are **Tailwind's
+default gray ramp**, counted in the tree on 2026-07-28:
+
+| Hex | Tailwind name | Occurrences |
+|---|---|---|
+| `#111827` | gray-900 | 12 |
+| `#6B7280` | gray-500 | 12 |
+| `#E5E7EB` | gray-200 | 5 |
+| `#F3F4F6` | gray-100 | 1 |
+| `#9CA3AF` | gray-400 | 1 |
+
+**Two consequences for Module 1.** First, the 281 hex literals are a *translation artifact*, not
+carelessness: web CSS has variables, RN `StyleSheet` has none until a token layer exists, so a
+mechanical conversion inlines every value — which is exactly the debt C-4 exists to stop recurring.
+Second, because these are Tailwind defaults rather than hand-picked colours, they map
+**systematically** onto semantic tokens — `#111827` is consistently primary text, `#6B7280`
+consistently muted text. Remap by role, not file by file.
+
 ### Type safety
 `tsconfig.json` sets `strict: true`, but **the project does not typecheck.** `npx tsc --noEmit`
 reports 3 errors, all pre-existing in the Emergent output (verified against `HEAD` on 2026-07-27,
@@ -285,7 +358,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-5 | Express Interest daily cap value `N` (FR-17a) is still "to be set by product". | Module 7 | Product owner |
 | O-6 | Height filter bounds inconsistent across wireframes (140–210cm vs 140–200cm), FE TDD §8. | Module 7 | Product owner |
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
-| O-10 | **Store accounts → Organization, registered once the LLP and D-U-N-S exist. Final (2026-07-28).** An Individual placeholder account was considered twice and rejected both times: it publishes the seller name as a person rather than "Zomyra" on a product asking strangers to share religion, income and biometric selfies, and it forces a later account conversion or app transfer. **Sequence:** LLP → D-U-N-S (request the day the certificate lands — the one pure-waiting link in the chain) → Apple Org + Play Org enrolment → reserve the "Zomyra" name immediately → PAN/TAN and current account applied for in parallel. **Genuine upside of this path:** Organization accounts are **exempt from Play's 14-day closed-testing requirement**, which a personal account would have carried — so the delay costs roughly two weeks less than it appears. **Cost to plan around:** no iOS physical-device testing until the Apple account exists — Android device builds and the iOS Simulator work throughout, but device-only behaviour (safe areas, keyboard avoidance, Dynamic Type per NFR-6a, haptics per FR-25a, permission dialogs) stays unverified until ~September. Do not let App Review be the first real iOS hardware the app runs on. | Before the §2.1 gate | Product owner | The LLP is not yet formed, so neither store account can be opened as an Organization yet. Deliberately *not* taking an Individual account as a placeholder: it would publish the seller name as a person rather than "Zomyra", pull a personal Play account into the multi-tester/14-day pre-publication requirement, and require a later account conversion or app transfer. Critical-path check: LLP (~2–4 wks) → D-U-N-S (5–14 business days) → Apple org approval (1–4 wks) ≈ 6–10 weeks total, which fits inside the Modules 0–9 window since none of them need an account. **Owner track, in parallel with engineering:** start LLP formation, buy `zomyra.com`, file the India trademark (stronger and more durable protection than an App Store name reservation), set up `developer@zomyra.com` as the account holder rather than a personal inbox. | Before the §2.1 gate | Product owner |
+| O-10 | **Store accounts → Organization, registered once the LLP and D-U-N-S exist. Final (2026-07-28).** Long-form rationale, critical path and the parallel owner track are in **§2.2a** — the detail outgrew a table cell. | Before the §2.1 gate | Product owner |
 | O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
 | O-8 | **Backend base URL + OpenAPI spec.** Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
 | O-11 | **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
@@ -570,3 +643,35 @@ when a new density or store requirement appears.
 Two constraints worth passing to the designer up front: the icon must stay legible at **48×48**
 (Android launcher) and the mark must read against **white**, since C-3 fixes a light theme. The
 current placeholder's mark is only 304×217 real pixels, which is why it looks soft when scaled.
+
+---
+
+## 11. Build internals — non-obvious facts, verified 2026-07-28
+
+Four things about how this project builds that are easy to get wrong and expensive to rediscover.
+
+**There is no `babel.config.js`, and that is correct — do not "fix" it.** Metro is the bundler, not
+the transpiler; it delegates per-file transformation to `@expo/metro-config`'s babel-transformer,
+whose `loadBabelConfig` looks for `.babelrc` / `.babelrc.js` / `babel.config.js` and, **finding
+none, injects `babel-preset-expo` itself**. That preset supplies the JSX transform,
+`@babel/preset-typescript`, the expo-router plugin, and `WorkletsBabelPlugin` — which is what makes
+the ~74 Reanimated worklet calls in Discover, ProfileView and MatchOverlay work.
+⚠️ **The footgun:** the moment *any* Babel config file exists, Expo stops injecting the default. If
+a module ever needs one (a module resolver, a custom plugin), it **must** list `babel-preset-expo`
+explicitly, or JSX, TypeScript and worklets silently stop being transformed.
+
+**Types are stripped, never checked.** `@babel/preset-typescript` deletes annotations without any
+type checking, so a bundle will build cleanly over type errors — which is exactly why the three
+inherited errors do not break `expo export`, and why `tsc --noEmit` has to be its own step. Run
+`yarn typecheck:baseline`; it is green today and fails on anything new.
+
+**Environment variables:** use Expo's built-in `.env` support with the `EXPO_PUBLIC_*` prefix.
+`react-native-dotenv` was removed in Module 0 (unwired and superseded). **`EXPO_PUBLIC_*` values are
+inlined into the shipped bundle** — correct for O-8's API base URL, never for a secret.
+`.env.example` is deliberately un-ignored in `zomyra-app/.gitignore`, overriding the repo-root
+`.gitignore`, which would otherwise swallow it silently.
+
+**Package manager is yarn, and only yarn.** `yarn.lock` is the only lockfile. npm cannot resolve
+this dependency tree (it fails on a `@react-navigation/native` peer conflict), and with no lockfile
+present Expo's own tooling silently picks npm — which is how the repo ended up with duplicate native
+modules before Module 0.
