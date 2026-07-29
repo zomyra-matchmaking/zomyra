@@ -645,8 +645,8 @@ Tailwind config"*.
   are roles the system needs to be coherent but that today's screens do not reach for. Noted here
   rather than left to be discovered: if a later module still has no use for one, delete it. Genuinely
   speculative tokens (`brand.fill`, `shadow.brand`) were removed rather than shipped.
-- **No component library.** This module produced tokens, not `<Button>`/`<Card>` primitives. Screens
-  still hand-roll their styles; the tokens simply mean they hand-roll them from the same values.
+- **The component language covers the common controls, not every pattern.** Added on the owner's
+  ask after the token work landed — see the "Component primitives" subsection below.
 - **Accessibility beyond colour is untouched** — NFR-6's touch targets and the single
   `accessibilityLabel` in the codebase stay with Module 12. `MIN_TOUCH_TARGET` is exported for it.
 - **`src/hooks/use-icon-fonts.ts` pins `ICON_VECTOR_VERSION = "15.0.3"`** while `package.json` now
@@ -656,8 +656,9 @@ Tailwind config"*.
 
 **Inherited by next module:**
 
-- Module 2 receives a project where colour, type and radius are single-sourced, so any UI it adds
-  should import from `@/src/theme` and will fail lint if it does not.
+- Module 2 receives a project where colour, type and radius are single-sourced **and where the
+  common controls exist** — any UI it adds should import tokens from `@/src/theme` and controls from
+  `@/src/components/ui`, and will fail lint if it reaches for raw colour or `Pressable` instead.
 - **The four-purples trap is closed**, but the lesson generalises: this codebase hides values in
   `rgba()` decimal form. Grep for both spellings when auditing anything colour-adjacent.
 - Modules 3–9 own migrating spacing per screen as they rewrite, and own deleting any of the eight
@@ -676,6 +677,67 @@ Tailwind config"*.
   15 the project already tolerates.
 - Spacing was **not** mass-migrated (reasoning above). This is the one part of "design system" that
   Module 1 leaves incomplete, and it is a deliberate call rather than an oversight.
+
+#### Module 1 addendum — component primitives (owner ask, 2026-07-29)
+
+Tokens fix *what things look like*; they do nothing about **how many times a button is rebuilt**.
+The owner asked for a component language alongside the design language, and specifically for a
+shared touchable — correctly, because press feedback is platform behaviour and resolving it per
+call site guarantees drift.
+
+**The evidence for the touchable, counted before building it:** 106 press call sites (102
+`Pressable`, 4 `TouchableOpacity`) using **7 different press opacities** (0.7 / 0.8 / 0.85 / 0.9 /
+0.92 / 0.95 / 1) and **5 different scales** (0.94 / 0.97 / 0.98 / 0.985 / 0.99) — and
+**zero `android_ripple` anywhere**, so every Android tap was getting iOS feedback.
+
+**`src/components/ui/` is now the primitive tier**, exported from one barrel:
+
+| Primitive | What it owns |
+|---|---|
+| **`Touchable`** | The base. Everything else is built on it. iOS dim / Android ripple chosen once, `feedback` variants (`opacity` · `scale` · `highlight` · `none`), 44pt `hitSlop` by default (NFR-6), `accessibilityRole`/`State` wired |
+| **`Button`** | 5 variants (primary · gradient · secondary · ghost · danger) × 3 sizes, icon, `loading`, one disabled treatment |
+| **`Input`** | Boxed field with label, hint, **error state**, focus ring, `multiline`, character count |
+| **`Overlay`** | The modal shell — RN `Modal` + scrim + backdrop dismiss + `onRequestClose` |
+| **`Dialog`** | Centred card on `Overlay`. `ConfirmDialog` is now a thin composition of `Dialog` + two `Button`s |
+| **`BottomSheet`** | The half-card, rebuilt on `Overlay`. `SHEET_HALF` / `SHEET_TALL` name the two heights |
+
+**Migrated:** all 106 press sites → `Touchable`, with each site's hand-rolled feedback hoisted into
+the `feedback` prop. Auth CTAs (login ×2, phone, otp) and the Requests accept/decline pair →
+`Button`. The phone field and the onboarding bio → `Input`. `ConfirmDialog` and `BottomSheet`
+rebuilt on the primitives.
+
+**Enforced:** `eslint.config.js` now also blocks importing `Pressable` / `TouchableOpacity` /
+`TouchableHighlight` from `react-native` outside `src/components/ui/`, for the same reason the raw
+colour rule exists.
+
+**Two bugs fixed in passing, both from centralising:**
+
+- **Disabled buttons were unreadable.** Every disabled CTA kept its white label on the light
+  lavender disabled fill. `Button` swaps the label to `text.muted` when blocked. Visible on the
+  phone screen's "Send OTP".
+- **Inputs had no focus state.** `Input` draws a brand-coloured focus ring; nothing did before.
+
+**Deliberately not migrated:**
+
+- **`edit-profile.tsx`'s fields stay raw `TextInput`.** They are *inline editable text* — borderless,
+  width-sized-to-content, sitting inside a card row — not boxed form fields. Forcing them into
+  `Input` would have been a visual regression, not a cleanup. Different pattern, different primitive,
+  and that primitive does not exist yet.
+- **The OTP screen's six single-character boxes.** A specialised control, not a form field.
+- **`profile.tsx`'s two bespoke `Modal`s** (log-out, delete-account) — they carry an icon treatment
+  `Dialog` does not model.
+- **No `Card`, `Chip` or `Text`/typography component**, though 28 card-ish and 55 chip-ish style
+  keys say all three are warranted. Left because Modules 3–9 rewrite most of these screens and the
+  right API is easier to see with the real requirements in hand.
+
+> ⚠️ **Pre-existing bug found and confirmed, not introduced here: a `ConfirmDialog` opened while a
+> `BottomSheet` is open never appears.** Both are RN `Modal`s declared as siblings, and iOS silently
+> refuses to present a second modal over the first — so the dialog renders behind the sheet.
+> **Verified by testing the same tap on the pre-primitives commit, where it fails identically.**
+> It affects Requests' decline flow (`app/requests.tsx`) and any future sheet→confirm path.
+> The real fix is a single modal host with a portal, rather than `Modal` per surface — which the
+> `Overlay` primitive now makes a **one-file change** instead of an eleven-file one. Left for
+> whichever module needs the flow to work; Module 8 owns Requests.
 
 <!--
 Template:
