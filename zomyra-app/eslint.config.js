@@ -19,6 +19,16 @@ const noRawColours = [
     message:
       'Raw rgba() colour. Use alpha(colors.x.y, 0.5) from "@/src/theme", so translucent values stay tied to the palette (C-4).',
   },
+  {
+    // Any numeric padding/margin/gap. `0` is allowed — it means "none", not a
+    // rhythm choice, and spacing[0] reads worse everywhere it appears.
+    // NB: matching on `value` with a regex silently matches nothing here —
+    // esquery does not stringify numeric literals. Compare, do not match.
+    selector:
+      'Property[key.name=/^(padding|margin|gap|rowGap|columnGap)/] > Literal[value!=0]',
+    message:
+      'Raw spacing value. Use a step from `spacing` in "@/src/theme" (C-4). The scale is a 2pt grid; if nothing fits, the value is probably a layout constant — name it, like NAV_CLEARANCE.',
+  },
 ];
 
 module.exports = defineConfig([
