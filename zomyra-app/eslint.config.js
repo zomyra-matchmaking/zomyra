@@ -49,6 +49,14 @@ module.exports = defineConfig([
                 'src/theme/palette.ts is the private ramp layer. Import semantic tokens from "@/src/theme" instead (C-4, MIGRATION §10.3).',
             },
           ],
+          paths: [
+            {
+              name: 'react-native',
+              importNames: ['Pressable', 'TouchableOpacity', 'TouchableHighlight'],
+              message:
+                'Use <Touchable> from "@/src/components/ui". Press feedback is platform convention (iOS dims, Android ripples) and belongs in one file — resolved per call site it drifts, which is how the prototype ended up with 7 different press opacities and no Android ripple at all.',
+            },
+          ],
         },
       ],
     },
@@ -58,6 +66,14 @@ module.exports = defineConfig([
     files: ['src/theme/**/*.ts'],
     rules: {
       'no-restricted-syntax': 'off',
+      'no-restricted-imports': 'off',
+    },
+  },
+  {
+    // The primitives are what everything else is built from, so they are the
+    // one place allowed to touch RN's press and colour internals directly.
+    files: ['src/components/ui/**/*.tsx'],
+    rules: {
       'no-restricted-imports': 'off',
     },
   },
