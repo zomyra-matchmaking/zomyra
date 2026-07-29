@@ -10,15 +10,17 @@ Append a "Module log" entry at the end of every module, in the same session that
 - Started: 2026-07-27
 - Codebase: `zomyra/zomyra-app` (Expo SDK 54, RN 0.81.5, React 19.1, expo-router v6)
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
-- Status: **Module 1 complete** (2026-07-29). §3's baseline still describes the untouched Emergent
+- Status: **Module 1 complete** (2026-07-30). §3's baseline still describes the untouched Emergent
   output and is kept as the historical reference point; §6 records what each module changed.
   ⚠️ **§3's "Design language" subsection is now history, not current state** — the 281 hex literals,
   the 13 rival palettes and the four NFR-6a failures it records were all resolved in Module 1.
-- **Handoff state:** Module 0 is **merged** — PR #1 landed on `master` (`aa80d1a`, 2026-07-29) and
-  local `master` is up to date. Module 1 runs on `module/1-design-system`, branched from that commit.
-- **Verified green as of 2026-07-29:** `yarn doctor` 18/18 · `yarn lint` 0 errors (14 pre-existing
+- **Handoff state:** **Module 1 is finished and awaiting the owner.** Nine commits sit on
+  `module/1-design-system` (branched from `aa80d1a`), **committed but not pushed and with no PR
+  open** — per C-6 the owner does both. A new session must not assume this work is on `master`;
+  `git log master..module/1-design-system` shows what is pending. Module 0 is merged (PR #1).
+- **Verified green as of 2026-07-30:** `yarn doctor` 18/18 · `yarn lint` 0 errors (14 pre-existing
   warnings, one fewer than Module 0) · `yarn typecheck:baseline` clean · `expo export --platform ios`
-  bundles (6.48 MB) · every screen re-checked on the iPhone 16 Plus simulator.
+  bundles · every screen re-checked on the iPhone 16 Plus simulator.
   ⚠️ `yarn lint` caches to **`.expo/cache/eslint`**. If it reports errors that `npx eslint app src
   --no-cache` does not, `rm -rf .expo/cache` before believing it — this cost time in Module 1.
 - **C-2 is now proven, not just configured.** The first EAS build ran on 2026-07-28
@@ -64,7 +66,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | # | Module | Status | One-line rationale for its position |
 |---|---|---|---|
 | 0 | Build & project foundation | **Complete** (2026-07-28) | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
-| 1 | Design system & theming | **Complete** (2026-07-29) | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
+| 1 | Design system & theming | **Complete** (2026-07-30) | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
 | 2 | State & data layer | Not started | Every subsequent module plugs into it; nothing can reach the backend until it exists |
 | 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me` |
 | 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
@@ -573,7 +575,7 @@ find-and-replace on `#5B2C70` would miss every occurrence. Corroborating the §3
 `src/theme/colors.ts` line 1 states outright that its tokens were *"extracted from the original
 Tailwind config"*.
 
-### Module 1 — Design system & theming (completed 2026-07-29)
+### Module 1 — Design system & theming (completed 2026-07-30)
 
 **Changed:**
 
