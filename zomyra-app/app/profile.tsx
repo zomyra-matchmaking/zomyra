@@ -35,7 +35,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -48,6 +47,7 @@ import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
 import { useRequestsStore } from "@/src/stores/requests-store";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80&auto=format&fit=crop";
@@ -215,13 +215,11 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <Pressable
+          <Touchable
+            feedback="scale"
             testID="profile-see-plans"
             onPress={() => router.push("/premium" as never)}
-            style={({ pressed }) => [
-              styles.premiumCta,
-              pressed && { transform: [{ scale: 0.985 }] },
-            ]}
+            style={[styles.premiumCta]}
           >
             <LinearGradient
               colors={colors.gradient.brand}
@@ -232,7 +230,7 @@ export default function ProfileScreen() {
               <Crown size={16} color={colors.premium.onDark} strokeWidth={2} fill={colors.premium.onDark} />
               <Text style={styles.premiumCtaText}>See Premium Plans</Text>
             </LinearGradient>
-          </Pressable>
+          </Touchable>
         </View>
         ) : null}
       </ScrollView>
@@ -277,14 +275,10 @@ function ActionRow({
   last?: boolean;
 }) {
   return (
-    <Pressable
+    <Touchable
       testID={testID}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.row,
-        last && { paddingBottom: 16 },
-        pressed && { opacity: 0.85 },
-      ]}
+      style={[styles.row, last && { paddingBottom: 16 }]}
     >
       <View style={[styles.rowIcon, { backgroundColor: iconBg }]}>
         <Icon size={20} color={iconColor} strokeWidth={2} />
@@ -301,7 +295,7 @@ function ActionRow({
         </View>
       ) : null}
       <ChevronRight size={18} color={colors.text.muted} strokeWidth={2} />
-    </Pressable>
+    </Touchable>
   );
 }
 
@@ -349,8 +343,8 @@ function LogoutDialog({
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      <Pressable style={styles.dialogBackdrop} onPress={onCancel}>
-        <Pressable style={styles.dialogCard} onPress={() => {}}>
+      <Touchable style={styles.dialogBackdrop} onPress={onCancel}>
+        <Touchable style={styles.dialogCard} onPress={() => {}}>
           <View style={styles.dialogIconCircleDanger}>
             <LogOut size={22} color={colors.danger.default} strokeWidth={2} />
           </View>
@@ -360,29 +354,24 @@ function LogoutDialog({
             sign back in anytime.
           </Text>
           <View style={styles.dialogActions}>
-            <Pressable
+            <Touchable
               testID="logout-cancel"
               onPress={onCancel}
-              style={({ pressed }) => [
-                styles.dialogCancel,
-                pressed && { opacity: 0.85 },
-              ]}
+              style={[styles.dialogCancel]}
             >
               <Text style={styles.dialogCancelText}>Cancel</Text>
-            </Pressable>
-            <Pressable
+            </Touchable>
+            <Touchable
+              feedback="scale"
               testID="logout-confirm"
               onPress={onConfirm}
-              style={({ pressed }) => [
-                styles.dialogDanger,
-                pressed && { transform: [{ scale: 0.985 }] },
-              ]}
+              style={[styles.dialogDanger]}
             >
               <Text style={styles.dialogDangerText}>Log out</Text>
-            </Pressable>
+            </Touchable>
           </View>
-        </Pressable>
-      </Pressable>
+        </Touchable>
+      </Touchable>
     </Modal>
   );
 }
@@ -457,7 +446,7 @@ function DeleteAccountDialog({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.dialogBackdrop}
       >
-        <Pressable
+        <Touchable
           style={StyleSheet.absoluteFill}
           onPress={close}
           testID="delete-backdrop"
@@ -470,17 +459,14 @@ function DeleteAccountDialog({
             <Text style={styles.deleteHeaderTitle}>
               {step === 1 ? "Delete account" : "Confirm account deletion"}
             </Text>
-            <Pressable
+            <Touchable
               testID="delete-close"
               onPress={close}
               hitSlop={10}
-              style={({ pressed }) => [
-                styles.deleteCloseBtn,
-                pressed && { opacity: 0.7 },
-              ]}
+              style={[styles.deleteCloseBtn]}
             >
               <X size={18} color={colors.text.primary} strokeWidth={2.2} />
-            </Pressable>
+            </Touchable>
           </View>
 
           {step === 1 ? (
@@ -505,7 +491,7 @@ function DeleteAccountDialog({
                 {REASONS.map((r) => {
                   const active = reason === r;
                   return (
-                    <Pressable
+                    <Touchable
                       key={r}
                       testID={`delete-reason-${r}`}
                       onPress={() => setReason(r)}
@@ -519,7 +505,7 @@ function DeleteAccountDialog({
                       >
                         {r}
                       </Text>
-                    </Pressable>
+                    </Touchable>
                   );
                 })}
               </View>
@@ -537,15 +523,12 @@ function DeleteAccountDialog({
                 <Text style={styles.feedbackCount}>{feedback.length}/200</Text>
               </View>
 
-              <Pressable
+              <Touchable
+                feedback="scale"
                 testID="delete-continue"
                 disabled={!canContinue}
                 onPress={() => animateTo(2)}
-                style={({ pressed }) => [
-                  styles.continueBtn,
-                  canContinue ? styles.continueBtnActive : styles.continueBtnDisabled,
-                  pressed && canContinue && { transform: [{ scale: 0.985 }] },
-                ]}
+                style={[styles.continueBtn, canContinue ? styles.continueBtnActive : styles.continueBtnDisabled]}
               >
                 <Text
                   style={[
@@ -557,7 +540,7 @@ function DeleteAccountDialog({
                 >
                   Continue
                 </Text>
-              </Pressable>
+              </Touchable>
               <Text style={styles.continueHelper}>
                 This helps us prevent accidental deletions.
               </Text>
@@ -582,35 +565,29 @@ function DeleteAccountDialog({
                   style={styles.deleteInput}
                 />
               </View>
-              <Pressable
+              <Touchable
+                feedback="scale"
                 testID="delete-confirm"
                 disabled={!canDelete}
                 onPress={onConfirm}
-                style={({ pressed }) => [
-                  styles.deleteCta,
-                  canDelete ? styles.deleteCtaActive : styles.deleteCtaDisabled,
-                  pressed && canDelete && { transform: [{ scale: 0.985 }] },
-                ]}
+                style={[styles.deleteCta, canDelete ? styles.deleteCtaActive : styles.deleteCtaDisabled]}
               >
                 <Trash2 size={18} color={colors.text.onBrand} strokeWidth={2.4} />
                 <Text style={styles.deleteCtaText}>Delete my account</Text>
-              </Pressable>
+              </Touchable>
               <View style={styles.lockNoteRow}>
                 <View style={styles.lockNoteDot} />
                 <Text style={styles.lockNote}>
                   Your account and all data will be permanently deleted.
                 </Text>
               </View>
-              <Pressable
+              <Touchable
                 testID="delete-back"
                 onPress={() => animateTo(1)}
-                style={({ pressed }) => [
-                  styles.backLink,
-                  pressed && { opacity: 0.7 },
-                ]}
+                style={[styles.backLink]}
               >
                 <Text style={styles.backLinkText}>← Back</Text>
-              </Pressable>
+              </Touchable>
             </View>
           )}
         </Animated.View>

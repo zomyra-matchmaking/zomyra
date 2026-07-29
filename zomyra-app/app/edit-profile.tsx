@@ -44,7 +44,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -64,6 +63,7 @@ import type {
   Smoking,
 } from "@/src/lib/onboarding/types";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 // Design tokens — match Discover so the screens feel related.
 
@@ -153,23 +153,23 @@ export default function EditProfileScreen() {
       >
         {/* ── Sticky header ── */}
         <View style={styles.header}>
-          <Pressable
+          <Touchable
             testID="edit-back"
             onPress={() => router.back()}
             hitSlop={10}
-            style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
+            style={[styles.iconBtn]}
           >
             <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
-          </Pressable>
+          </Touchable>
           <Text style={styles.headerTitle}>Edit Profile</Text>
-          <Pressable
+          <Touchable
             testID="edit-done"
             onPress={() => router.back()}
             hitSlop={10}
-            style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.85 }]}
+            style={[styles.doneBtn]}
           >
             <Text style={styles.doneText}>Done</Text>
-          </Pressable>
+          </Touchable>
         </View>
 
         <ScrollView
@@ -218,17 +218,17 @@ export default function EditProfileScreen() {
 
           {/* ── Primary photo card (hero) ── */}
           <SectionCard kicker="PRIMARY PHOTO" Icon={Camera} testID="card-primary-photo">
-            <Pressable
+            <Touchable
               testID="edit-primary-photo"
               onPress={() => pickPhoto(state.photos.length > 0 ? 0 : null)}
-              style={({ pressed }) => [styles.heroPhotoWrap, pressed && { opacity: 0.95 }]}
+              style={[styles.heroPhotoWrap]}
             >
               <Image source={{ uri: photos[0] }} style={styles.heroPhoto} />
               <View style={styles.heroEditChip}>
                 <Pencil size={14} color={colors.text.onBrand} strokeWidth={2.4} />
                 <Text style={styles.heroEditText}>Change photo</Text>
               </View>
-            </Pressable>
+            </Touchable>
             <Text style={styles.helper}>
               This is the first photo people see in Discover. Make it count.
             </Text>
@@ -242,30 +242,25 @@ export default function EditProfileScreen() {
                 return (
                   <View key={`${realIdx}-${src.slice(-12)}`} style={styles.photoTile}>
                     <Image source={{ uri: src }} style={styles.photoTileImage} />
-                    <Pressable
+                    <Touchable
                       onPress={() => removePhoto(realIdx)}
-                      style={({ pressed }) => [
-                        styles.photoTileDelete,
-                        pressed && { opacity: 0.85 },
-                      ]}
+                      style={[styles.photoTileDelete]}
                       hitSlop={6}
                     >
                       <Trash2 size={13} color={colors.text.onBrand} strokeWidth={2.4} />
-                    </Pressable>
+                    </Touchable>
                   </View>
                 );
               })}
-              <Pressable
+              <Touchable
+                feedback="scale"
                 testID="edit-add-photo"
                 onPress={() => pickPhoto(null)}
-                style={({ pressed }) => [
-                  styles.photoAdd,
-                  pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
-                ]}
+                style={[styles.photoAdd]}
               >
                 <Plus size={22} color={colors.brand.default} strokeWidth={2.4} />
                 <Text style={styles.photoAddText}>Add photo</Text>
-              </Pressable>
+              </Touchable>
             </View>
           </SectionCard>
 
@@ -492,10 +487,10 @@ function PickField({
   testID?: string;
 }) {
   return (
-    <Pressable
+    <Touchable
       testID={testID}
       onPress={onPress}
-      style={({ pressed }) => [styles.fieldRow, pressed && { opacity: 0.85 }]}
+      style={[styles.fieldRow]}
     >
       <View style={styles.fieldIcon}>
         <Icon size={16} color={colors.brand.default} strokeWidth={2.2} />
@@ -513,7 +508,7 @@ function PickField({
         </Text>
       </View>
       <Pencil size={15} color={colors.text.muted} strokeWidth={2} />
-    </Pressable>
+    </Touchable>
   );
 }
 
@@ -536,31 +531,28 @@ function PickerSheet({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <Pressable style={styles.sheetBackdrop} onPress={onClose} testID="picker-backdrop">
-        <Pressable style={styles.sheet} onPress={() => {}}>
+      <Touchable style={styles.sheetBackdrop} onPress={onClose} testID="picker-backdrop">
+        <Touchable style={styles.sheet} onPress={() => {}}>
           <View style={styles.sheetGrabber} />
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>{picker?.title ?? ""}</Text>
-            <Pressable onPress={onClose} hitSlop={8} style={styles.sheetClose}>
+            <Touchable onPress={onClose} hitSlop={8} style={styles.sheetClose}>
               <X size={18} color={colors.text.primary} strokeWidth={2.2} />
-            </Pressable>
+            </Touchable>
           </View>
           <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
             {picker?.options.map((opt) => {
               const active = picker.current === opt;
               return (
-                <Pressable
+                <Touchable
+                  feedback="highlight"
                   key={opt}
                   testID={`picker-opt-${opt}`}
                   onPress={() => {
                     picker.onPick(opt);
                     onClose();
                   }}
-                  style={({ pressed }) => [
-                    styles.sheetItem,
-                    active && styles.sheetItemActive,
-                    pressed && !active && { backgroundColor: colors.surface.brand },
-                  ]}
+                  style={[styles.sheetItem, active && styles.sheetItemActive]}
                 >
                   <Text
                     style={[
@@ -571,12 +563,12 @@ function PickerSheet({
                     {opt}
                   </Text>
                   {active ? <CheckCircle2 size={18} color={colors.brand.default} strokeWidth={2.2} /> : null}
-                </Pressable>
+                </Touchable>
               );
             })}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </Touchable>
+      </Touchable>
     </Modal>
   );
 }

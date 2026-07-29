@@ -1,22 +1,14 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CountrySelector } from "@/src/components/auth/CountrySelector";
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { DEFAULT_COUNTRY, type Country } from "@/src/lib/countries";
 import { authService } from "@/src/services/auth";
-import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { colors, fontSize, fontWeight } from "@/src/theme";
+import { Button, Input } from "@/src/components/ui";
 
 export default function PhoneScreen() {
   const router = useRouter();
@@ -74,26 +66,24 @@ export default function PhoneScreen() {
                 setTouched(false);
               }}
             />
-            <TextInput
+            <Input
               testID="phone-input"
               value={phone}
               onChangeText={onChangePhone}
               onBlur={() => setTouched(true)}
               keyboardType="number-pad"
               placeholder="Enter mobile number"
-              placeholderTextColor={colors.text.muted}
               autoComplete="tel"
               autoCorrect={false}
               textContentType="telephoneNumber"
-              style={[styles.input, showError && { borderColor: colors.danger.default }]}
+              error={
+                showError
+                  ? `Enter a valid ${country.length}-digit number for ${country.name}.`
+                  : undefined
+              }
+              containerStyle={styles.inputWrap}
             />
           </View>
-
-          {showError ? (
-            <Text style={styles.errorText}>
-              Enter a valid {country.length}-digit number for {country.name}.
-            </Text>
-          ) : null}
 
           <Text style={styles.hint}>
             {isValid
@@ -101,19 +91,15 @@ export default function PhoneScreen() {
               : "We'll send a verification code to your phone number."}
           </Text>
 
-          <Pressable
+          <Button
             testID="phone-send-otp"
-            disabled={!isValid || sending}
+            label={sending ? "Sending OTP…" : "Send OTP"}
+            loading={sending}
+            disabled={!isValid}
             onPress={send}
-            style={({ pressed }) => [
-              styles.cta,
-              (!isValid || sending) && styles.ctaDisabled,
-              pressed && isValid && { opacity: 0.92 },
-            ]}
-          >
-            {sending ? <ActivityIndicator color={colors.brand.onBrand} /> : null}
-            <Text style={styles.ctaText}>{sending ? "Sending OTP…" : "Send OTP"}</Text>
-          </Pressable>
+            fullWidth
+            style={styles.cta}
+          />
 
           <View style={{ flex: 1 }} />
 
@@ -139,27 +125,8 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: colors.text.muted,
   },
-  row: { marginTop: 24, flexDirection: "row", gap: 8, alignItems: "stretch" },
-  input: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    minWidth: 0,
-    height: 52,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border.neutral,
-    backgroundColor: colors.surface.default,
-    paddingHorizontal: 16,
-    fontSize: fontSize.title,
-    color: colors.text.primary,
-  },
-  errorText: {
-    marginTop: 8,
-    fontSize: fontSize.label,
-    fontWeight: fontWeight.semibold,
-    color: colors.danger.default,
-  },
+  row: { marginTop: 24, flexDirection: "row", gap: 8, alignItems: "flex-start" },
+  inputWrap: { flex: 1, minWidth: 0 },
   hint: {
     marginTop: 14,
     fontSize: fontSize.caption,
@@ -170,22 +137,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontWeight: fontWeight.bold,
   },
-  cta: {
-    marginTop: 18,
-    height: 52,
-    borderRadius: radii.lg,
-    backgroundColor: colors.brand.default,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  ctaDisabled: { backgroundColor: colors.surface.disabled },
-  ctaText: {
-    color: colors.brand.onBrand,
-    fontSize: fontSize.bodyLarge,
-    fontWeight: fontWeight.bold,
-  },
+  cta: { marginTop: 18 },
   legal: {
     textAlign: "center",
     fontSize: fontSize.caption,

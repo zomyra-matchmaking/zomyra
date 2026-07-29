@@ -3,7 +3,7 @@
  */
 import { Crown, Search } from "lucide-react-native";
 import { useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useChatStore } from "@/src/stores/chat-store";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 export default function ChatsList() {
   const router = useRouter();
@@ -25,12 +26,12 @@ export default function ChatsList() {
           <Text style={styles.title}>Chats</Text>
           <Text style={styles.subtitle}>Your conversations</Text>
         </View>
-        <Pressable
+        <Touchable
           testID="chats-search"
-          style={({ pressed }) => [styles.searchBtn, pressed && { opacity: 0.85 }]}
+          style={[styles.searchBtn]}
         >
           <Search size={16} color={colors.text.muted} />
-        </Pressable>
+        </Touchable>
       </View>
 
       {conversations.length === 0 ? (
@@ -47,11 +48,12 @@ export default function ChatsList() {
           contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <Pressable
+            <Touchable
+              feedback="highlight"
               testID={`chat-row-${item.id}`}
               onPress={() => router.push(`/chats/${item.id}` as never)}
               onLongPress={() => setPendingUnmatch(item.id)}
-              style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface.brand }]}
+              style={[styles.row]}
             >
               <Image source={{ uri: item.avatar }} style={styles.avatar} />
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -92,7 +94,7 @@ export default function ChatsList() {
                   ) : null}
                 </View>
               </View>
-            </Pressable>
+            </Touchable>
           )}
         />
       )}

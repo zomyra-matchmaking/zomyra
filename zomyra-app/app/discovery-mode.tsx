@@ -16,12 +16,13 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
 import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type Option = {
   key: CompatibilityDimension;
@@ -97,15 +98,11 @@ export default function DiscoveryMode() {
           {OPTIONS.map((opt) => {
             const active = draft === opt.key;
             return (
-              <Pressable
+              <Touchable
                 key={opt.key}
                 testID={`discovery-mode-${opt.key}`}
                 onPress={() => setDraft(opt.key)}
-                style={({ pressed }) => [
-                  styles.option,
-                  active && styles.optionActive,
-                  pressed && { opacity: 0.92 },
-                ]}
+                style={[styles.option, active && styles.optionActive]}
               >
                 <View
                   style={[styles.optionIconWrap, active && styles.optionIconWrapActive]}
@@ -128,20 +125,18 @@ export default function DiscoveryMode() {
                 <View style={[styles.radio, active && styles.radioActive]}>
                   {active ? <View style={styles.radioDot} /> : null}
                 </View>
-              </Pressable>
+              </Touchable>
             );
           })}
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <Pressable
+        <Touchable
+          feedback="scale"
           testID="discovery-mode-continue"
           onPress={apply}
-          style={({ pressed }) => [
-            styles.cta,
-            pressed && { transform: [{ scale: 0.98 }] },
-          ]}
+          style={[styles.cta]}
         >
           <LinearGradient
             colors={colors.gradient.brand}
@@ -151,7 +146,7 @@ export default function DiscoveryMode() {
           >
             <Text style={styles.ctaText}>Show me matches</Text>
           </LinearGradient>
-        </Pressable>
+        </Touchable>
       </View>
     </SafeAreaView>
   );

@@ -10,11 +10,12 @@ import {
   Crown,
   Sparkles,
 } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useRequestsStore } from "@/src/stores/requests-store";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const BENEFITS = [
   "Unlock all premium filters (Height, Income, Family, Education, more)",
@@ -32,14 +33,14 @@ export default function PremiumScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.header}>
-        <Pressable
+        <Touchable
           testID="premium-back"
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.headerBtn]}
           hitSlop={8}
         >
           <ArrowLeft size={22} color={colors.text.primary} strokeWidth={2} />
-        </Pressable>
+        </Touchable>
         <Text style={styles.headerTitle}>Premium</Text>
         <View style={styles.headerBtn} />
       </View>
@@ -92,13 +93,11 @@ export default function PremiumScreen() {
           </View>
         </View>
 
-        <Pressable
+        <Touchable
+          feedback="scale"
           testID="premium-purchase"
           onPress={() => setPremium(!premium)}
-          style={({ pressed }) => [
-            styles.cta,
-            pressed && { transform: [{ scale: 0.985 }] },
-          ]}
+          style={[styles.cta]}
         >
           <LinearGradient
             colors={colors.gradient.brand}
@@ -111,7 +110,7 @@ export default function PremiumScreen() {
               {premium ? "You're Premium" : "Upgrade to Premium"}
             </Text>
           </LinearGradient>
-        </Pressable>
+        </Touchable>
 
         <Text style={styles.fine}>
           Subscription auto-renews. Cancel anytime in your account settings.

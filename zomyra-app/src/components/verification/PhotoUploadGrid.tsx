@@ -7,13 +7,14 @@
 import { GripVertical, ImagePlus, Star, Trash2 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Linking, StyleSheet, Text, View } from "react-native";
 
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { toast } from "@/src/components/ui/Toast";
 import { MAX_PHOTOS, type UploadedPhoto } from "@/src/lib/verification/types";
 import { uploadService } from "@/src/services/upload";
 import { colors, radii, alpha, fontSize, fontWeight } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 // Short, warm, matrimony-appropriate prompts shown on the empty upload
 // slots. Each hints at what kind of photo would work well for that slot.
@@ -90,16 +91,16 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
                   <View style={styles.gripBadge}>
                     <GripVertical size={12} color={colors.text.muted} />
                   </View>
-                  <Pressable
+                  <Touchable
                     testID={`delete-photo-${i}`}
                     onPress={() => setPendingDelete(slot.id)}
                     style={styles.removeBtn}
                   >
                     <Trash2 size={14} color={colors.danger.default} />
-                  </Pressable>
+                  </Touchable>
                 </View>
               ) : (
-                <Pressable
+                <Touchable
                   testID={`upload-slot-${i}`}
                   onPress={pick}
                   style={[styles.tile, styles.placeholder]}
@@ -109,7 +110,7 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
                     {prompt}
                   </Text>
                   <Text style={styles.placeholderHint}>{isRequired ? "REQUIRED" : "OPTIONAL"}</Text>
-                </Pressable>
+                </Touchable>
               )}
             </View>
           );

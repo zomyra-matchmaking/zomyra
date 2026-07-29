@@ -6,13 +6,14 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { Camera, Check, Clock, ImagePlus, ShieldCheck, Sun, UserCircle2, X } from "lucide-react-native";
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingShell } from "@/src/components/onboarding/OnboardingShell";
 import { PhotoUploadGrid } from "@/src/components/verification/PhotoUploadGrid";
 import { MIN_PHOTOS } from "@/src/lib/verification/types";
 import { useVerificationStore } from "@/src/stores/verification-store";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const TOTAL = 6;
 
@@ -174,18 +175,18 @@ export default function VerifyScreen() {
               <ImagePlus size={28} color={colors.text.muted} />
             )}
           </View>
-          <Pressable
+          <Touchable
             testID="retake-selfie"
             onPress={() => {
               setSelfie(null);
               setStep(2);
               captureSelfie();
             }}
-            style={({ pressed }) => [styles.retakeBtn, pressed && { opacity: 0.9 }]}
+            style={[styles.retakeBtn]}
           >
             <Camera size={16} color={colors.text.primary} />
             <Text style={styles.retakeText}>Retake Selfie</Text>
-          </Pressable>
+          </Touchable>
         </View>
       </OnboardingShell>
     );

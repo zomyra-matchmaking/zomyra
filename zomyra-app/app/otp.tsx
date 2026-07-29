@@ -1,10 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -16,6 +14,7 @@ import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { toast } from "@/src/components/ui/Toast";
 import { authService } from "@/src/services/auth";
 import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { Button, Touchable } from "@/src/components/ui";
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -166,29 +165,25 @@ export default function OtpScreen() {
                 {" "}Resend in {mm}:{ss}
               </Text>
             ) : (
-              <Pressable testID="otp-resend" onPress={resend} disabled={resending} hitSlop={6}>
+              <Touchable testID="otp-resend" onPress={resend} disabled={resending} hitSlop={6}>
                 <Text style={{ color: colors.brand.default, fontWeight: fontWeight.bold, fontSize: fontSize.label }}>
                   {" "}{resending ? "Resending…" : "Resend OTP"}
                 </Text>
-              </Pressable>
+              </Touchable>
             )}
           </View>
 
           <View style={{ flex: 1 }} />
 
-          <Pressable
+          <Button
             testID="otp-verify"
-            disabled={!isComplete || verifying}
+            label={verifying ? "Verifying…" : "Verify & Continue"}
+            loading={verifying}
+            disabled={!isComplete}
             onPress={verify}
-            style={({ pressed }) => [
-              styles.cta,
-              (!isComplete || verifying) && styles.ctaDisabled,
-              pressed && isComplete && { opacity: 0.92 },
-            ]}
-          >
-            {verifying ? <ActivityIndicator color={colors.brand.onBrand} /> : null}
-            <Text style={styles.ctaText}>{verifying ? "Verifying…" : "Verify & Continue"}</Text>
-          </Pressable>
+            fullWidth
+            style={styles.cta}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -229,16 +224,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   resendRow: { marginTop: 16, flexDirection: "row", justifyContent: "center", alignItems: "center" },
-  cta: {
-    height: 52,
-    borderRadius: radii.lg,
-    backgroundColor: colors.brand.default,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 18,
-  },
-  ctaDisabled: { backgroundColor: colors.surface.disabled },
-  ctaText: { color: colors.brand.onBrand, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold },
+  cta: { marginBottom: 18 },
 });

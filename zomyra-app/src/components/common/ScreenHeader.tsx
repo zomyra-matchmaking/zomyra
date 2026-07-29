@@ -1,19 +1,20 @@
 import { ArrowLeft } from "lucide-react-native";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { colors, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 export function ScreenHeader({ onBack }: { onBack: () => void }) {
   return (
     <View style={styles.row}>
-      <Pressable
+      <Touchable
         testID="screen-header-back"
         onPress={onBack}
-        style={({ pressed }) => [styles.btn, pressed && { opacity: 0.7 }]}
+        style={[styles.btn]}
         hitSlop={8}
       >
         <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
-      </Pressable>
+      </Touchable>
     </View>
   );
 }

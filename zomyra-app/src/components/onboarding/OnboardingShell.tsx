@@ -6,7 +6,6 @@ import {
   Easing,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type Props = {
   step: number;
@@ -134,14 +134,14 @@ export function OnboardingShell({
       >
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <Pressable
+            <Touchable
               testID="onboarding-back"
               onPress={onBack}
-              style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+              style={[styles.backBtn]}
               hitSlop={8}
             >
               <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
-            </Pressable>
+            </Touchable>
             {!hideStepLabel ? (
               <Text style={styles.stepLabel}>
                 Step {step + 1} of {total}
@@ -177,19 +177,15 @@ export function OnboardingShell({
 
         {!hideNext ? (
           <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-            <Pressable
+            <Touchable
               testID="onboarding-next"
               disabled={!canNext || loading}
               onPress={onNext}
-              style={({ pressed }) => [
-                styles.nextBtn,
-                (!canNext || loading) && styles.nextBtnDisabled,
-                pressed && canNext && { opacity: 0.92 },
-              ]}
+              style={[styles.nextBtn, (!canNext || loading) && styles.nextBtnDisabled]}
             >
               {loading ? <ActivityIndicator color={colors.brand.onBrand} /> : null}
               <Text style={styles.nextLabel}>{nextLabel}</Text>
-            </Pressable>
+            </Touchable>
           </View>
         ) : (
           <View style={{ paddingBottom: Math.max(insets.bottom, 12) }} />

@@ -8,7 +8,6 @@ import {
   Dimensions,
   Keyboard,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,6 +16,7 @@ import {
 } from "react-native";
 
 import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 /* ============ OptionCard ============ */
 type OptionCardProps = {
@@ -29,15 +29,11 @@ type OptionCardProps = {
 
 export function OptionCard({ selected, onSelect, title, description, compact }: OptionCardProps) {
   return (
-    <Pressable
+    <Touchable
+      feedback="scale"
       testID={`option-${title}`}
       onPress={onSelect}
-      style={({ pressed }) => [
-        styles.optCard,
-        compact ? styles.optCardCompact : null,
-        selected ? styles.optCardSelected : null,
-        pressed && { transform: [{ scale: 0.99 }] },
-      ]}
+      style={[styles.optCard, compact ? styles.optCardCompact : null, selected ? styles.optCardSelected : null]}
     >
       <View style={{ flex: 1 }}>
         <Text style={[styles.optTitle, compact && { fontSize: fontSize.body }]}>{title}</Text>
@@ -48,7 +44,7 @@ export function OptionCard({ selected, onSelect, title, description, compact }: 
           <Check size={12} color={colors.brand.onBrand} strokeWidth={3.5} />
         </View>
       ) : null}
-    </Pressable>
+    </Touchable>
   );
 }
 
@@ -73,15 +69,12 @@ export function OptionGrid<T extends string>({
       {options.map((opt) => {
         const selected = value === opt;
         return (
-          <Pressable
+          <Touchable
+            feedback="scale"
             key={opt}
             testID={`option-${opt}`}
             onPress={() => onChange(opt)}
-            style={({ pressed }) => [
-              styles.chipCard,
-              selected && styles.chipCardSelected,
-              pressed && { transform: [{ scale: 0.97 }] },
-            ]}
+            style={[styles.chipCard, selected && styles.chipCardSelected]}
           >
             <Text
               numberOfLines={1}
@@ -94,7 +87,7 @@ export function OptionGrid<T extends string>({
                 <Check size={10} color={colors.brand.onBrand} strokeWidth={3.5} />
               </View>
             ) : null}
-          </Pressable>
+          </Touchable>
         );
       })}
     </View>
@@ -119,18 +112,14 @@ export function ChipGroup({
       {options.map((opt) => {
         const selected = value.includes(opt);
         return (
-          <Pressable
+          <Touchable
             key={opt}
             testID={`chip-${opt}`}
             onPress={() => toggle(opt)}
-            style={({ pressed }) => [
-              styles.chip,
-              selected && styles.chipSelected,
-              pressed && { opacity: 0.9 },
-            ]}
+            style={[styles.chip, selected && styles.chipSelected]}
           >
             <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{opt}</Text>
-          </Pressable>
+          </Touchable>
         );
       })}
     </View>
@@ -331,14 +320,14 @@ export function SearchableSelect({
               {filtered.map((item) => {
                 const selected = item === value;
                 return (
-                  <Pressable
+                  <Touchable
                     key={item}
                     testID={`suggestion-${item}`}
                     onPress={() => commit(item)}
-                    style={({ pressed }) => [
+                    feedback="highlight"
+                    style={[
                       styles.suggestItem,
                       selected && styles.suggestItemSelected,
-                      pressed && styles.suggestItemPressed,
                     ]}
                   >
                     <Text
@@ -352,7 +341,7 @@ export function SearchableSelect({
                     {selected ? (
                       <Check size={16} color={colors.brand.default} />
                     ) : null}
-                  </Pressable>
+                  </Touchable>
                 );
               })}
             </ScrollView>
@@ -391,13 +380,13 @@ export function SearchableSelect({
           returnKeyType="done"
         />
         {q.length > 0 ? (
-          <Pressable
+          <Touchable
             testID="searchable-select-clear"
             onPress={clear}
             hitSlop={8}
           >
             <X size={16} color={colors.text.muted} />
-          </Pressable>
+          </Touchable>
         ) : null}
       </View>
 
@@ -612,9 +601,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border.default,
-  },
-  suggestItemPressed: {
-    backgroundColor: colors.surface.brand,
   },
   suggestItemSelected: {
     backgroundColor: colors.surface.brand,

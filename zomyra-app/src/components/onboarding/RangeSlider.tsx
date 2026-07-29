@@ -3,13 +3,7 @@
  * thumb so taps and drags both work correctly.
  */
 import { useRef, useState } from "react";
-import {
-  LayoutChangeEvent,
-  PanResponder,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from "react-native";
 
 import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 

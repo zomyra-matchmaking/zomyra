@@ -1,10 +1,15 @@
 import { Phone } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { toast } from "@/src/components/ui/Toast";
-import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { Button, Touchable } from "@/src/components/ui";
+
+function GoogleG() {
+  return <Text style={styles.googleG}>G</Text>;
+}
 
 export default function Login() {
   const router = useRouter();
@@ -27,23 +32,24 @@ export default function Login() {
 
         {/* Bottom — anchored auth CTAs */}
         <View style={styles.bottom}>
-          <Pressable
+          <Button
             testID="login-continue-google"
+            label="Continue with Google"
+            variant="ghost"
+            icon={GoogleG}
             onPress={() => toast.show("Google sign-in coming soon")}
-            style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.92 }]}
-          >
-            <Text style={styles.googleG}>G</Text>
-            <Text style={styles.secondaryBtnText}>Continue with Google</Text>
-          </Pressable>
+            fullWidth
+            style={styles.authBtn}
+          />
 
-          <Pressable
+          <Button
             testID="login-continue-phone"
+            label="Continue with Phone"
+            icon={Phone}
             onPress={() => router.push("/phone")}
-            style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.92 }]}
-          >
-            <Phone size={20} color={colors.brand.onBrand} strokeWidth={2.4} />
-            <Text style={styles.primaryBtnText}>Continue with Phone</Text>
-          </Pressable>
+            fullWidth
+            style={styles.authBtn}
+          />
 
           <Text style={styles.legal}>
             By continuing, you agree to our{" "}
@@ -69,13 +75,13 @@ export default function Login() {
           {/* TEMPORARY: dev skip — jumps straight to Discover, bypassing  */}
           {/* phone/otp/onboarding/verify/matching. REMOVE before launch.  */}
           {/* ────────────────────────────────────────────────────────────── */}
-          <Pressable
+          <Touchable
             testID="login-dev-skip"
             onPress={() => router.replace("/discover")}
-            style={({ pressed }) => [styles.devSkipBtn, pressed && { opacity: 0.7 }]}
+            style={styles.devSkipBtn}
           >
             <Text style={styles.devSkipText}>[DEV] Skip to Discover →</Text>
-          </Pressable>
+          </Touchable>
         </View>
       </View>
     </SafeAreaView>
@@ -117,37 +123,12 @@ const styles = StyleSheet.create({
   bottom: {
     gap: 12,
   },
-  primaryBtn: {
+  // Both auth CTAs are Buttons; this only makes them taller than the default
+  // `lg` and gives the primary its brand lift, since they are the hero of the
+  // screen rather than an inline action.
+  authBtn: {
     height: 56,
-    borderRadius: radii.lg,
-    backgroundColor: colors.brand.default,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    shadowColor: colors.brand.default,
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 18,
-    elevation: 4,
   },
-  primaryBtnText: {
-    color: colors.brand.onBrand,
-    fontSize: fontSize.title,
-    fontWeight: fontWeight.bold,
-  },
-  secondaryBtn: {
-    height: 56,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface.default,
-    borderWidth: 1,
-    borderColor: colors.border.neutral,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  secondaryBtnText: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
   googleG: {
     fontSize: fontSize.title,
     fontWeight: fontWeight.extrabold,

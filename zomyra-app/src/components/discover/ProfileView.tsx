@@ -40,16 +40,7 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  Dimensions,
-  Image,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Dimensions, Image, Modal, StyleSheet, Text, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -57,6 +48,7 @@ import Animated, {
 
 import type { CompatibilityDimension, DiscoverProfile } from "@/src/lib/discover/mock";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const SCREEN = Dimensions.get("window");
 const SCREEN_W = Math.min(SCREEN.width, 430);
@@ -193,17 +185,14 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         />
 
         {/* Compatibility chip — floats top-right; auto-collapses to icon-only. */}
-        <Pressable
+        <Touchable
           testID="discover-tier-chip"
           onPress={() => {
             setTierExpanded(true);
             setShowReason(true);
           }}
           hitSlop={8}
-          style={({ pressed }) => [
-            styles.heroTierChip,
-            pressed && { opacity: 0.9 },
-          ]}
+          style={[styles.heroTierChip]}
         >
           <Sparkles size={12} color={colors.text.onBrand} strokeWidth={2.4} />
           {tierExpanded ? (
@@ -217,11 +206,10 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
               </Text>
             </Animated.View>
           ) : null}
-        </Pressable>
+        </Touchable>
 
         {/* Tap hero to open the full-screen viewer */}
-        <TouchableOpacity
-          activeOpacity={0.95}
+        <Touchable
           onPress={() => setViewerPhoto(photos[0])}
           style={StyleSheet.absoluteFill as never}
           testID="discover-photo-0"
@@ -397,11 +385,11 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         onRequestClose={() => setShowReason(false)}
         statusBarTranslucent
       >
-        <Pressable
+        <Touchable
           style={styles.reasonBackdrop}
           onPress={() => setShowReason(false)}
         >
-          <Pressable style={styles.reasonCard} onPress={() => {}}>
+          <Touchable style={styles.reasonCard} onPress={() => {}}>
             <View style={styles.reasonChip}>
               <Sparkles size={12} color={colors.text.onBrand} strokeWidth={2.6} />
               <Text style={styles.reasonChipText}>
@@ -410,17 +398,14 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             </View>
             <Text style={styles.reasonTitle}>{reasonTitle}</Text>
             <Text style={styles.reasonBody}>{reason}</Text>
-            <Pressable
+            <Touchable
               onPress={() => setShowReason(false)}
-              style={({ pressed }) => [
-                styles.reasonCloseBtn,
-                pressed && { opacity: 0.9 },
-              ]}
+              style={[styles.reasonCloseBtn]}
             >
               <Text style={styles.reasonCloseText}>Got it</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
+            </Touchable>
+          </Touchable>
+        </Touchable>
       </Modal>
 
       {/* Full-screen photo viewer */}
@@ -432,16 +417,14 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         statusBarTranslucent
       >
         <View style={styles.viewerRoot}>
-          <TouchableOpacity
+          <Touchable
             testID="photo-viewer-close"
             onPress={() => setViewerPhoto(null)}
             style={styles.viewerClose}
-            activeOpacity={0.8}
           >
             <X size={22} color={colors.text.onBrand} strokeWidth={2} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={1}
+          </Touchable>
+          <Touchable
             onPress={() => setViewerPhoto(null)}
             style={styles.viewerBackdrop}
           >
@@ -452,7 +435,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
                 resizeMode="contain"
               />
             ) : null}
-          </TouchableOpacity>
+          </Touchable>
         </View>
       </Modal>
 
@@ -504,19 +487,16 @@ function ExpandableText({ text }: { text: string }) {
         {text}
       </Text>
       {isTruncatable ? (
-        <Pressable
+        <Touchable
           testID="about-toggle"
           onPress={() => setExpanded((v) => !v)}
           hitSlop={8}
-          style={({ pressed }) => [
-            styles.expandToggle,
-            pressed && { opacity: 0.7 },
-          ]}
+          style={[styles.expandToggle]}
         >
           <Text style={styles.expandToggleText}>
             {expanded ? "See less" : "See more"}
           </Text>
-        </Pressable>
+        </Touchable>
       ) : null}
     </View>
   );
@@ -537,8 +517,7 @@ function EditorialPhoto({
 }) {
   return (
     <View style={[styles.editorialPhotoWrap, last && { marginBottom: 8 }]}>
-      <TouchableOpacity
-        activeOpacity={0.95}
+      <Touchable
         onPress={onOpen}
         style={styles.editorialPhoto}
         testID={testID}
@@ -563,7 +542,7 @@ function EditorialPhoto({
             </View>
           </>
         ) : null}
-      </TouchableOpacity>
+      </Touchable>
     </View>
   );
 }

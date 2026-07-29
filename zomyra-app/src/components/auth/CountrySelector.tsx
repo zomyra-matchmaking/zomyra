@@ -3,19 +3,12 @@
  */
 import { Check, ChevronDown, Search } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import {
-  FlatList,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { FlatList, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, radii, fontSize, fontWeight } from "@/src/theme";
 import { COUNTRIES, type Country } from "@/src/lib/countries";
+import { Touchable } from "@/src/components/ui";
 
 type Props = {
   value: Country;
@@ -37,19 +30,19 @@ export function CountrySelector({ value, onChange }: Props) {
 
   return (
     <>
-      <Pressable
+      <Touchable
         testID="country-selector"
         onPress={() => setOpen(true)}
-        style={({ pressed }) => [styles.trigger, pressed && { opacity: 0.9 }]}
+        style={[styles.trigger]}
       >
         <Text style={styles.flag}>{value.flag}</Text>
         <Text style={styles.dial}>{value.dial}</Text>
         <ChevronDown size={14} color={colors.text.muted} strokeWidth={2.4} />
-      </Pressable>
+      </Touchable>
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <Pressable
+        <Touchable style={styles.backdrop} onPress={() => setOpen(false)}>
+          <Touchable
             style={[styles.sheet, { paddingBottom: insets.bottom + 8 }]}
             onPress={(e) => e.stopPropagation()}
           >
@@ -74,28 +67,26 @@ export function CountrySelector({ value, onChange }: Props) {
               renderItem={({ item }) => {
                 const selected = item.code === value.code && item.dial === value.dial;
                 return (
-                  <Pressable
+                  <Touchable
+                    feedback="highlight"
                     testID={`country-${item.code}`}
                     onPress={() => {
                       onChange(item);
                       setOpen(false);
                       setQ("");
                     }}
-                    style={({ pressed }) => [
-                      styles.row,
-                      pressed && { backgroundColor: colors.surface.brand },
-                    ]}
+                    style={[styles.row]}
                   >
                     <Text style={styles.rowFlag}>{item.flag}</Text>
                     <Text style={styles.rowName}>{item.name}</Text>
                     <Text style={styles.rowDial}>{item.dial}</Text>
                     {selected ? <Check size={16} color={colors.brand.default} /> : null}
-                  </Pressable>
+                  </Touchable>
                 );
               }}
             />
-          </Pressable>
-        </Pressable>
+          </Touchable>
+        </Touchable>
       </Modal>
     </>
   );

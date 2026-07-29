@@ -32,7 +32,7 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { useState, type ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DualRangeSlider } from "@/src/components/discover/DualRangeSlider";
@@ -43,6 +43,7 @@ import {
 } from "@/src/stores/discover-filters-store";
 import { useRequestsStore } from "@/src/stores/requests-store";
 import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type RowKey = "age" | "height" | MultiFilterKey;
 
@@ -141,7 +142,7 @@ export default function FiltersScreen() {
           {opts.map((opt) => {
             const active = selected.includes(opt);
             return (
-              <Pressable
+              <Touchable
                 key={opt}
                 testID={`filter-chip-${row.key}-${opt}`}
                 onPress={() => filters.toggle(row.key, opt)}
@@ -150,21 +151,18 @@ export default function FiltersScreen() {
                 <Text style={[styles.chipText, active && styles.chipTextActive]}>
                   {opt}
                 </Text>
-              </Pressable>
+              </Touchable>
             );
           })}
         </View>
         {selected.length > 0 ? (
-          <Pressable
+          <Touchable
             testID={`filter-clear-${row.key}`}
             onPress={() => filters.clear(row.key)}
-            style={({ pressed }) => [
-              styles.clearChip,
-              pressed && { opacity: 0.7 },
-            ]}
+            style={[styles.clearChip]}
           >
             <Text style={styles.clearChipText}>Clear all</Text>
-          </Pressable>
+          </Touchable>
         ) : null}
       </View>
     );
@@ -175,7 +173,7 @@ export default function FiltersScreen() {
     const isOpen = expanded === row.key;
     return (
       <View key={row.key}>
-        <Pressable
+        <Touchable
           testID={`filters-row-${row.key}`}
           onPress={() => toggleExpand(row.key, locked)}
           style={[
@@ -212,7 +210,7 @@ export default function FiltersScreen() {
               )}
             </>
           )}
-        </Pressable>
+        </Touchable>
         {isOpen && !locked ? renderEditor(row) : null}
         {isOpen && !last ? <View style={styles.dividerLine} /> : null}
       </View>
@@ -222,23 +220,23 @@ export default function FiltersScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.header}>
-        <Pressable
+        <Touchable
           testID="filters-back"
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.headerBtn]}
           hitSlop={8}
         >
           <ArrowLeft size={22} color={colors.text.primary} strokeWidth={2} />
-        </Pressable>
+        </Touchable>
         <Text style={styles.headerTitle}>Filters</Text>
-        <Pressable
+        <Touchable
           testID="filters-reset"
           onPress={filters.reset}
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.headerBtn]}
           hitSlop={8}
         >
           <Text style={styles.resetText}>Reset</Text>
-        </Pressable>
+        </Touchable>
       </View>
 
       <ScrollView

@@ -1,74 +1,69 @@
 /**
- * Lightweight bottom sheet using react-native Modal + Animated. Replaces
- * `vaul` from web. Two modes: full content height OR `snap` (0.7 of screen).
+ * Bottom sheet — the "half card". Replaces `vaul` from web. Sits on `Overlay`
+ * for the modal shell and scrim, and animates its own entrance, so it passes
+ * `animationType="none"` and drives the translate itself.
+ *
+ * `height` is a fraction of the screen. The two common cases have names:
+ * `SHEET_HALF` for a peek and `SHEET_TALL` for a near-full sheet (the default,
+ * which is what every existing call site wants).
  */
 import { useEffect, useRef, type ReactNode } from "react";
-import {
-  Animated,
-  Dimensions,
-  Modal,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Animated, Dimensions, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii } from "@/src/theme";
+import { colors, radii, spacing } from "@/src/theme";
+import { Overlay } from "./Overlay";
+
+/** Half the screen — a peek that leaves the context behind it visible. */
+export const SHEET_HALF = 0.5;
+/** Near-full. The default: enough room for a scrolling profile or filter list. */
+export const SHEET_TALL = 0.88;
 
 type Props = {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
-  /** Sheet height as a fraction of screen height (default 0.85). */
+  /** Sheet height as a fraction of screen height. */
   heightFraction?: number;
+  testID?: string;
 };
 
-export function BottomSheet({ open, onClose, children, heightFraction = 0.88 }: Props) {
+export function BottomSheet({
+  open,
+  onClose,
+  children,
+  heightFraction = SHEET_TALL,
+  testID = "bottom-sheet",
+}: Props) {
   const insets = useSafeAreaInsets();
   const screenH = Dimensions.get("window").height;
   const sheetH = screenH * heightFraction;
   const translate = useRef(new Animated.Value(sheetH)).current;
-  const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (open) {
-      Animated.parallel([
-        Animated.timing(translate, { toValue: 0, duration: 260, useNativeDriver: true }),
-        Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(translate, { toValue: sheetH, duration: 220, useNativeDriver: true }),
-        Animated.timing(fade, { toValue: 0, duration: 200, useNativeDriver: true }),
-      ]).start();
-    }
-  }, [open, sheetH, translate, fade]);
+    Animated.timing(translate, {
+      toValue: open ? 0 : sheetH,
+      duration: open ? 260 : 220,
+      useNativeDriver: true,
+    }).start();
+  }, [open, sheetH, translate]);
 
   return (
-    <Modal visible={open} transparent animationType="none" onRequestClose={onClose}>
-      <View style={StyleSheet.absoluteFill}>
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]}>
-          <Pressable
-            testID="bottom-sheet-backdrop"
-            onPress={onClose}
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay.scrim }]}
-          />
-        </Animated.View>
-        <Animated.View
-          style={[
-            styles.sheet,
-            {
-              height: sheetH,
-              paddingBottom: insets.bottom,
-              transform: [{ translateY: translate }],
-            },
-          ]}
-        >
-          <View style={styles.grabber} />
-          <View style={{ flex: 1 }}>{children}</View>
-        </Animated.View>
-      </View>
-    </Modal>
+    <Overlay open={open} onClose={onClose} animationType="none" testID={testID}>
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            height: sheetH,
+            paddingBottom: insets.bottom,
+            transform: [{ translateY: translate }],
+          },
+        ]}
+      >
+        <View style={styles.grabber} />
+        <View style={{ flex: 1 }}>{children}</View>
+      </Animated.View>
+    </Overlay>
   );
 }
 
@@ -93,7 +88,7 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: radii.full,
     backgroundColor: colors.border.default,
-    marginTop: 8,
-    marginBottom: 6,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs + 2,
   },
 });

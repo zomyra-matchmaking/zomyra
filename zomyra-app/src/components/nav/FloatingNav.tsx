@@ -3,12 +3,13 @@
  * Icons: User, Users, HeartHandshake, MessageCircle (lucide).
  */
 import { HeartHandshake, MessageCircle, UserRound, Users } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 
 import { useRequestsStore } from "@/src/stores/requests-store";
 import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type Item = {
   key: "profile" | "discover" | "requests" | "chats";
@@ -50,7 +51,7 @@ export function FloatingNav() {
           else if (item.key === "chats") Icon = MessageCircle;
 
           return (
-            <Pressable
+            <Touchable
               key={item.key}
               testID={`tab-${item.key}`}
               onPress={() => router.push(item.path as never)}
@@ -65,7 +66,7 @@ export function FloatingNav() {
                 ) : null}
               </View>
               <Text style={[styles.label, { color }]}>{item.label}</Text>
-            </Pressable>
+            </Touchable>
           );
         })}
       </View>

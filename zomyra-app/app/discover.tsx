@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ChevronDown, Crown, Send, SlidersHorizontal, Sparkles, X } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   Easing,
@@ -32,6 +32,7 @@ import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { discoverService } from "@/src/services/discover";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
 import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type QuickKey = "height" | "build" | "income" | "education";
 const QUICK_CHIPS: { key: QuickKey; label: string }[] = [
@@ -209,27 +210,21 @@ export default function Discover() {
           pointerEvents="box-none"
           style={[styles.actionFloat, { bottom: insets.bottom + 72 }]}
         >
-          <Pressable
+          <Touchable
+            feedback="scale"
             testID="discover-action-decline"
             onPress={advance}
             hitSlop={8}
-            style={({ pressed }) => [
-              styles.actionFloatBtn,
-              styles.actionFloatDecline,
-              pressed && { transform: [{ scale: 0.94 }] },
-            ]}
+            style={[styles.actionFloatBtn, styles.actionFloatDecline]}
           >
             <X size={22} color={colors.text.primary} strokeWidth={2.4} />
-          </Pressable>
-          <Pressable
+          </Touchable>
+          <Touchable
+            feedback="scale"
             testID="discover-action-interest"
             onPress={handleLike}
             hitSlop={8}
-            style={({ pressed }) => [
-              styles.actionFloatBtn,
-              styles.actionFloatInterest,
-              pressed && { transform: [{ scale: 0.94 }] },
-            ]}
+            style={[styles.actionFloatBtn, styles.actionFloatInterest]}
           >
             <Send
               size={22}
@@ -237,7 +232,7 @@ export default function Discover() {
               strokeWidth={2.2}
               style={{ transform: [{ translateX: -1 }] }}
             />
-          </Pressable>
+          </Touchable>
         </View>
       ) : null}
 
@@ -253,13 +248,10 @@ export default function Discover() {
             <Logo size={22} />
           </View>
 
-          <Pressable
+          <Touchable
             testID="filter-chip-compatibility"
             onPress={() => setSheetOpen(true)}
-            style={({ pressed }) => [
-              styles.statusPill,
-              pressed && { opacity: 0.85 },
-            ]}
+            style={[styles.statusPill]}
           >
             <Sparkles size={12} color={colors.brand.default} strokeWidth={2} />
             <Text style={styles.statusPillText} numberOfLines={1}>
@@ -267,19 +259,16 @@ export default function Discover() {
               <Text style={styles.statusPillHi}>{dimLabel}</Text> matches
             </Text>
             <ChevronDown size={12} color={colors.brand.default} strokeWidth={2} />
-          </Pressable>
+          </Touchable>
 
-          <Pressable
+          <Touchable
             testID="filter-icon"
             onPress={() => router.push("/filters" as never)}
-            style={({ pressed }) => [
-              styles.settingsBtn,
-              pressed && { opacity: 0.85 },
-            ]}
+            style={[styles.settingsBtn]}
             hitSlop={8}
           >
             <SlidersHorizontal size={16} color={colors.brand.default} strokeWidth={2} />
-          </Pressable>
+          </Touchable>
         </View>
 
         {/* Filter chip row */}
@@ -289,7 +278,7 @@ export default function Discover() {
           contentContainerStyle={styles.chipsRow}
         >
           {QUICK_CHIPS.map((c) => (
-            <Pressable
+            <Touchable
               key={c.key}
               testID={`filter-chip-${c.key}`}
               onPress={() => setQuickKey(c.key)}
@@ -298,7 +287,7 @@ export default function Discover() {
               <Text style={styles.chipLabel}>{c.label}</Text>
               <Crown size={11} color={colors.premium.icon} strokeWidth={2} fill={colors.premium.icon} />
               <ChevronDown size={12} color={colors.text.muted} strokeWidth={2} />
-            </Pressable>
+            </Touchable>
           ))}
         </ScrollView>
       </Animated.View>
@@ -419,7 +408,7 @@ function ChipPicker({
       {options.map((opt) => {
         const active = value === opt;
         return (
-          <Pressable
+          <Touchable
             key={opt}
             testID={`dialog-chip-${opt}`}
             onPress={() => onChange(opt)}
@@ -430,7 +419,7 @@ function ChipPicker({
             >
               {opt}
             </Text>
-          </Pressable>
+          </Touchable>
         );
       })}
     </View>
@@ -451,7 +440,7 @@ function OptionList({
       {options.map((opt) => {
         const active = value === opt;
         return (
-          <Pressable
+          <Touchable
             key={opt}
             testID={`dialog-option-${opt}`}
             onPress={() => onChange(opt)}
@@ -465,7 +454,7 @@ function OptionList({
             <View style={[styles.radio, active && styles.radioActive]}>
               {active ? <View style={styles.radioDot} /> : null}
             </View>
-          </Pressable>
+          </Touchable>
         );
       })}
     </View>

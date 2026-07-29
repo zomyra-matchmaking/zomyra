@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -26,6 +25,7 @@ import { toast } from "@/src/components/ui/Toast";
 import { chatToDiscoverProfile, type ChatMessage } from "@/src/lib/chats/mock";
 import { useChatStore, useConversation } from "@/src/stores/chat-store";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const REPORT_REASONS = ["Fake profile", "Inappropriate behavior", "Harassment", "Spam", "Other"];
 
@@ -93,15 +93,15 @@ export default function Conversation() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <View style={styles.header}>
-        <Pressable
+        <Touchable
           testID="conversation-back"
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.headerBtn]}
           hitSlop={8}
         >
           <ArrowLeft size={20} color={colors.text.primary} />
-        </Pressable>
-        <Pressable
+        </Touchable>
+        <Touchable
           onPress={() => setProfileOpen(true)}
           style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}
         >
@@ -115,14 +115,14 @@ export default function Conversation() {
             </View>
             <Text style={styles.headerSubtitle}>Active recently</Text>
           </View>
-        </Pressable>
-        <Pressable
+        </Touchable>
+        <Touchable
           testID="conversation-more"
           onPress={() => setMenuOpen(true)}
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.headerBtn]}
         >
           <MoreVertical size={18} color={colors.text.muted} />
-        </Pressable>
+        </Touchable>
       </View>
 
       <KeyboardAvoidingView
@@ -180,14 +180,15 @@ export default function Conversation() {
               returnKeyType="send"
             />
           </View>
-          <Pressable
+          <Touchable
+            feedback="scale"
             testID="message-send"
             onPress={send}
             disabled={!draft.trim()}
-            style={({ pressed }) => [styles.sendBtn, !draft.trim() && { opacity: 0.4 }, pressed && draft.trim() && { transform: [{ scale: 0.96 }] }]}
+            style={[styles.sendBtn, !draft.trim() && { opacity: 0.4 }]}
           >
             <Send size={16} color={colors.text.onBrand} />
-          </Pressable>
+          </Touchable>
         </View>
       </KeyboardAvoidingView>
 
@@ -200,14 +201,14 @@ export default function Conversation() {
 
       {/* More menu */}
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
-        <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
+        <Touchable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
           <View style={styles.menu}>
             <MenuItem label="View profile" onPress={() => { setMenuOpen(false); setProfileOpen(true); }} />
             <MenuItem label="Unmatch" destructive onPress={() => { setMenuOpen(false); setDialog("unmatch"); }} />
             <MenuItem label="Block" destructive onPress={() => { setMenuOpen(false); setDialog("block"); }} />
             <MenuItem label="Report" onPress={() => { setMenuOpen(false); setReportOpen(true); }} />
           </View>
-        </Pressable>
+        </Touchable>
       </Modal>
 
       {/* Report sheet */}
@@ -217,17 +218,18 @@ export default function Conversation() {
           <Text style={styles.reportSubtitle}>Choose a reason. Our team reviews every report.</Text>
           <View style={{ marginTop: 12 }}>
             {REPORT_REASONS.map((r) => (
-              <Pressable
+              <Touchable
+                feedback="highlight"
                 key={r}
                 testID={`report-${r}`}
                 onPress={() => {
                   setReportOpen(false);
                   toast.success(`Reported: ${r}. Our team will review.`);
                 }}
-                style={({ pressed }) => [styles.reportItem, pressed && { backgroundColor: colors.surface.brand }]}
+                style={[styles.reportItem]}
               >
                 <Text style={styles.reportItemText}>{r}</Text>
-              </Pressable>
+              </Touchable>
             ))}
           </View>
         </View>
@@ -265,9 +267,10 @@ function MenuItem({
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <Touchable
+      feedback="highlight"
       onPress={onPress}
-      style={({ pressed }) => [styles.menuItem, pressed && { backgroundColor: colors.surface.brand }]}
+      style={[styles.menuItem]}
     >
       <Text
         style={[
@@ -277,7 +280,7 @@ function MenuItem({
       >
         {label}
       </Text>
-    </Pressable>
+    </Touchable>
   );
 }
 

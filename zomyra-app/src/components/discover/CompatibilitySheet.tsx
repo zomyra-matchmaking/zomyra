@@ -22,7 +22,6 @@ import {
   Dimensions,
   Easing,
   Modal,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -32,6 +31,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const SCREEN_H = Dimensions.get("window").height;
 
@@ -132,7 +132,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
     >
       <View style={styles.root}>
         <Animated.View style={[styles.backdrop, { opacity: backdrop }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          <Touchable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
 
         <Animated.View
@@ -155,14 +155,14 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
           >
             <View style={styles.headerRow}>
               <Text style={styles.title}>Discovery Mode</Text>
-              <Pressable
+              <Touchable
                 testID="compat-sheet-close"
                 onPress={onClose}
                 hitSlop={10}
-                style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
+                style={[styles.closeBtn]}
               >
                 <X size={18} color={colors.text.primary} strokeWidth={2.2} />
-              </Pressable>
+              </Touchable>
             </View>
             <Text style={styles.subtitle}>
               Choose how Zomyra should rank the people you see today.
@@ -173,7 +173,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
                 const active = draft === opt.key;
                 const I = opt.Icon;
                 return (
-                  <Pressable
+                  <Touchable
                     key={opt.key}
                     testID={`compat-option-${opt.key}`}
                     onPress={() => setDraft(opt.key)}
@@ -202,7 +202,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
                     >
                       {active ? <View style={styles.radioDot} /> : null}
                     </View>
-                  </Pressable>
+                  </Touchable>
                 );
               })}
             </View>
@@ -221,13 +221,11 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
             </View>
 
             {/* ── CTA ── */}
-            <Pressable
+            <Touchable
+              feedback="scale"
               testID="compat-apply"
               onPress={apply}
-              style={({ pressed }) => [
-                styles.cta,
-                pressed && { transform: [{ scale: 0.985 }] },
-              ]}
+              style={[styles.cta]}
             >
               <LinearGradient
                 colors={colors.gradient.brand}
@@ -237,7 +235,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
               >
                 <Text style={styles.ctaText}>Apply & Show Matches</Text>
               </LinearGradient>
-            </Pressable>
+            </Touchable>
           </ScrollView>
         </Animated.View>
       </View>

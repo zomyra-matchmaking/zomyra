@@ -5,14 +5,7 @@
 import { useRouter } from "expo-router";
 import { MessageCircle } from "lucide-react-native";
 import { useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Image,
-  Dimensions,
-} from "react-native";
+import { View, Text, StyleSheet, Image, Dimensions } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -25,6 +18,7 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const SCREEN = Dimensions.get("window");
 
@@ -364,20 +358,20 @@ export function MatchOverlay({
 
           {/* Action Buttons */}
           <Animated.View style={[styles.buttonsContainer, buttonsStyle]}>
-            <Pressable
+            <Touchable
               style={styles.primaryButton}
               onPress={onStartConversation}
             >
               <MessageCircle size={20} color={colors.text.onBrand} strokeWidth={2.5} />
               <Text style={styles.primaryButtonText}>Start Conversation</Text>
-            </Pressable>
+            </Touchable>
 
-            <Pressable
+            <Touchable
               style={styles.secondaryButton}
               onPress={onKeepDiscovering}
             >
               <Text style={styles.secondaryButtonText}>Keep Discovering</Text>
-            </Pressable>
+            </Touchable>
           </Animated.View>
         </View>
       </Animated.View>

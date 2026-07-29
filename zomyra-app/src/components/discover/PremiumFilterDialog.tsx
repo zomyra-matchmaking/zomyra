@@ -12,15 +12,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { X } from "lucide-react-native";
 import { useEffect, useRef, type ReactNode } from "react";
-import {
-  Animated,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Animated, Modal, StyleSheet, Text, View } from "react-native";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type Props = {
   visible: boolean;
@@ -74,7 +68,7 @@ export function PremiumFilterDialog({
       statusBarTranslucent
     >
       <Animated.View style={[styles.backdrop, { opacity }]}>
-        <Pressable
+        <Touchable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           testID="premium-dialog-backdrop"
@@ -88,39 +82,31 @@ export function PremiumFilterDialog({
               <Text style={styles.title}>{title}</Text>
               {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
             </View>
-            <Pressable
+            <Touchable
               testID="premium-dialog-close"
               onPress={onClose}
               hitSlop={10}
-              style={({ pressed }) => [
-                styles.closeBtn,
-                pressed && { opacity: 0.7 },
-              ]}
+              style={[styles.closeBtn]}
             >
               <X size={18} color={colors.text.primary} strokeWidth={2.2} />
-            </Pressable>
+            </Touchable>
           </View>
 
           <View style={{ marginTop: 18 }}>{children}</View>
 
           <View style={styles.footer}>
-            <Pressable
+            <Touchable
               testID="premium-dialog-cancel"
               onPress={onClose}
-              style={({ pressed }) => [
-                styles.cancelBtn,
-                pressed && { opacity: 0.85 },
-              ]}
+              style={[styles.cancelBtn]}
             >
               <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-            <Pressable
+            </Touchable>
+            <Touchable
+              feedback="scale"
               testID="premium-dialog-apply"
               onPress={onApply}
-              style={({ pressed }) => [
-                styles.applyBtn,
-                pressed && { transform: [{ scale: 0.985 }] },
-              ]}
+              style={[styles.applyBtn]}
             >
               <LinearGradient
                 colors={colors.gradient.brand}
@@ -130,7 +116,7 @@ export function PremiumFilterDialog({
               >
                 <Text style={styles.applyText}>{applyLabel}</Text>
               </LinearGradient>
-            </Pressable>
+            </Touchable>
           </View>
         </Animated.View>
       </Animated.View>

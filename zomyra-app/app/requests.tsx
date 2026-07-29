@@ -4,7 +4,7 @@
  */
 import { Check, Crown, Lock, Sparkles, UserPlus, X } from "lucide-react-native";
 import { useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomSheet } from "@/src/components/ui/BottomSheet";
@@ -19,6 +19,7 @@ import type { CompatibilityTier } from "@/src/lib/discover/mock";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
+import { Button, Touchable } from "@/src/components/ui";
 
 const TIER_COLOR: Record<CompatibilityTier, (typeof colors.tier)[keyof typeof colors.tier]> = {
   "Excellent Match": colors.tier.excellent,
@@ -104,7 +105,7 @@ export default function Requests() {
           <Text style={styles.title}>Requests</Text>
           <Text style={styles.subtitle}>People who want to connect with you</Text>
         </View>
-        <Pressable
+        <Touchable
           testID="toggle-premium"
           onPress={() => setPremium(!isPremium)}
           style={[
@@ -117,7 +118,7 @@ export default function Requests() {
           <Text style={{ color: isPremium ? colors.brand.default : colors.text.muted, fontWeight: fontWeight.bold, fontSize: fontSize.micro }}>
             {isPremium ? "Premium" : "Free"}
           </Text>
-        </Pressable>
+        </Touchable>
       </View>
 
       {requests.length === 0 ? (
@@ -149,25 +150,22 @@ export default function Requests() {
               profile={active.profile}
               footer={
                 <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Pressable
+                  <Button
                     testID="request-decline"
+                    label="Decline"
+                    variant="ghost"
+                    icon={X}
                     onPress={() => setPendingDecline(active.id)}
-                    style={({ pressed }) => [styles.sheetBtn, styles.sheetBtnGhost, pressed && { opacity: 0.9 }]}
-                  >
-                    <X size={16} color={colors.text.primary} />
-                    <Text style={styles.sheetBtnGhostText}>Decline</Text>
-                  </Pressable>
-                  <Pressable
+                    style={styles.sheetBtn}
+                  />
+                  <Button
                     testID="request-accept"
+                    label={accepting ? "Accepting…" : "Accept"}
+                    icon={Check}
+                    loading={accepting}
                     onPress={() => accept(active)}
-                    disabled={accepting}
-                    style={({ pressed }) => [styles.sheetBtn, styles.sheetBtnPrimary, pressed && { opacity: 0.92 }]}
-                  >
-                    <Check size={16} color={colors.brand.onBrand} />
-                    <Text style={styles.sheetBtnPrimaryText}>
-                      {accepting ? "Accepting…" : "Accept"}
-                    </Text>
-                  </Pressable>
+                    style={styles.sheetBtn}
+                  />
                 </View>
               }
             />
@@ -215,13 +213,13 @@ function UpsellCard({ onUpgrade }: { onUpgrade: () => void }) {
           </Text>
         </View>
       </View>
-      <Pressable
+      <Touchable
         testID="upgrade-premium"
         onPress={onUpgrade}
-        style={({ pressed }) => [styles.upsellBtn, pressed && { opacity: 0.92 }]}
+        style={[styles.upsellBtn]}
       >
         <Text style={styles.upsellBtnText}>Upgrade to Premium</Text>
-      </Pressable>
+      </Touchable>
     </View>
   );
 }
@@ -244,10 +242,10 @@ function TierChip({ tier }: { tier: CompatibilityTier }) {
 function PremiumCard({ request, onOpen }: { request: ConnectionRequest; onOpen: () => void }) {
   const p = request.profile;
   return (
-    <Pressable
+    <Touchable
       testID={`request-card-${request.id}`}
       onPress={onOpen}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.95 }]}
+      style={[styles.card]}
     >
       <Image source={{ uri: p.hero }} style={styles.cardAvatar} />
       <View style={{ flex: 1 }}>
@@ -272,7 +270,7 @@ function PremiumCard({ request, onOpen }: { request: ConnectionRequest; onOpen: 
           {request.teaser}
         </Text>
       </View>
-    </Pressable>
+    </Touchable>
   );
 }
 
@@ -413,21 +411,5 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.text.muted,
   },
-  sheetBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: radii.md,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  sheetBtnGhost: {
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.surface.default,
-  },
-  sheetBtnGhostText: { fontSize: fontSize.label, fontWeight: fontWeight.bold, color: colors.text.primary },
-  sheetBtnPrimary: { backgroundColor: colors.brand.default },
-  sheetBtnPrimaryText: { fontSize: fontSize.label, fontWeight: fontWeight.bold, color: colors.brand.onBrand },
+  sheetBtn: { flex: 1 },
 });

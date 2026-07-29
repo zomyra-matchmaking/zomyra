@@ -4,10 +4,11 @@
  */
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
@@ -42,14 +43,14 @@ export default function PrivacyScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.header}>
-        <Pressable
+        <Touchable
           testID="privacy-back"
           onPress={() => router.back()}
           hitSlop={10}
-          style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.backBtn]}
         >
           <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
-        </Pressable>
+        </Touchable>
         <Text style={styles.headerTitle}>Privacy Policy</Text>
         <View style={{ width: 40 }} />
       </View>

@@ -12,13 +12,13 @@ import {
   Dimensions,
   Easing,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const SCREEN_H = Dimensions.get("window").height;
 
@@ -95,7 +95,7 @@ export function FilterOptionSheet({
     >
       <View style={styles.root}>
         <Animated.View style={[styles.backdrop, { opacity: backdrop }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          <Touchable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
 
         <Animated.View
@@ -107,29 +107,23 @@ export function FilterOptionSheet({
             <Text style={styles.title}>{title}</Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               {draft !== null ? (
-                <Pressable
+                <Touchable
                   onPress={clear}
                   testID="filter-sheet-clear"
                   hitSlop={6}
-                  style={({ pressed }) => [
-                    styles.clearBtn,
-                    pressed && { opacity: 0.7 },
-                  ]}
+                  style={[styles.clearBtn]}
                 >
                   <Text style={styles.clearText}>Clear</Text>
-                </Pressable>
+                </Touchable>
               ) : null}
-              <Pressable
+              <Touchable
                 testID="filter-sheet-close"
                 onPress={onClose}
                 hitSlop={10}
-                style={({ pressed }) => [
-                  styles.closeBtn,
-                  pressed && { opacity: 0.7 },
-                ]}
+                style={[styles.closeBtn]}
               >
                 <X size={18} color={colors.text.primary} strokeWidth={2.2} />
-              </Pressable>
+              </Touchable>
             </View>
           </View>
           <Text style={styles.subtitle}>Pick one option below.</Text>
@@ -138,7 +132,7 @@ export function FilterOptionSheet({
             {options.map((opt) => {
               const active = draft === opt;
               return (
-                <Pressable
+                <Touchable
                   key={opt}
                   testID={`filter-option-${opt}`}
                   onPress={() => setDraft(opt)}
@@ -150,18 +144,16 @@ export function FilterOptionSheet({
                   <View style={[styles.radio, active && styles.radioActive]}>
                     {active ? <View style={styles.radioDot} /> : null}
                   </View>
-                </Pressable>
+                </Touchable>
               );
             })}
           </ScrollView>
 
-          <Pressable
+          <Touchable
+            feedback="scale"
             testID="filter-sheet-apply"
             onPress={apply}
-            style={({ pressed }) => [
-              styles.cta,
-              pressed && { transform: [{ scale: 0.985 }] },
-            ]}
+            style={[styles.cta]}
           >
             <LinearGradient
               colors={colors.gradient.brand}
@@ -171,7 +163,7 @@ export function FilterOptionSheet({
             >
               <Text style={styles.ctaText}>Apply</Text>
             </LinearGradient>
-          </Pressable>
+          </Touchable>
         </Animated.View>
       </View>
     </Modal>

@@ -5,11 +5,12 @@
  */
 import { ArrowLeft, ArrowRight, Anchor, Compass, Heart } from "lucide-react-native";
 import { useEffect, useRef, type ComponentType } from "react";
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
 import { colors, radii, alpha, fontSize, fontWeight } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 export type TreasureStepInfo = {
   step: 1 | 2 | 3;
@@ -162,13 +163,13 @@ export function TreasureMap({
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <View style={styles.header}>
         {onBack ? (
-          <Pressable
+          <Touchable
             onPress={onBack}
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+            style={[styles.backBtn]}
             hitSlop={8}
           >
             <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
-          </Pressable>
+          </Touchable>
         ) : null}
       </View>
 
@@ -285,14 +286,14 @@ export function TreasureMap({
       </View>
 
       <View style={styles.footer}>
-        <Pressable
+        <Touchable
           testID="treasure-continue"
           onPress={onContinue}
-          style={({ pressed }) => [styles.cta, pressed && { opacity: 0.92 }]}
+          style={[styles.cta]}
         >
           <Text style={styles.ctaText}>{info.cta}</Text>
           <ArrowRight size={16} color={colors.brand.onBrand} strokeWidth={2.4} />
-        </Pressable>
+        </Touchable>
       </View>
     </SafeAreaView>
   );

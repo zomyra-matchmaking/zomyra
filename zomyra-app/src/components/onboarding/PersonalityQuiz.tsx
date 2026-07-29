@@ -16,7 +16,6 @@ import {
   Animated,
   Easing,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -30,6 +29,7 @@ import { Slider } from "@/src/components/onboarding/Slider";
 import { colors, radii, alpha, fontSize, fontWeight } from "@/src/theme";
 import { SCALE_QUESTIONS } from "@/src/lib/onboarding/scales";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
+import { Touchable } from "@/src/components/ui";
 
 type Props = {
   state: OnboardingState;
@@ -104,14 +104,14 @@ export function PersonalityQuiz({
       {/* Header with back button + segmented progress bar */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Pressable
+          <Touchable
             testID="personality-back"
             onPress={handleBack}
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+            style={[styles.backBtn]}
             hitSlop={10}
           >
             <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
-          </Pressable>
+          </Touchable>
           <Text style={styles.counter} testID="personality-counter">
             {index + 1} / {total}
           </Text>
@@ -149,16 +149,13 @@ export function PersonalityQuiz({
           { paddingBottom: Math.max(insets.bottom, 12) },
         ]}
       >
-        <Pressable
+        <Touchable
           testID="personality-continue-button"
           onPress={handleNext}
-          style={({ pressed }) => [
-            styles.nextBtn,
-            pressed && { opacity: 0.9 },
-          ]}
+          style={[styles.nextBtn]}
         >
           <Text style={styles.nextLabel}>{isLast ? "Finish" : "Continue"}</Text>
-        </Pressable>
+        </Touchable>
         <View style={styles.helperSpacer} />
       </View>
     </SafeAreaView>

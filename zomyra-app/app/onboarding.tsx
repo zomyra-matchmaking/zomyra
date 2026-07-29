@@ -30,6 +30,7 @@ import {
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
 import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
+import { Input } from "@/src/components/ui";
 
 type Section = 1 | 2 | 3;
 type IntroScreen = { kind: "intro"; section: Section };
@@ -373,16 +374,16 @@ const Q1: QuestionScreen[] = [
       canNext: true,
       body: (
         <View>
-          <TextInput
+          <Input
             testID="onboarding-bio"
             value={s.bio}
-            onChangeText={(t) => set("bio", t.slice(0, 500))}
+            onChangeText={(t) => set("bio", t)}
             placeholder="I love long walks, weekend hikes, and honest conversations over coffee…"
-            placeholderTextColor={colors.text.muted}
             multiline
-            style={styles.bioInput}
+            rows={6}
+            maxLength={500}
+            showCount
           />
-          <Text style={styles.bioCount}>{s.bio.length}/500</Text>
         </View>
       ),
     }),
@@ -604,24 +605,4 @@ const styles = StyleSheet.create({
   smallValue: { marginTop: 4, fontSize: fontSize.caption, color: colors.text.muted },
   rangeLabels: { marginTop: 8, flexDirection: "row", justifyContent: "space-between" },
   rangeLabel: { fontSize: fontSize.micro, color: colors.text.muted },
-  bioInput: {
-    minHeight: 140,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    backgroundColor: colors.surface.default,
-    fontSize: fontSize.bodyLarge,
-    lineHeight: 22,
-    color: colors.text.primary,
-    textAlignVertical: "top",
-  },
-  bioCount: {
-    marginTop: 6,
-    alignSelf: "flex-end",
-    fontSize: fontSize.micro,
-    fontWeight: fontWeight.semibold,
-    color: colors.text.muted,
-  },
 });
