@@ -16,7 +16,7 @@ import { toast } from "@/src/components/ui/Toast";
 import { useRequestsStore, type ConnectionRequest } from "@/src/stores/requests-store";
 import { useChatStore } from "@/src/stores/chat-store";
 import type { CompatibilityTier } from "@/src/lib/discover/mock";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing, NAV_CLEARANCE } from "@/src/theme";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Button, Touchable } from "@/src/components/ui";
@@ -128,7 +128,7 @@ export default function Requests() {
           data={requests}
           keyExtractor={(r) => r.id}
           ListHeaderComponent={!isPremium ? <UpsellCard onUpgrade={() => setPremium(true)} /> : null}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, paddingTop: 8 }}
+          contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: NAV_CLEARANCE, paddingTop: spacing[2] }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) =>
             isPremium ? (
@@ -145,11 +145,11 @@ export default function Requests() {
 
       <BottomSheet open={!!active} onClose={() => setActiveId(null)}>
         {active ? (
-          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: spacing[6] }}>
             <ProfileView
               profile={active.profile}
               footer={
-                <View style={{ flexDirection: "row", gap: 8 }}>
+                <View style={{ flexDirection: "row", gap: spacing[2] }}>
                   <Button
                     testID="request-decline"
                     label="Decline"
@@ -202,7 +202,7 @@ export default function Requests() {
 function UpsellCard({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <View style={styles.upsell}>
-      <View style={{ flexDirection: "row", gap: 12 }}>
+      <View style={{ flexDirection: "row", gap: spacing[3] }}>
         <View style={styles.upsellIcon}>
           <Sparkles size={16} color={colors.brand.onBrand} />
         </View>
@@ -263,7 +263,7 @@ function PremiumCard({ request, onOpen }: { request: ConnectionRequest; onOpen: 
           <Text style={styles.cardTime}>{request.receivedAt}</Text>
         </View>
         <Text style={styles.cardLoc}>{p.location}</Text>
-        <View style={{ marginTop: 6 }}>
+        <View style={{ marginTop: spacing[1.5] }}>
           <TierChip tier={p.compatibility} />
         </View>
         <Text style={styles.cardTeaser} numberOfLines={2}>
@@ -285,8 +285,8 @@ function BlurredCard({ request }: { request: ConnectionRequest }) {
           <View style={{ width: 96, height: 12, backgroundColor: alpha(colors.brand.strong, 0.12), borderRadius: radii.xs }} />
           <Text style={styles.cardTime}>{request.receivedAt}</Text>
         </View>
-        <View style={{ marginTop: 6, width: 64, height: 10, backgroundColor: alpha(colors.brand.strong, 0.08), borderRadius: radii.xs }} />
-        <View style={{ marginTop: 6 }}>
+        <View style={{ marginTop: spacing[1.5], width: 64, height: 10, backgroundColor: alpha(colors.brand.strong, 0.08), borderRadius: radii.xs }} />
+        <View style={{ marginTop: spacing[1.5] }}>
           <TierChip tier={request.profile.compatibility} />
         </View>
         <Text style={styles.cardTeaser} numberOfLines={2}>
@@ -314,25 +314,25 @@ function EmptyState() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
   title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
-  subtitle: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
+  subtitle: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
   premiumChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1],
     borderRadius: radii.full,
     borderWidth: 1,
   },
   upsell: {
-    marginTop: 4,
-    marginBottom: 6,
-    padding: 16,
+    marginTop: spacing[1],
+    marginBottom: spacing[1.5],
+    padding: spacing[4],
     borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: alpha(colors.brand.default, 0.25),
@@ -347,9 +347,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   upsellTitle: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, lineHeight: 18 },
-  upsellSubtitle: { marginTop: 4, fontSize: fontSize.caption, color: colors.text.muted, lineHeight: 16 },
+  upsellSubtitle: { marginTop: spacing[1], fontSize: fontSize.caption, color: colors.text.muted, lineHeight: 16 },
   upsellBtn: {
-    marginTop: 12,
+    marginTop: spacing[3],
     height: 44,
     borderRadius: radii.md,
     backgroundColor: colors.brand.default,
@@ -360,15 +360,15 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
-    padding: 12,
+    gap: spacing[3],
+    padding: spacing[3],
     borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.surface.default,
   },
   cardAvatar: { width: 64, height: 64, borderRadius: radii.md },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1, marginRight: 6 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: spacing[1.5], flex: 1, marginRight: spacing[1.5] },
   cardName: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, flexShrink: 1 },
   premiumDot: {
     width: 18,
@@ -378,22 +378,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  cardLoc: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
+  cardLoc: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
   cardTime: { fontSize: fontSize.nano, color: colors.text.muted },
-  cardTeaser: { marginTop: 6, fontSize: fontSize.caption, color: alpha(colors.brand.strong, 0.85), lineHeight: 17 },
+  cardTeaser: { marginTop: spacing[1.5], fontSize: fontSize.caption, color: alpha(colors.brand.strong, 0.85), lineHeight: 17 },
   tierChip: {
     alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[0.5],
     borderRadius: radii.full,
     borderWidth: 1,
   },
   tierDot: { width: 5, height: 5, borderRadius: radii.full },
   tierText: { fontSize: fontSize.nano, fontWeight: fontWeight.bold },
-  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
+  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[8] },
   emptyIcon: {
     width: 80,
     height: 80,
@@ -402,9 +402,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyTitle: { marginTop: 20, fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
+  emptyTitle: { marginTop: spacing[5], fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
   emptySubtitle: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     maxWidth: 260,
     textAlign: "center",
     fontSize: fontSize.label,

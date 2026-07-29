@@ -21,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 type Option = {
@@ -155,9 +155,9 @@ export default function DiscoveryMode() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface.default },
   scroll: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 24,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[6],
+    paddingBottom: spacing[6],
   },
   kicker: {
     fontSize: fontSize.micro,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   title: {
-    marginTop: 8,
+    marginTop: spacing[2],
     fontSize: fontSize.display,
     fontWeight: fontWeight.bold,
     color: colors.text.primary,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   subtitle: {
-    marginTop: 10,
+    marginTop: spacing[2.5],
     fontSize: fontSize.body,
     fontWeight: fontWeight.medium,
     color: colors.text.muted,
@@ -183,15 +183,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
   options: {
-    marginTop: 28,
-    gap: 12,
+    marginTop: spacing[7],
+    gap: spacing[3],
   },
   option: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    gap: spacing[3.5],
+    paddingVertical: spacing[3.5],
+    paddingHorizontal: spacing[3.5],
     borderRadius: radii["3xl"],
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   optionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing[2],
     flexWrap: "wrap",
   },
   optionTitle: {
@@ -233,13 +233,13 @@ const styles = StyleSheet.create({
     color: colors.brand.default,
     letterSpacing: 0.6,
     textTransform: "uppercase",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: spacing[1.5],
+    paddingVertical: spacing[0.5],
     borderRadius: radii.xs,
     backgroundColor: colors.surface.brandStrong,
   },
   optionSubtitle: {
-    marginTop: 3,
+    marginTop: spacing[1],
     fontSize: fontSize.label,
     fontWeight: fontWeight.medium,
     color: colors.text.muted,
@@ -258,16 +258,16 @@ const styles = StyleSheet.create({
   radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
 
   footer: {
-    paddingHorizontal: 24,
-    paddingBottom: 12,
-    paddingTop: 8,
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[3],
+    paddingTop: spacing[2],
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border.default,
     backgroundColor: colors.surface.default,
   },
   cta: { borderRadius: radii.full, overflow: "hidden" },
   ctaGradient: {
-    paddingVertical: 16,
+    paddingVertical: spacing[4],
     alignItems: "center",
     justifyContent: "center",
   },

@@ -9,7 +9,7 @@ import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
-import { colors, radii, alpha, fontSize, fontWeight } from "@/src/theme";
+import { colors, radii, alpha, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 export type TreasureStepInfo = {
@@ -278,7 +278,7 @@ export function TreasureMap({
           })}
         </View>
 
-        <View style={{ marginTop: 36, alignItems: "center", maxWidth: 340 }}>
+        <View style={{ marginTop: spacing[8], alignItems: "center", maxWidth: 340 }}>
           <Text style={styles.stepLabel}>STEP {info.step} OF 3</Text>
           <Text style={styles.title}>{info.title}</Text>
           <Text style={styles.body}>{info.body}</Text>
@@ -301,7 +301,7 @@ export function TreasureMap({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: 16, paddingTop: 8 },
+  header: { paddingHorizontal: spacing[4], paddingTop: spacing[2] },
   backBtn: {
     width: 40,
     height: 40,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   },
   main: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
     alignItems: "center",
     justifyContent: "center",
   },
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   nodeLabel: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     fontSize: fontSize.nano,
     fontWeight: fontWeight.semibold,
     letterSpacing: 1.4,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     color: colors.brand.default,
   },
   title: {
-    marginTop: 8,
+    marginTop: spacing[2],
     fontSize: fontSize.h2,
     fontWeight: fontWeight.bold,
     color: colors.text.primary,
@@ -372,13 +372,13 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   body: {
-    marginTop: 10,
+    marginTop: spacing[2.5],
     fontSize: fontSize.body,
     lineHeight: 22,
     color: colors.text.muted,
     textAlign: "center",
   },
-  footer: { paddingHorizontal: 24, paddingBottom: 24 },
+  footer: { paddingHorizontal: spacing[6], paddingBottom: spacing[6] },
   cta: {
     height: 52,
     borderRadius: radii.md + 1,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
   ctaText: {
     color: colors.brand.onBrand,

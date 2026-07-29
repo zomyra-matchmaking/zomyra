@@ -63,7 +63,7 @@ export function ConfirmDialog({
 const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
-    gap: spacing.sm,
+    gap: spacing[2],
   },
   action: {
     flex: 1,

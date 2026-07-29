@@ -26,7 +26,7 @@ import { ArrowLeft, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
 import { Slider } from "@/src/components/onboarding/Slider";
-import { colors, radii, alpha, fontSize, fontWeight } from "@/src/theme";
+import { colors, radii, alpha, fontSize, fontWeight, spacing } from "@/src/theme";
 import { SCALE_QUESTIONS } from "@/src/lib/onboarding/scales";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
 import { Touchable } from "@/src/components/ui";
@@ -285,15 +285,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing[5],
     paddingTop: Platform.OS === "android" ? 6 : 4,
-    paddingBottom: 12,
+    paddingBottom: spacing[3],
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
+    marginBottom: spacing[3.5],
   },
   backBtn: {
     width: 40,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   progressRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: spacing[1],
   },
   progressSegment: {
     flex: 1,
@@ -334,9 +334,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 24,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[8],
+    paddingBottom: spacing[6],
     justifyContent: "center",
   },
   questionCard: {
@@ -346,8 +346,8 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 12,
+    gap: spacing[1.5],
+    marginBottom: spacing[3],
   },
   titleTag: {
     fontSize: fontSize.caption,
@@ -363,18 +363,18 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     color: colors.text.primary,
     textAlign: "center",
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing[1],
   },
   sliderBlock: {
-    marginTop: 40,
+    marginTop: spacing[10],
     width: "100%",
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing[1],
   },
   dots: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 10,
-    marginBottom: 16,
+    gap: spacing[2.5],
+    marginBottom: spacing[4],
   },
   dot: {
     width: 7,
@@ -387,10 +387,10 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.5 }],
   },
   sliderWrap: {
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing[1],
   },
   labelRow: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     flexDirection: "row",
     justifyContent: "space-between",
   },
@@ -408,8 +408,8 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
     borderTopWidth: 1,
     borderTopColor: colors.border.default,
     backgroundColor: colors.background,
@@ -431,13 +431,13 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
   helperText: {
-    marginTop: 8,
+    marginTop: spacing[2],
     textAlign: "center",
     fontSize: fontSize.caption,
     color: colors.text.muted,
   },
   helperSpacer: {
-    marginTop: 8,
+    marginTop: spacing[2],
     height: 15,
   },
 });

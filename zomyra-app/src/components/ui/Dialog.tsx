@@ -55,14 +55,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
-    padding: spacing["2xl"],
+    padding: spacing[6],
   },
   card: {
     width: "100%",
     maxWidth: 340,
     borderRadius: radii["3xl"],
     backgroundColor: colors.surface.default,
-    padding: spacing.xl,
+    padding: spacing[5],
   },
   title: {
     fontSize: fontSize.title,
@@ -70,12 +70,12 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   description: {
-    marginTop: spacing.xs + 2,
+    marginTop: spacing[1.5],
     fontSize: fontSize.label,
     lineHeight: fontSize.label * lineHeight.relaxed,
     color: colors.text.muted,
   },
   body: {
-    marginTop: spacing.lg + 2,
+    marginTop: spacing[4.5],
   },
 });

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 
 const STEPS = [
   { Icon: UsersRound, text: "Scanning profiles aligned with your values" },
@@ -43,7 +43,7 @@ export default function Matching() {
           Hang tight — we're matching you on values, lifestyle, and intent.
         </Text>
 
-        <View style={{ marginTop: 28, gap: 8, width: "100%", maxWidth: 320 }}>
+        <View style={{ marginTop: spacing[7], gap: spacing[2], width: "100%", maxWidth: 320 }}>
           {STEPS.map((s, i) => {
             const state = i < active ? "done" : i === active ? "active" : "pending";
             return (
@@ -75,7 +75,7 @@ export default function Matching() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" },
-  center: { alignItems: "center", paddingHorizontal: 24 },
+  center: { alignItems: "center", paddingHorizontal: spacing[6] },
   haloOuter: {
     width: 160,
     height: 160,
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   title: {
-    marginTop: 32,
+    marginTop: spacing[8],
     fontSize: fontSize.h2,
     fontWeight: fontWeight.bold,
     color: colors.text.primary,
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    marginTop: 8,
+    marginTop: spacing[2],
     fontSize: fontSize.body,
     lineHeight: 20,
     color: colors.text.muted,
@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 14,
+    gap: spacing[3],
+    padding: spacing[3.5],
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,

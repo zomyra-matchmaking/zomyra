@@ -13,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { toast } from "@/src/components/ui/Toast";
 import { authService } from "@/src/services/auth";
-import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Button, Touchable } from "@/src/components/ui";
 
 const OTP_LENGTH = 6;
@@ -128,7 +128,7 @@ export default function OtpScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <View style={{ paddingHorizontal: 24, flex: 1 }}>
+        <View style={{ paddingHorizontal: spacing[6], flex: 1 }}>
           <ScreenHeader onBack={() => router.back()} />
           <Text style={styles.title}>Verify your number</Text>
           <Text style={styles.subtitle}>
@@ -193,19 +193,19 @@ export default function OtpScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   title: {
-    marginTop: 16,
+    marginTop: spacing[4],
     fontSize: fontSize.display,
     fontWeight: fontWeight.bold,
     letterSpacing: -0.3,
     color: colors.text.primary,
   },
   subtitle: {
-    marginTop: 8,
+    marginTop: spacing[2],
     fontSize: fontSize.bodyLarge,
     lineHeight: 21,
     color: colors.text.muted,
   },
-  row: { marginTop: 24, flexDirection: "row", gap: 8, alignItems: "stretch" },
+  row: { marginTop: spacing[6], flexDirection: "row", gap: spacing[2], alignItems: "stretch" },
   box: {
     width: 44,
     flexGrow: 1,
@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.h2,
     fontWeight: fontWeight.bold,
     color: colors.text.primary,
-    paddingHorizontal: 0,
+    paddingHorizontal: spacing[0],
   },
-  resendRow: { marginTop: 16, flexDirection: "row", justifyContent: "center", alignItems: "center" },
-  cta: { marginBottom: 18 },
+  resendRow: { marginTop: spacing[4], flexDirection: "row", justifyContent: "center", alignItems: "center" },
+  cta: { marginBottom: spacing[4.5] },
 });

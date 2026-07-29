@@ -62,7 +62,7 @@ import type {
   IncomeRange,
   Smoking,
 } from "@/src/lib/onboarding/types";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 // Design tokens — match Discover so the screens feel related.
@@ -444,7 +444,7 @@ function SectionCard({
         </View>
         <Text style={styles.kickerText}>{kicker}</Text>
       </View>
-      <View style={{ marginTop: 12 }}>{children}</View>
+      <View style={{ marginTop: spacing[3] }}>{children}</View>
     </View>
   );
 }
@@ -465,7 +465,7 @@ function FieldRow({
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.fieldLabel}>{label}</Text>
-        <View style={{ marginTop: 2 }}>{children}</View>
+        <View style={{ marginTop: spacing[0.5] }}>{children}</View>
       </View>
     </View>
   );
@@ -577,13 +577,13 @@ function PickerSheet({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface.default },
-  scroll: { paddingBottom: 32 },
+  scroll: { paddingBottom: spacing[8] },
 
   // Header
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[1.5],
+    paddingBottom: spacing[2.5],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -601,8 +601,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: fontSize.title, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.3 },
   doneBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
     borderRadius: radii.full,
     backgroundColor: colors.brand.default,
   },
@@ -610,11 +610,11 @@ const styles = StyleSheet.create({
 
   // Identity
   identityRow: {
-    marginHorizontal: 16,
-    marginTop: 14,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[3.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing[2.5],
   },
   editableNameRow: { flexDirection: "row", alignItems: "baseline" },
   identityNameInput: {
@@ -622,24 +622,24 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.extrabold,
     color: colors.text.primary,
     letterSpacing: -0.5,
-    padding: 0,
+    padding: spacing[0],
     minWidth: 60,
   },
   identityName: { fontSize: fontSize.h1, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.5 },
-  identityLocRow: { marginTop: 2, flexDirection: "row", alignItems: "center", gap: 4 },
+  identityLocRow: { marginTop: spacing[0.5], flexDirection: "row", alignItems: "center", gap: spacing[1] },
   identityLocInput: {
     flex: 1,
     fontSize: fontSize.label,
     color: colors.text.primary,
     fontWeight: fontWeight.medium,
-    padding: 0,
+    padding: spacing[0],
   },
   identityChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
     borderRadius: radii.full,
     backgroundColor: colors.surface.brand,
     borderWidth: 1,
@@ -649,20 +649,20 @@ const styles = StyleSheet.create({
 
   // Section card
   card: {
-    marginHorizontal: 16,
-    marginTop: 14,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[3.5],
     backgroundColor: colors.surface.default,
     borderRadius: radii["4xl"],
     borderWidth: 1,
     borderColor: colors.border.default,
-    padding: 16,
+    padding: spacing[4],
     shadowColor: colors.shadow.default,
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
     elevation: 2,
   },
-  kickerRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  kickerRow: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
   kickerIcon: {
     width: 24,
     height: 24,
@@ -677,9 +677,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     color: colors.brand.default,
   },
-  helper: { marginTop: 10, fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.medium },
+  helper: { marginTop: spacing[2.5], fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.medium },
   helperRight: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     alignSelf: "flex-end",
     fontSize: fontSize.micro,
     color: colors.text.muted,
@@ -702,16 +702,16 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: spacing[1.5],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
     borderRadius: radii.full,
     backgroundColor: alpha(colors.text.primary, 0.85),
   },
   heroEditText: { color: colors.text.onBrand, fontSize: fontSize.caption, fontWeight: fontWeight.bold },
 
   // Photo grid
-  photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2.5] },
   photoTile: {
     width: "48%",
     aspectRatio: 4 / 5,
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
   photoAddText: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.brand.default },
 
@@ -753,15 +753,15 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 21,
     textAlignVertical: "top",
-    padding: 0,
+    padding: spacing[0],
   },
 
   // Field rows
   fieldRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 10,
+    gap: spacing[3],
+    paddingVertical: spacing[2.5],
   },
   fieldIcon: {
     width: 32,
@@ -782,10 +782,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     fontWeight: fontWeight.semibold,
     color: colors.text.primary,
-    padding: 0,
+    padding: spacing[0],
   },
   fieldStatic: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary },
-  divider: { height: 1, backgroundColor: colors.border.default, marginVertical: 4 },
+  divider: { height: 1, backgroundColor: colors.border.default, marginVertical: spacing[1] },
 
   // Picker sheet
   sheetBackdrop: {
@@ -797,9 +797,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.default,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 32,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[8],
   },
   sheetGrabber: {
     width: 36,
@@ -807,14 +807,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     backgroundColor: colors.border.default,
     alignSelf: "center",
-    marginBottom: 10,
+    marginBottom: spacing[2.5],
   },
   sheetHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 4,
-    paddingBottom: 6,
+    paddingHorizontal: spacing[1],
+    paddingBottom: spacing[1.5],
   },
   sheetTitle: { fontSize: fontSize.title, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.2 },
   sheetClose: {
@@ -829,8 +829,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 13,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
     borderRadius: radii.lg,
   },
   sheetItemActive: { backgroundColor: colors.surface.brand },

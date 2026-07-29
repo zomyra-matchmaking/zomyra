@@ -12,7 +12,7 @@ import { OnboardingShell } from "@/src/components/onboarding/OnboardingShell";
 import { PhotoUploadGrid } from "@/src/components/verification/PhotoUploadGrid";
 import { MIN_PHOTOS } from "@/src/lib/verification/types";
 import { useVerificationStore } from "@/src/stores/verification-store";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const TOTAL = 6;
@@ -89,7 +89,7 @@ export default function VerifyScreen() {
             <ShieldCheck size={28} color={colors.text.onBrand} />
           </View>
         </View>
-        <View style={{ marginTop: 24, gap: 8 }}>
+        <View style={{ marginTop: spacing[6], gap: spacing[2] }}>
           {[
             "Better visibility in search",
             "A safer community for everyone",
@@ -216,7 +216,7 @@ export default function VerifyScreen() {
       </View>
       <View style={styles.calloutBox}>
         <Clock size={14} color={colors.text.muted} />
-        <Text style={[styles.calloutText, { flex: 1, marginLeft: 6 }]}>
+        <Text style={[styles.calloutText, { flex: 1, marginLeft: spacing[1.5] }]}>
           Verification is usually completed within a few hours and always within 24 hours.
         </Text>
       </View>
@@ -247,7 +247,7 @@ function StatusRow({ label, done, pending }: { label: string; done?: boolean; pe
 }
 
 const styles = StyleSheet.create({
-  helperText: { marginTop: 12, fontSize: fontSize.label, fontWeight: fontWeight.semibold, color: colors.text.muted },
+  helperText: { marginTop: spacing[3], fontSize: fontSize.label, fontWeight: fontWeight.semibold, color: colors.text.muted },
   shieldWrap: { alignItems: "center" },
   shieldCircle: {
     width: 80,
@@ -273,9 +273,9 @@ const styles = StyleSheet.create({
   benefitRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: spacing[3],
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2.5],
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -291,9 +291,9 @@ const styles = StyleSheet.create({
   },
   benefitText: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary, flex: 1 },
   calloutBox: {
-    marginTop: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    marginTop: spacing[3.5],
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2.5],
     borderRadius: radii.md,
     backgroundColor: alpha(colors.surface.brand, 0.6),
     flexDirection: "row",
@@ -336,17 +336,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.default,
   },
   tipsGrid: {
-    marginTop: 24,
+    marginTop: spacing[6],
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing[2],
   },
   tipCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    gap: spacing[2],
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[2.5],
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -374,11 +374,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   retakeBtn: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
+    gap: spacing[2],
+    paddingHorizontal: spacing[4],
     height: 44,
     borderRadius: radii.md,
     borderWidth: 1,
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   },
   retakeText: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary },
   statusList: {
-    marginTop: 20,
+    marginTop: spacing[5],
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -397,9 +397,9 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
     borderBottomWidth: 1,
     borderBottomColor: colors.border.default,
   },

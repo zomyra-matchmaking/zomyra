@@ -47,7 +47,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import type { CompatibilityDimension, DiscoverProfile } from "@/src/lib/discover/mock";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const SCREEN = Dimensions.get("window");
@@ -516,7 +516,7 @@ function EditorialPhoto({
   last?: boolean;
 }) {
   return (
-    <View style={[styles.editorialPhotoWrap, last && { marginBottom: 8 }]}>
+    <View style={[styles.editorialPhotoWrap, last && { marginBottom: spacing[2] }]}>
       <Touchable
         onPress={onOpen}
         style={styles.editorialPhoto}
@@ -557,7 +557,7 @@ function QuickFact({
   last?: boolean;
 }) {
   return (
-    <View style={[styles.quickFact, last && { marginBottom: 0 }]}>
+    <View style={[styles.quickFact, last && { marginBottom: spacing[0] }]}>
       <Text style={styles.quickFactLabel}>{label}</Text>
       <Text style={styles.quickFactValue} numberOfLines={2}>
         {value}
@@ -569,7 +569,7 @@ function QuickFact({
 const styles = StyleSheet.create({
   root: {
     backgroundColor: colors.surface.default,
-    paddingBottom: 24,
+    paddingBottom: spacing[6],
   },
 
   // ─── Hero ───
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: 10,
+    gap: spacing[2.5],
   },
   heroName: {
     fontSize: fontSize.displayLarge,
@@ -614,9 +614,9 @@ const styles = StyleSheet.create({
   heroPremiumBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
     borderRadius: radii.full,
     backgroundColor: colors.brand.default,
     borderWidth: 1,
@@ -630,10 +630,10 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   heroLocRow: {
-    marginTop: 8,
+    marginTop: spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: spacing[1],
   },
   heroLoc: {
     fontSize: fontSize.label,
@@ -647,8 +647,8 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
     borderRadius: radii.full,
     backgroundColor: alpha(colors.overlay.base, 0.4),
     borderWidth: 1,
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   heroTierLabelWrap: {
-    marginLeft: 5,
+    marginLeft: spacing[1],
   },
   heroTierText: {
     fontSize: fontSize.micro,
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
 
   // Languages & Faith — icon-less rows (label above value).
   langRow: {
-    paddingVertical: 12,
+    paddingVertical: spacing[3],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border.subtle,
   },
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   langValue: {
-    marginTop: 4,
+    marginTop: spacing[1],
     fontSize: fontSize.body,
     fontWeight: fontWeight.medium,
     color: colors.text.primary,
@@ -693,13 +693,13 @@ const styles = StyleSheet.create({
   // ─── Section (whitespace-driven, no cards) ───
   section: {
     paddingHorizontal: PAD_X,
-    paddingTop: 32,
-    paddingBottom: 12,
+    paddingTop: spacing[8],
+    paddingBottom: spacing[3],
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
   kicker: {
     fontSize: fontSize.micro,
@@ -709,18 +709,18 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   sectionTitle: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     fontSize: fontSize.h2,
     fontWeight: fontWeight.bold,
     color: colors.text.primary,
     letterSpacing: -0.5,
   },
   sectionBody: {
-    marginTop: 16,
+    marginTop: spacing[4],
   },
 
   hairline: {
-    marginTop: 24,
+    marginTop: spacing[6],
     marginHorizontal: PAD_X,
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border.subtle,
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.medium,
     letterSpacing: -0.1,
   },
-  expandToggle: { marginTop: 10, alignSelf: "flex-start" },
+  expandToggle: { marginTop: spacing[2.5], alignSelf: "flex-start" },
   expandToggleText: {
     fontSize: fontSize.label,
     fontWeight: fontWeight.bold,
@@ -750,11 +750,11 @@ const styles = StyleSheet.create({
   },
   factGridItem: {
     width: "50%",
-    paddingHorizontal: 6,
-    paddingVertical: 10,
+    paddingHorizontal: spacing[1.5],
+    paddingVertical: spacing[2.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing[2.5],
   },
   factGridLabel: {
     flex: 1,
@@ -768,8 +768,8 @@ const styles = StyleSheet.create({
   professionRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 8,
+    gap: spacing[2.5],
+    paddingVertical: spacing[2],
   },
   professionText: {
     flex: 1,
@@ -783,8 +783,8 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
+    gap: spacing[3],
+    paddingVertical: spacing[3],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border.subtle,
   },
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   detailValue: {
-    marginTop: 2,
+    marginTop: spacing[0.5],
     fontSize: fontSize.body,
     fontWeight: fontWeight.medium,
     color: colors.text.primary,
@@ -816,8 +816,8 @@ const styles = StyleSheet.create({
   },
   quickFact: {
     width: "50%",
-    marginBottom: 18,
-    paddingRight: 12,
+    marginBottom: spacing[4.5],
+    paddingRight: spacing[3],
   },
   quickFactLabel: {
     fontSize: fontSize.micro,
@@ -827,7 +827,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   quickFactValue: {
-    marginTop: 4,
+    marginTop: spacing[1],
     fontSize: fontSize.body,
     fontWeight: fontWeight.medium,
     color: colors.text.primary,
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
 
   // ─── Editorial photos (edge-to-edge, no radius) ───
   editorialPhotoWrap: {
-    marginTop: 24,
+    marginTop: spacing[6],
   },
   editorialPhoto: {
     width: SCREEN_W,
@@ -873,14 +873,14 @@ const styles = StyleSheet.create({
   alignChipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing[2],
   },
   alignChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: spacing[2],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -894,7 +894,7 @@ const styles = StyleSheet.create({
     maxWidth: SCREEN_W - PAD_X * 2 - 60,
   },
 
-  footerSlot: { paddingHorizontal: PAD_X, paddingTop: 12 },
+  footerSlot: { paddingHorizontal: PAD_X, paddingTop: spacing[3] },
 
   // ─── Reason modal ───
   reasonBackdrop: {
@@ -902,15 +902,15 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.text.primary, 0.45),
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
   },
   reasonCard: {
     width: "100%",
     maxWidth: 360,
     backgroundColor: colors.surface.default,
     borderRadius: radii["4xl"],
-    padding: 24,
-    gap: 12,
+    padding: spacing[6],
+    gap: spacing[3],
     shadowColor: colors.shadow.default,
     shadowOpacity: 0.18,
     shadowRadius: 24,
@@ -921,9 +921,9 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    gap: spacing[1.5],
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1],
     borderRadius: radii.full,
     backgroundColor: colors.brand.default,
   },
@@ -936,10 +936,10 @@ const styles = StyleSheet.create({
   },
   reasonBody: { fontSize: fontSize.title, lineHeight: 24, color: colors.text.primary, fontWeight: fontWeight.regular },
   reasonCloseBtn: {
-    marginTop: 8,
+    marginTop: spacing[2],
     alignSelf: "flex-end",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingHorizontal: spacing[4.5],
+    paddingVertical: spacing[3],
     borderRadius: radii["2xl"],
     backgroundColor: colors.brand.default,
   },

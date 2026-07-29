@@ -31,7 +31,7 @@ import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { discoverService } from "@/src/services/discover";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing, NAV_CLEARANCE } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 type QuickKey = "height" | "build" | "income" | "education";
@@ -174,7 +174,7 @@ export default function Discover() {
       {/* Scrollable profile content — headers overlay on top */}
       <Animated.ScrollView
         contentContainerStyle={{
-          paddingBottom: 120,
+          paddingBottom: NAV_CLEARANCE,
           // filterHeaderH already includes insets.top (the overlay applies it
           // as internal padding to sit below the notch). The ScrollView
           // itself starts inside the SafeAreaView's insets.top padding, so
@@ -436,7 +436,7 @@ function OptionList({
   onChange: (v: string) => void;
 }) {
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: spacing[2] }}>
       {options.map((opt) => {
         const active = value === opt;
         return (
@@ -476,12 +476,12 @@ const styles = StyleSheet.create({
 
   // header
   header: {
-    paddingHorizontal: 14,
-    paddingTop: 6,
-    paddingBottom: 6,
+    paddingHorizontal: spacing[3.5],
+    paddingTop: spacing[1.5],
+    paddingBottom: spacing[1.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing[2],
     zIndex: 10,
   },
   // Combined "Showing your best XXX matches" pill (was 2 rows — now 1)
@@ -489,9 +489,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
     height: 32,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing[3],
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     color: colors.brand.default,
   },
   titleH1: {
-    marginTop: 2,
+    marginTop: spacing[0.5],
     fontSize: fontSize.h1,
     fontWeight: fontWeight.extrabold,
     color: colors.text.primary,
@@ -535,18 +535,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   subHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[1],
     flexDirection: "row",
     alignItems: "center",
   },
   headerPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -562,24 +562,24 @@ const styles = StyleSheet.create({
 
   // chip row (slim)
   chipsRow: {
-    paddingHorizontal: 14,
-    paddingTop: 2,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[3.5],
+    paddingTop: spacing[0.5],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
   chip: {
     flexShrink: 0,
     height: 28,
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing[2.5],
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.surface.default,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: spacing[1],
   },
   chipLabel: {
     fontSize: fontSize.micro,
@@ -592,11 +592,11 @@ const styles = StyleSheet.create({
   chipPickerWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing[2],
   },
   pickerChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -610,8 +610,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[3],
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -634,31 +634,31 @@ const styles = StyleSheet.create({
 
   // banner
   banner: {
-    marginHorizontal: 16,
-    marginTop: 2,
-    marginBottom: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[0.5],
+    marginBottom: spacing[2],
+    paddingVertical: spacing[1.5],
+    paddingHorizontal: spacing[3],
     borderRadius: radii.full,
     backgroundColor: colors.surface.brand,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    gap: spacing[1],
     borderWidth: 1,
     borderColor: colors.border.default,
   },
   bannerText: { fontSize: fontSize.micro, fontWeight: fontWeight.medium, color: colors.text.primary },
   bannerHi: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
-  empty: { padding: 32, textAlign: "center", color: colors.text.muted },
+  empty: { padding: spacing[8], textAlign: "center", color: colors.text.muted },
 
   // Floating action pill — sits above the FloatingNav.
   actionFloat: {
     position: "absolute",
     left: 0,
     right: 0,
-    paddingHorizontal: 28,
+    paddingHorizontal: spacing[7],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

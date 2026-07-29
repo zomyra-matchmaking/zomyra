@@ -6,7 +6,7 @@
  */
 import { useMemo, useRef, useState } from "react";
 import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from "react-native";
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 
 const THUMB = 26;
 
@@ -152,12 +152,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    marginBottom: 14,
+    gap: spacing[2],
+    marginBottom: spacing[3.5],
   },
   valuePill: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[1.5],
     borderRadius: radii.full,
     backgroundColor: colors.surface.brand,
     borderWidth: 1,
@@ -199,10 +199,10 @@ const styles = StyleSheet.create({
   },
 
   minMaxRow: {
-    marginTop: 8,
+    marginTop: spacing[2],
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 2,
+    paddingHorizontal: spacing[0.5],
   },
   minMaxText: { fontSize: fontSize.caption, color: colors.text.primary, fontWeight: fontWeight.medium },
 });

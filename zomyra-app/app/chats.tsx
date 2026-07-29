@@ -10,7 +10,7 @@ import { useRouter } from "expo-router";
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useChatStore } from "@/src/stores/chat-store";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing, NAV_CLEARANCE } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 export default function ChatsList() {
@@ -45,7 +45,7 @@ export default function ChatsList() {
         <FlatList
           data={conversations}
           keyExtractor={(c) => c.id}
-          contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 120 }}
+          contentContainerStyle={{ paddingHorizontal: spacing[2], paddingBottom: NAV_CLEARANCE }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <Touchable
@@ -120,15 +120,15 @@ export default function ChatsList() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
   title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
-  subtitle: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
+  subtitle: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
   searchBtn: {
     width: 38,
     height: 38,
@@ -142,14 +142,14 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    gap: spacing[3],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2.5],
     borderRadius: radii.md,
   },
   avatar: { width: 48, height: 48, borderRadius: radii.full, backgroundColor: colors.surface.brand },
   rowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1, marginRight: 6 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: spacing[1.5], flex: 1, marginRight: spacing[1.5] },
   name: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, flexShrink: 1 },
   premiumDot: {
     width: 18,
@@ -160,22 +160,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   time: { fontSize: fontSize.micro, color: colors.text.muted },
-  rowBottom: { marginTop: 2, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  preview: { flex: 1, fontSize: fontSize.label, color: colors.text.muted, marginRight: 6 },
+  rowBottom: { marginTop: spacing[0.5], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  preview: { flex: 1, fontSize: fontSize.label, color: colors.text.muted, marginRight: spacing[1.5] },
   badge: {
     minWidth: 18,
     height: 18,
-    paddingHorizontal: 5,
+    paddingHorizontal: spacing[1],
     borderRadius: radii.full,
     backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
   badgeText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold },
-  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
+  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[8] },
   emptyTitle: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
   emptySubtitle: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     maxWidth: 260,
     textAlign: "center",
     fontSize: fontSize.label,

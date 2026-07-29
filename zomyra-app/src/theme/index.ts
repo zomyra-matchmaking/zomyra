@@ -7,7 +7,7 @@
  * everything outside this directory (C-4, enforced in `eslint.config.js`).
  */
 export { colors, shadows, alpha } from "./colors";
-export { radii, spacing, MIN_TOUCH_TARGET } from "./layout";
+export { radii, spacing, MIN_TOUCH_TARGET, NAV_CLEARANCE } from "./layout";
 export {
   typography,
   fontSize,

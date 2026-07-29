@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 type Props = {
@@ -201,9 +201,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[1.5],
+    paddingBottom: spacing[2.5],
     backgroundColor: colors.background,
   },
   headerRow: {
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   progressTrack: {
-    marginTop: 12,
+    marginTop: spacing[3],
     height: 5,
     borderRadius: radii.full,
     backgroundColor: colors.surface.brand,
@@ -254,8 +254,8 @@ const styles = StyleSheet.create({
   // Question container is centered vertically and horizontally.
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[6],
     justifyContent: "center",
   },
   questionWrap: {
@@ -271,19 +271,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    marginTop: 8,
+    marginTop: spacing[2],
     fontSize: fontSize.bodyLarge,
     lineHeight: 22,
     color: colors.text.muted,
     textAlign: "center",
   },
   bodyWrap: {
-    marginTop: 28,
+    marginTop: spacing[7],
     width: "100%",
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2.5],
     borderTopWidth: 1,
     borderTopColor: colors.border.default,
     backgroundColor: colors.background,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 8,
+    gap: spacing[2],
   },
   nextBtnDisabled: {
     backgroundColor: colors.surface.disabled,

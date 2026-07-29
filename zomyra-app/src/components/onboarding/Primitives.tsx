@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 
-import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 /* ============ OptionCard ============ */
@@ -294,8 +294,8 @@ export function SearchableSelect({
           style={[
             styles.suggestPanel,
             placeAbove
-              ? { bottom: "100%", marginBottom: 8 }
-              : { top: "100%", marginTop: 8 },
+              ? { bottom: "100%", marginBottom: spacing[2] }
+              : { top: "100%", marginTop: spacing[2] },
             { maxHeight: panelMaxHeight },
           ]}
         >
@@ -409,15 +409,15 @@ const styles = StyleSheet.create({
   optCard: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.surface.default,
   },
   optCardCompact: {
-    paddingVertical: 11,
+    paddingVertical: spacing[3],
   },
   optCardSelected: {
     borderColor: colors.brand.default,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   optDesc: {
-    marginTop: 2,
+    marginTop: spacing[0.5],
     fontSize: fontSize.label,
     lineHeight: 17,
     color: colors.text.muted,
@@ -442,20 +442,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 12,
+    marginLeft: spacing[3],
   },
   // ---- Chip-style grid layout (content-based width, wrapped, centered) ----
   gridWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: spacing[2.5],
     width: "100%",
     justifyContent: "center",
   },
   chipCard: {
     alignSelf: "flex-start",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingHorizontal: spacing[4.5],
+    paddingVertical: spacing[3],
     borderRadius: radii.full,
     borderWidth: 1.5,
     borderColor: colors.border.default,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     color: colors.brand.default,
   },
   chipCheck: {
-    marginLeft: 8,
+    marginLeft: spacing[2],
     width: 16,
     height: 16,
     borderRadius: radii.full,
@@ -491,12 +491,12 @@ const styles = StyleSheet.create({
   chipWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing[2],
     justifyContent: "center",
   },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
     borderRadius: radii.sm,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.surface.default,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing[4],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -542,18 +542,18 @@ const styles = StyleSheet.create({
   searchableInputWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing[2.5],
     height: 52,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.surface.default,
-    paddingHorizontal: 14,
+    paddingHorizontal: spacing[3.5],
   },
   searchableInputWrapFocused: {
     borderColor: colors.brand.default,
     borderWidth: 2,
-    paddingHorizontal: 13,
+    paddingHorizontal: spacing[3],
   },
   searchableInput: {
     flex: 1,
@@ -561,11 +561,11 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     // Compensate for the border-width jump between focused/blurred so text
     // doesn't jump on focus.
-    paddingVertical: 0,
+    paddingVertical: spacing[0],
   },
   searchableHelper: {
-    marginTop: 6,
-    marginLeft: 4,
+    marginTop: spacing[1.5],
+    marginLeft: spacing[1],
     fontSize: fontSize.caption,
     color: colors.text.muted,
   },
@@ -594,8 +594,8 @@ const styles = StyleSheet.create({
     // Height is capped inline via `maxHeight` based on live geometry.
   },
   suggestItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -614,8 +614,8 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.semibold,
   },
   suggestEmpty: {
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    paddingVertical: spacing[5],
+    paddingHorizontal: spacing[4],
     alignItems: "center",
   },
   suggestEmptyText: {

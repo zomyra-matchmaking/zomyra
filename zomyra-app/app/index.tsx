@@ -7,7 +7,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Logo, Wordmark } from "@/src/components/brand/Logo";
-import { colors, fontSize, fontWeight } from "@/src/theme";
+import { colors, fontSize, fontWeight, spacing } from "@/src/theme";
 
 export default function Splash() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function Splash() {
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
       <View style={styles.center}>
         <Logo size={96} />
-        <View style={{ marginTop: 18 }}>
+        <View style={{ marginTop: spacing[4.5] }}>
           <Wordmark size={fontSize.displayXl} />
         </View>
         <Text style={styles.tagline}>Beyond Bios. Built on Values.</Text>
@@ -33,15 +33,15 @@ export default function Splash() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background, alignItems: "center" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: spacing[8] },
   tagline: {
-    marginTop: 12,
+    marginTop: spacing[3],
     fontSize: fontSize.label,
     fontWeight: fontWeight.semibold,
     color: colors.text.muted,
   },
   footer: {
-    marginBottom: 32,
+    marginBottom: spacing[8],
     fontSize: fontSize.micro,
     fontWeight: fontWeight.semibold,
     letterSpacing: 2,

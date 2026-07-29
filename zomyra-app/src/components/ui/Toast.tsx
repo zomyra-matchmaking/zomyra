@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii, shadows, fontSize, fontWeight } from "@/src/theme";
+import { colors, radii, shadows, fontSize, fontWeight, spacing } from "@/src/theme";
 
 type ToastVariant = "default" | "success";
 
@@ -90,8 +90,8 @@ const styles = StyleSheet.create({
   },
   toast: {
     backgroundColor: colors.brand.strong,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2.5],
     borderRadius: radii.full,
     maxWidth: "86%",
     ...shadows.card,

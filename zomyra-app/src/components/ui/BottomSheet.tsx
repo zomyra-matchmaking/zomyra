@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: radii.full,
     backgroundColor: colors.border.default,
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs + 2,
+    marginTop: spacing[2],
+    marginBottom: spacing[1.5],
   },
 });

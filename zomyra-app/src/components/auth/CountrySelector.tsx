@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { FlatList, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii, fontSize, fontWeight } from "@/src/theme";
+import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { COUNTRIES, type Country } from "@/src/lib/countries";
 import { Touchable } from "@/src/components/ui";
 
@@ -95,10 +95,10 @@ export function CountrySelector({ value, onChange }: Props) {
 const styles = StyleSheet.create({
   trigger: {
     height: 52,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingTop: 8,
-    paddingHorizontal: 16,
+    paddingTop: spacing[2],
+    paddingHorizontal: spacing[4],
     maxHeight: "80%",
   },
   grabber: {
@@ -125,12 +125,12 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: radii.full,
     backgroundColor: colors.border.default,
-    marginBottom: 4,
+    marginBottom: spacing[1],
   },
   title: {
-    paddingHorizontal: 4,
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[1],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[2],
     fontSize: fontSize.title,
     fontWeight: fontWeight.bold,
     color: colors.text.primary,
@@ -138,22 +138,22 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing[2],
     height: 46,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing[3],
     backgroundColor: colors.surface.default,
-    marginBottom: 8,
+    marginBottom: spacing[2],
   },
   searchInput: { flex: 1, fontSize: fontSize.bodyLarge, color: colors.text.primary },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[3.5],
   },
   rowFlag: { fontSize: fontSize.h2 },
   rowName: { flex: 1, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.semibold, color: colors.text.primary },

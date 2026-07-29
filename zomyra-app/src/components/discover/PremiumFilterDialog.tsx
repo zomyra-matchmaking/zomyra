@@ -13,7 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { X } from "lucide-react-native";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Animated, Modal, StyleSheet, Text, View } from "react-native";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 type Props = {
@@ -92,7 +92,7 @@ export function PremiumFilterDialog({
             </Touchable>
           </View>
 
-          <View style={{ marginTop: 18 }}>{children}</View>
+          <View style={{ marginTop: spacing[4.5] }}>{children}</View>
 
           <View style={styles.footer}>
             <Touchable
@@ -130,14 +130,14 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.text.primary, 0.45),
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
   },
   card: {
     width: "100%",
     maxWidth: 360,
     backgroundColor: colors.surface.default,
     borderRadius: radii["4xl"],
-    padding: 22,
+    padding: spacing[6],
     shadowColor: colors.shadow.default,
     shadowOpacity: 0.2,
     shadowRadius: 24,
@@ -147,10 +147,10 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: spacing[3],
   },
   title: { fontSize: fontSize.subtitle, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
-  subtitle: { marginTop: 4, fontSize: fontSize.label, color: colors.text.muted, lineHeight: 18 },
+  subtitle: { marginTop: spacing[1], fontSize: fontSize.label, color: colors.text.muted, lineHeight: 18 },
   closeBtn: {
     width: 32,
     height: 32,
@@ -162,9 +162,9 @@ const styles = StyleSheet.create({
   },
 
   footer: {
-    marginTop: 20,
+    marginTop: spacing[5],
     flexDirection: "row",
-    gap: 10,
+    gap: spacing[2.5],
   },
   cancelBtn: {
     flex: 1,

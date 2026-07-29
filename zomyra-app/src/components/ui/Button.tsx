@@ -128,7 +128,7 @@ export function Button({
 
   const shape: ViewStyle = {
     height: HEIGHT[size],
-    paddingHorizontal: size === "sm" ? spacing.md : spacing.lg,
+    paddingHorizontal: size === "sm" ? spacing[3] : spacing[4],
     alignSelf: fullWidth ? "stretch" : "flex-start",
   };
 
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.sm,
+    gap: spacing[2],
     borderRadius: radii.lg,
     // Clips the gradient to the rounded shape.
     overflow: "hidden",
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.sm,
+    gap: spacing[2],
   },
   label: {
     fontWeight: fontWeight.bold,

@@ -46,7 +46,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
 import { useRequestsStore } from "@/src/stores/requests-store";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing, NAV_CLEARANCE } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const DEFAULT_AVATAR =
@@ -206,7 +206,7 @@ export default function ProfileScreen() {
             <Text style={styles.premiumSub}>
               Serious matches. Better connections.
             </Text>
-            <View style={{ marginTop: 10, gap: 8 }}>
+            <View style={{ marginTop: spacing[2.5], gap: spacing[2] }}>
               <Benefit label="Unlimited connect requests" />
               <Benefit label="Advanced filters (Height, Income & more)" />
               <Benefit label="Better visibility in Discover" />
@@ -278,7 +278,7 @@ function ActionRow({
     <Touchable
       testID={testID}
       onPress={onPress}
-      style={[styles.row, last && { paddingBottom: 16 }]}
+      style={[styles.row, last && { paddingBottom: spacing[4] }]}
     >
       <View style={[styles.rowIcon, { backgroundColor: iconBg }]}>
         <Icon size={20} color={iconColor} strokeWidth={2} />
@@ -487,7 +487,7 @@ function DeleteAccountDialog({
               <Text style={styles.askTitle}>Why are you leaving Zomyra?</Text>
               <Text style={styles.askSub}>Your feedback helps us improve.</Text>
 
-              <View style={{ marginTop: 10, gap: 8 }}>
+              <View style={{ marginTop: spacing[2.5], gap: spacing[2] }}>
                 {REASONS.map((r) => {
                   const active = reason === r;
                   return (
@@ -598,15 +598,19 @@ function DeleteAccountDialog({
 
 // ───────────────────────── styles ─────────────────────────
 
+// Row dividers start past the leading icon tile so they align with the text
+// column rather than spanning the full card. Icon (44) + its gutter (24).
+const ROW_ICON_INSET = 68;
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface.default },
-  scroll: { paddingBottom: 110 },
+  scroll: { paddingBottom: NAV_CLEARANCE },
 
   // header
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[1],
   },
   kicker: {
     fontSize: fontSize.caption,
@@ -615,7 +619,7 @@ const styles = StyleSheet.create({
     color: colors.brand.default,
   },
   title: {
-    marginTop: 2,
+    marginTop: spacing[0.5],
     fontSize: fontSize.h1,
     fontWeight: fontWeight.extrabold,
     color: colors.text.primary,
@@ -625,25 +629,25 @@ const styles = StyleSheet.create({
   // summary — compact
   summary: {
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[2],
   },
   avatarRing: {
     width: 80,
     height: 80,
     borderRadius: radii.full,
-    padding: 3,
+    padding: spacing[1],
     backgroundColor: colors.surface.brand,
     borderWidth: 1,
     borderColor: colors.border.default,
   },
   avatar: { width: "100%", height: "100%", borderRadius: radii.full },
   nameRow: {
-    marginTop: 10,
+    marginTop: spacing[2.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
   name: {
     fontSize: fontSize.h2,
@@ -664,13 +668,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  locRow: { marginTop: 2, flexDirection: "row", alignItems: "center", gap: 4 },
+  locRow: { marginTop: spacing[0.5], flexDirection: "row", alignItems: "center", gap: spacing[1] },
   locText: { fontSize: fontSize.label, color: colors.text.muted, fontWeight: fontWeight.medium },
 
   // action card
   actionCard: {
-    marginHorizontal: 16,
-    marginTop: 4,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[1],
     backgroundColor: colors.surface.default,
     borderRadius: radii["4xl"],
     borderWidth: 1,
@@ -685,9 +689,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
   },
   rowIcon: {
     width: 40,
@@ -697,15 +701,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   rowTitle: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.2 },
-  rowSubtitle: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.medium },
+  rowSubtitle: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.medium },
   divider: {
     height: 1,
     backgroundColor: colors.border.default,
-    marginLeft: 68,
+    marginLeft: ROW_ICON_INSET,
   },
   bestValueBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1],
     borderRadius: radii.full,
     backgroundColor: colors.surface.brand,
     borderWidth: 1,
@@ -715,8 +719,8 @@ const styles = StyleSheet.create({
 
   // premium card
   premiumCard: {
-    marginHorizontal: 16,
-    marginTop: 14,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[3.5],
     backgroundColor: colors.surface.default,
     borderRadius: radii["4xl"],
     borderWidth: 1,
@@ -729,8 +733,8 @@ const styles = StyleSheet.create({
     elevation: 3,
     flexDirection: "row",
     flexWrap: "wrap",
-    padding: 14,
-    gap: 12,
+    padding: spacing[3.5],
+    gap: spacing[3],
   },
   premiumArt: {
     width: 110,
@@ -755,8 +759,8 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     letterSpacing: -0.3,
   },
-  premiumSub: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
-  benefitRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  premiumSub: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
+  benefitRow: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
   benefitIcon: {
     width: 18,
     height: 18,
@@ -770,8 +774,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.nano,
     color: colors.text.muted,
     fontWeight: fontWeight.bold,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: spacing[1.5],
+    paddingVertical: spacing[0.5],
     borderRadius: radii.full,
     backgroundColor: colors.surface.subtle,
   },
@@ -779,7 +783,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: radii.xl,
     overflow: "hidden",
-    marginTop: 2,
+    marginTop: spacing[0.5],
     shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 6 },
@@ -791,7 +795,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
   premiumCtaText: { color: colors.text.onBrand, fontSize: fontSize.title, fontWeight: fontWeight.extrabold, letterSpacing: -0.2 },
 
@@ -801,14 +805,14 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.text.primary, 0.45),
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
   },
   dialogCard: {
     width: "100%",
     maxWidth: 360,
     backgroundColor: colors.surface.default,
     borderRadius: radii["4xl"],
-    padding: 22,
+    padding: spacing[6],
     alignItems: "center",
     shadowColor: colors.shadow.default,
     shadowOpacity: 0.2,
@@ -823,17 +827,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger.surfaceStrong,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
   dialogTitle: { fontSize: fontSize.heading, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.3 },
   dialogBody: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     fontSize: fontSize.label,
     color: colors.text.muted,
     textAlign: "center",
     lineHeight: 20,
   },
-  dialogActions: { marginTop: 18, flexDirection: "row", gap: 10, width: "100%" },
+  dialogActions: { marginTop: spacing[4.5], flexDirection: "row", gap: spacing[2.5], width: "100%" },
   dialogCancel: {
     flex: 1,
     height: 48,
@@ -866,7 +870,7 @@ const styles = StyleSheet.create({
     maxWidth: 380,
     backgroundColor: colors.surface.default,
     borderRadius: radii["4xl"],
-    padding: 18,
+    padding: spacing[4.5],
     shadowColor: colors.shadow.default,
     shadowOpacity: 0.2,
     shadowRadius: 24,
@@ -877,7 +881,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
   deleteHeaderTitle: { fontSize: fontSize.title, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.3 },
   deleteCloseBtn: {
@@ -891,8 +895,8 @@ const styles = StyleSheet.create({
 
   warnBanner: {
     flexDirection: "row",
-    gap: 10,
-    padding: 12,
+    gap: spacing[2.5],
+    padding: spacing[3],
     borderRadius: radii.xl,
     backgroundColor: colors.danger.surface,
     borderWidth: 1,
@@ -907,17 +911,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   warnTitle: { fontSize: fontSize.label, fontWeight: fontWeight.extrabold, color: colors.danger.default },
-  warnBody: { marginTop: 2, fontSize: fontSize.caption, color: colors.danger.textStrong, lineHeight: 17 },
+  warnBody: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.danger.textStrong, lineHeight: 17 },
 
-  askTitle: { marginTop: 16, fontSize: fontSize.body, fontWeight: fontWeight.extrabold, color: colors.text.primary },
-  askSub: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
+  askTitle: { marginTop: spacing[4], fontSize: fontSize.body, fontWeight: fontWeight.extrabold, color: colors.text.primary },
+  askSub: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
 
   reasonRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    gap: spacing[2.5],
+    paddingVertical: spacing[2.5],
+    paddingHorizontal: spacing[3],
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -939,12 +943,12 @@ const styles = StyleSheet.create({
   reasonTextActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
   feedbackWrap: {
-    marginTop: 12,
+    marginTop: spacing[3],
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.surface.default,
-    padding: 12,
+    padding: spacing[3],
   },
   feedbackInput: {
     minHeight: 64,
@@ -960,7 +964,7 @@ const styles = StyleSheet.create({
   },
 
   continueBtn: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     height: 48,
     borderRadius: radii.lg,
     alignItems: "center",
@@ -972,7 +976,7 @@ const styles = StyleSheet.create({
   continueBtnTextActive: { color: colors.text.onBrand },
   continueBtnTextDisabled: { color: colors.danger.default, opacity: 0.7 },
   continueHelper: {
-    marginTop: 8,
+    marginTop: spacing[2],
     fontSize: fontSize.caption,
     color: colors.text.muted,
     textAlign: "center",
@@ -987,10 +991,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger.surfaceStrong,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 6,
+    marginTop: spacing[1.5],
   },
   confirmTitle: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     fontSize: fontSize.title,
     fontWeight: fontWeight.extrabold,
     color: colors.text.primary,
@@ -998,38 +1002,38 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   deleteInputWrap: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.default,
     backgroundColor: colors.surface.default,
-    paddingHorizontal: 14,
+    paddingHorizontal: spacing[3.5],
   },
   deleteInput: { height: 48, fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.bold },
 
   deleteCta: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     height: 50,
     borderRadius: radii.lg,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
   deleteCtaActive: { backgroundColor: colors.danger.default },
   deleteCtaDisabled: { backgroundColor: colors.danger.border },
   deleteCtaText: { color: colors.text.onBrand, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.extrabold, letterSpacing: -0.2 },
 
   lockNoteRow: {
-    marginTop: 12,
+    marginTop: spacing[3],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
   lockNoteDot: { width: 6, height: 6, borderRadius: radii.full, backgroundColor: colors.text.muted },
   lockNote: { fontSize: fontSize.micro, color: colors.text.muted, fontWeight: fontWeight.medium },
 
-  backLink: { marginTop: 10, alignSelf: "center", paddingVertical: 6, paddingHorizontal: 12 },
+  backLink: { marginTop: spacing[2.5], alignSelf: "center", paddingVertical: spacing[1.5], paddingHorizontal: spacing[3] },
   backLinkText: { fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.bold },
 });

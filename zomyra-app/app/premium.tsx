@@ -14,7 +14,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useRequestsStore } from "@/src/stores/requests-store";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const BENEFITS = [
@@ -46,7 +46,7 @@ export default function PremiumScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[10] }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroCard}>
@@ -123,9 +123,9 @@ export default function PremiumScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface.default },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[1],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 8,
   },
-  heroGradient: { padding: 24, alignItems: "flex-start" },
+  heroGradient: { padding: spacing[6], alignItems: "flex-start" },
   crownBadge: {
     width: 44,
     height: 44,
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.text.onBrand, 0.18),
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 14,
+    marginBottom: spacing[3.5],
     borderWidth: 1,
     borderColor: alpha(colors.text.onBrand, 0.25),
   },
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     fontSize: fontSize.body,
     color: alpha(colors.text.onBrand, 0.85),
     lineHeight: 21,
@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     color: colors.brand.default,
     textTransform: "uppercase",
-    marginTop: 24,
-    marginBottom: 10,
+    marginTop: spacing[6],
+    marginBottom: spacing[2.5],
   },
   benefitsCard: {
     backgroundColor: colors.surface.default,
@@ -186,9 +186,9 @@ const styles = StyleSheet.create({
   benefit: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
   },
   benefitDivider: { borderBottomWidth: 1, borderBottomColor: colors.border.default },
   benefitIcon: {
@@ -202,23 +202,23 @@ const styles = StyleSheet.create({
   benefitText: { flex: 1, fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.medium, lineHeight: 20 },
 
   pricingCard: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 18,
+    gap: spacing[3],
+    padding: spacing[4.5],
     borderRadius: radii["4xl"],
     backgroundColor: colors.surface.brand,
     borderWidth: 1,
     borderColor: colors.border.default,
   },
   pricingTitle: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
-  pricingSubtitle: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
+  pricingSubtitle: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
   priceBig: { fontSize: fontSize.h2, fontWeight: fontWeight.extrabold, color: colors.brand.default, letterSpacing: -0.3 },
   priceCaption: { fontSize: fontSize.micro, color: colors.text.muted },
 
   cta: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     borderRadius: radii["2xl"],
     overflow: "hidden",
     shadowColor: colors.brand.default,
@@ -232,12 +232,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
   ctaText: { color: colors.text.onBrand, fontSize: fontSize.heading, fontWeight: fontWeight.bold, letterSpacing: -0.2 },
 
   fine: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     fontSize: fontSize.caption,
     color: colors.text.muted,
     textAlign: "center",

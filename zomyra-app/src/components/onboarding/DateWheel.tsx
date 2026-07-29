@@ -16,7 +16,7 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 
 const ITEM_H = 40;
 const VISIBLE = 5;
@@ -234,7 +234,7 @@ export function DateWheel({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", justifyContent: "center", gap: 10 },
+  row: { flexDirection: "row", justifyContent: "center", gap: spacing[2.5] },
   wheelWrap: {
     position: "relative",
   },

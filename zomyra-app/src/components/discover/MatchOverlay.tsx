@@ -17,7 +17,7 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const SCREEN = Dimensions.get("window");
@@ -393,11 +393,11 @@ const styles = StyleSheet.create({
   content: {
     alignItems: "center",
     width: "100%",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
   },
   // Interlocking rings
   ringsContainer: {
-    marginBottom: 32,
+    marginBottom: spacing[8],
   },
   rings: {
     width: 120,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     color: colors.text.onBrand,
     textAlign: "center",
     letterSpacing: -0.5,
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
   subtitle: {
     fontSize: fontSize.title,
@@ -434,14 +434,14 @@ const styles = StyleSheet.create({
     color: alpha(colors.text.onBrand, 0.85),
     textAlign: "center",
     lineHeight: 24,
-    marginBottom: 32,
+    marginBottom: spacing[8],
   },
   // Profile Photos
   photosContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: spacing[5],
   },
   photoWrapper: {
     position: "relative",
@@ -462,35 +462,35 @@ const styles = StyleSheet.create({
   // Profile Info
   profileInfo: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: spacing[8],
   },
   profileName: {
     fontSize: fontSize.h2,
     fontWeight: fontWeight.bold,
     color: colors.text.onBrand,
-    marginBottom: 4,
+    marginBottom: spacing[1],
   },
   profileJob: {
     fontSize: fontSize.bodyLarge,
     fontWeight: fontWeight.medium,
     color: alpha(colors.text.onBrand, 0.8),
-    marginBottom: 2,
+    marginBottom: spacing[0.5],
   },
   profileLocation: {
     fontSize: fontSize.body,
     fontWeight: fontWeight.medium,
     color: alpha(colors.text.onBrand, 0.7),
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
   profileStats: {
     flexDirection: "row",
-    gap: 16,
+    gap: spacing[4],
     alignItems: "center",
   },
   stat: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: spacing[1],
   },
   statIcon: {
     fontSize: fontSize.body,
@@ -503,16 +503,16 @@ const styles = StyleSheet.create({
   // Buttons
   buttonsContainer: {
     width: "100%",
-    gap: 12,
+    gap: spacing[3],
   },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: spacing[2.5],
     backgroundColor: colors.brand.default,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[8],
     borderRadius: radii.md,
     shadowColor: colors.brand.default,
     shadowOpacity: 0.3,
@@ -527,8 +527,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   secondaryButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[8],
     borderRadius: radii.md,
     borderWidth: 1.5,
     borderColor: alpha(colors.text.onBrand, 0.35),

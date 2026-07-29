@@ -30,7 +30,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const SCREEN_H = Dimensions.get("window").height;
@@ -140,7 +140,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
             styles.sheet,
             {
               transform: [{ translateY }],
-              paddingTop: 32,
+              paddingTop: spacing[8],
               maxHeight: SCREEN_H * 0.85, // Don't let sheet go above 85% of screen
               marginTop: Math.max(insets.top + 20, 60), // Force sheet to start lower
             },
@@ -151,7 +151,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
           
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingTop: 8, paddingBottom: Math.max(insets.bottom, 20) }}
+            contentContainerStyle={{ paddingTop: spacing[2], paddingBottom: Math.max(insets.bottom, 20) }}
           >
             <View style={styles.headerRow}>
               <Text style={styles.title}>Discovery Mode</Text>
@@ -168,7 +168,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
               Choose how Zomyra should rank the people you see today.
             </Text>
 
-            <View style={{ marginTop: 16, gap: 10 }}>
+            <View style={{ marginTop: spacing[4], gap: spacing[2.5] }}>
               {OPTIONS.map((opt) => {
                 const active = draft === opt.key;
                 const I = opt.Icon;
@@ -253,9 +253,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.default,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[8],
   },
   grabber: {
     alignSelf: "center",
@@ -263,13 +263,13 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: radii.full,
     backgroundColor: colors.surface.muted,
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 4,
+    marginBottom: spacing[1],
   },
   title: {
     fontSize: fontSize.heading,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   subtitle: {
-    marginTop: 4,
+    marginTop: spacing[1],
     fontSize: fontSize.caption,
     color: colors.text.muted,
     fontWeight: fontWeight.regular,
@@ -296,8 +296,8 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 12,
+    gap: spacing[3],
+    padding: spacing[3],
     borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   optionIconActive: { backgroundColor: colors.brand.default },
-  optionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  optionTitleRow: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
   optionTitle: {
     fontSize: fontSize.title,
     fontWeight: fontWeight.bold,
@@ -324,13 +324,13 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   recommendBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[0.5],
     borderRadius: radii.full,
     backgroundColor: colors.brand.default,
   },
   recommendText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold },
-  optionSub: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted, lineHeight: 18 },
+  optionSub: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted, lineHeight: 18 },
   radio: {
     width: 22,
     height: 22,
@@ -350,11 +350,11 @@ const styles = StyleSheet.create({
 
   // privacy
   privacyCard: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 14,
+    gap: spacing[3],
+    padding: spacing[3.5],
     borderRadius: radii["2xl"],
     backgroundColor: colors.surface.brand,
     borderWidth: 1,
@@ -369,11 +369,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   privacyTitle: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary },
-  privacySub: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
+  privacySub: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
 
   // CTA
   cta: {
-    marginTop: 20,
+    marginTop: spacing[5],
     borderRadius: radii["2xl"],
     overflow: "hidden",
     shadowColor: colors.brand.default,

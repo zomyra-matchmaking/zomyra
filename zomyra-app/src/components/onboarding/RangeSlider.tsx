@@ -5,7 +5,7 @@
 import { useRef, useState } from "react";
 import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from "react-native";
 
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 
 type Props = {
   min: number;
@@ -114,7 +114,7 @@ export default function RangeSlider({ min, max, step = 1, value, onChange, forma
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingVertical: 8 },
+  wrap: { paddingVertical: spacing[2] },
   headerRow: {
     flexDirection: "row",
     alignItems: "baseline",
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   trackWrap: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     height: 40,
     justifyContent: "center",
   },

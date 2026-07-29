@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react-native";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const SECTIONS: { heading: string; body: string }[] = [
@@ -82,8 +82,8 @@ export default function TermsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -103,26 +103,26 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     color: colors.text.primary,
   },
-  content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
+  content: { paddingHorizontal: spacing[6], paddingTop: spacing[4], paddingBottom: spacing[10] },
   kicker: {
     fontSize: fontSize.micro,
     fontWeight: fontWeight.bold,
     letterSpacing: 1.4,
     color: colors.text.muted,
-    marginBottom: 8,
+    marginBottom: spacing[2],
   },
   intro: {
     fontSize: fontSize.bodyLarge,
     lineHeight: 23,
     color: colors.text.primary,
-    marginBottom: 8,
+    marginBottom: spacing[2],
   },
-  section: { marginTop: 22 },
+  section: { marginTop: spacing[6] },
   sectionHeading: {
     fontSize: fontSize.title,
     fontWeight: fontWeight.bold,
     color: colors.text.primary,
-    marginBottom: 8,
+    marginBottom: spacing[2],
   },
   sectionBody: {
     fontSize: fontSize.body,
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
   },
   footnote: {
-    marginTop: 28,
+    marginTop: spacing[7],
     fontSize: fontSize.caption,
     fontStyle: "italic",
     color: colors.text.muted,

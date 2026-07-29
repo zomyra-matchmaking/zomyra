@@ -24,7 +24,7 @@ import { ProfileView } from "@/src/components/discover/ProfileView";
 import { toast } from "@/src/components/ui/Toast";
 import { chatToDiscoverProfile, type ChatMessage } from "@/src/lib/chats/mock";
 import { useChatStore, useConversation } from "@/src/stores/chat-store";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const REPORT_REASONS = ["Fake profile", "Inappropriate behavior", "Harassment", "Spam", "Other"];
@@ -103,11 +103,11 @@ export default function Conversation() {
         </Touchable>
         <Touchable
           onPress={() => setProfileOpen(true)}
-          style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}
+          style={{ flexDirection: "row", alignItems: "center", gap: spacing[2.5], flex: 1 }}
         >
           <Image source={{ uri: conversation.avatar }} style={styles.headerAvatar} />
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[1] }}>
               <Text style={styles.headerName} numberOfLines={1}>
                 {conversation.name}
               </Text>
@@ -134,7 +134,7 @@ export default function Conversation() {
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
-          contentContainerStyle={{ padding: 16, gap: 4 }}
+          contentContainerStyle={{ padding: spacing[4], gap: spacing[1] }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => {
             const mine = item.from === "me";
@@ -194,7 +194,7 @@ export default function Conversation() {
 
       {/* Profile bottom sheet */}
       <BottomSheet open={profileOpen} onClose={() => setProfileOpen(false)}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: spacing[6] }}>
           <ProfileView profile={profile} />
         </ScrollView>
       </BottomSheet>
@@ -213,10 +213,10 @@ export default function Conversation() {
 
       {/* Report sheet */}
       <BottomSheet open={reportOpen} onClose={() => setReportOpen(false)} heightFraction={0.55}>
-        <View style={{ paddingHorizontal: 16 }}>
+        <View style={{ paddingHorizontal: spacing[4] }}>
           <Text style={styles.reportTitle}>Report this person</Text>
           <Text style={styles.reportSubtitle}>Choose a reason. Our team reviews every report.</Text>
-          <View style={{ marginTop: 12 }}>
+          <View style={{ marginTop: spacing[3] }}>
             {REPORT_REASONS.map((r) => (
               <Touchable
                 feedback="highlight"
@@ -284,14 +284,18 @@ function MenuItem({
   );
 }
 
+// The overflow menu hangs below the header rather than centring on screen, so
+// its backdrop pads down past the header before laying the menu out.
+const MENU_TOP_OFFSET = 60;
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    gap: spacing[2],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[2.5],
     borderBottomWidth: 1,
     borderBottomColor: colors.border.subtle,
   },
@@ -307,18 +311,18 @@ const styles = StyleSheet.create({
   headerSubtitle: { fontSize: fontSize.micro, color: colors.text.muted },
   bubble: {
     maxWidth: "78%",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
     borderRadius: radii.xl,
   },
   bubbleText: { fontSize: fontSize.body, lineHeight: 20 },
-  bubbleTime: { marginTop: 2, fontSize: fontSize.nano, textAlign: "right" },
+  bubbleTime: { marginTop: spacing[0.5], fontSize: fontSize.nano, textAlign: "right" },
   composer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: spacing[2],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
     borderTopWidth: 1,
     borderTopColor: colors.border.subtle,
     backgroundColor: colors.surface.default,
@@ -327,9 +331,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing[2],
     height: 44,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing[3],
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.border.subtle,
@@ -344,22 +348,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  menuBackdrop: { flex: 1, backgroundColor: alpha(colors.overlay.base, 0.3), justifyContent: "flex-start", paddingTop: 60, alignItems: "flex-end", paddingRight: 8 },
+  menuBackdrop: { flex: 1, backgroundColor: alpha(colors.overlay.base, 0.3), justifyContent: "flex-start", paddingTop: MENU_TOP_OFFSET, alignItems: "flex-end", paddingRight: spacing[2] },
   menu: {
     minWidth: 180,
     borderRadius: radii.lg,
     backgroundColor: colors.surface.default,
-    paddingVertical: 6,
+    paddingVertical: spacing[1.5],
     shadowColor: colors.shadow.default,
     shadowOpacity: 0.14,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
-  menuItem: { paddingHorizontal: 14, paddingVertical: 11 },
+  menuItem: { paddingHorizontal: spacing[3.5], paddingVertical: spacing[3] },
   menuItemText: { fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.semibold },
   reportTitle: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
-  reportSubtitle: { marginTop: 4, fontSize: fontSize.caption, color: colors.text.muted },
-  reportItem: { paddingHorizontal: 12, paddingVertical: 12, borderRadius: radii.md },
+  reportSubtitle: { marginTop: spacing[1], fontSize: fontSize.caption, color: colors.text.muted },
+  reportItem: { paddingHorizontal: spacing[3], paddingVertical: spacing[3], borderRadius: radii.md },
   reportItemText: { fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.semibold },
 });

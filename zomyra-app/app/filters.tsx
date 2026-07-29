@@ -42,7 +42,7 @@ import {
   type MultiFilterKey,
 } from "@/src/stores/discover-filters-store";
 import { useRequestsStore } from "@/src/stores/requests-store";
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 type RowKey = "age" | "height" | MultiFilterKey;
@@ -240,7 +240,7 @@ export default function FiltersScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[10] }}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.sectionTitle}>BASIC FILTERS</Text>
@@ -268,9 +268,9 @@ export default function FiltersScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface.default },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[1],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing[2],
   },
   headerTitle: { fontSize: fontSize.heading, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.2 },
   resetText: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.brand.default },
@@ -292,24 +292,24 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     color: colors.brand.default,
     textTransform: "uppercase",
-    marginTop: 8,
-    marginBottom: 10,
+    marginTop: spacing[2],
+    marginBottom: spacing[2.5],
   },
   premiumTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 28,
-    marginBottom: 10,
+    gap: spacing[2],
+    marginTop: spacing[7],
+    marginBottom: spacing[2.5],
   },
   unlockedPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[0.5],
     borderRadius: radii.full,
     backgroundColor: colors.surface.brand,
     borderWidth: 1,
     borderColor: colors.border.default,
-    marginLeft: 4,
+    marginLeft: spacing[1],
   },
   unlockedPillText: { fontSize: fontSize.nano, fontWeight: fontWeight.extrabold, color: colors.brand.default, letterSpacing: 0.3 },
 
@@ -328,9 +328,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
     backgroundColor: colors.surface.default,
   },
   rowOpen: { backgroundColor: colors.surface.brand },
@@ -348,15 +348,15 @@ const styles = StyleSheet.create({
   rowValueSet: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
   editor: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 16,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[1],
+    paddingBottom: spacing[4],
     backgroundColor: colors.surface.brand,
   },
-  chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -367,23 +367,23 @@ const styles = StyleSheet.create({
   chipTextActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
   clearChip: {
     alignSelf: "flex-start",
-    marginTop: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    marginTop: spacing[3],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1.5],
     borderRadius: radii.full,
     backgroundColor: colors.surface.default,
     borderWidth: 1,
     borderColor: colors.border.default,
   },
   clearChipText: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.text.muted },
-  dividerLine: { height: 1, backgroundColor: colors.border.default, marginHorizontal: 16 },
+  dividerLine: { height: 1, backgroundColor: colors.border.default, marginHorizontal: spacing[4] },
 
   lockBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
     borderRadius: radii.full,
     backgroundColor: colors.premium.surface,
     borderWidth: 1,

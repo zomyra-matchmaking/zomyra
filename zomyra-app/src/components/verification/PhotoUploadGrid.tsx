@@ -13,7 +13,7 @@ import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { toast } from "@/src/components/ui/Toast";
 import { MAX_PHOTOS, type UploadedPhoto } from "@/src/lib/verification/types";
 import { uploadService } from "@/src/services/upload";
-import { colors, radii, alpha, fontSize, fontWeight } from "@/src/theme";
+import { colors, radii, alpha, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 // Short, warm, matrimony-appropriate prompts shown on the empty upload
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    rowGap: 10,
+    rowGap: spacing[2.5],
   },
   cell: {
     width: "32%",
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.surface.brand, 0.5),
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: spacing[1],
   },
   placeholderLabel: {
     fontSize: fontSize.micro,
@@ -167,14 +167,14 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
     textAlign: "center",
     lineHeight: 14,
-    marginTop: 4,
-    paddingHorizontal: 4,
+    marginTop: spacing[1],
+    paddingHorizontal: spacing[1],
   },
   placeholderHint: {
     fontSize: fontSize.nano,
     letterSpacing: 1,
     color: colors.text.muted,
-    marginTop: 2,
+    marginTop: spacing[0.5],
   },
   coverChip: {
     position: "absolute",
@@ -182,9 +182,9 @@ const styles = StyleSheet.create({
     left: 6,
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
     borderRadius: radii.full,
     backgroundColor: colors.brand.default,
   },
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   help: {
-    marginTop: 12,
+    marginTop: spacing[3],
     fontSize: fontSize.caption,
     color: colors.text.muted,
   },

@@ -72,7 +72,7 @@ export const Input = forwardRef<TextInput, Props>(function Input(
       <View
         style={[
           styles.field,
-          multiline && { height: LINE_HEIGHT * rows + spacing.lg * 2, alignItems: "flex-start" },
+          multiline && { height: LINE_HEIGHT * rows + spacing[8], alignItems: "flex-start" },
           focused && styles.fieldFocused,
           invalid && styles.fieldInvalid,
         ]}
@@ -122,7 +122,7 @@ export const Input = forwardRef<TextInput, Props>(function Input(
 
 const styles = StyleSheet.create({
   label: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing[2],
     fontSize: fontSize.label,
     fontWeight: fontWeight.semibold,
     color: colors.text.primary,
@@ -130,9 +130,9 @@ const styles = StyleSheet.create({
   field: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing[2],
     minHeight: ROW_HEIGHT,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing[4],
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border.neutral,
@@ -150,11 +150,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.title,
     color: colors.text.primary,
     // Android adds vertical padding that desyncs the text from the box.
-    paddingVertical: 0,
+    paddingVertical: spacing[0],
   },
   inputMultiline: {
     height: "100%",
-    paddingTop: spacing.lg,
+    paddingTop: spacing[4],
     textAlignVertical: "top",
     fontSize: fontSize.body,
     lineHeight: LINE_HEIGHT,
@@ -163,8 +163,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: spacing.sm,
-    marginTop: spacing.xs + 2,
+    gap: spacing[2],
+    marginTop: spacing[1.5],
   },
   hint: {
     flex: 1,

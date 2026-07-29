@@ -7,7 +7,7 @@ import { CountrySelector } from "@/src/components/auth/CountrySelector";
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { DEFAULT_COUNTRY, type Country } from "@/src/lib/countries";
 import { authService } from "@/src/services/auth";
-import { colors, fontSize, fontWeight } from "@/src/theme";
+import { colors, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Button, Input } from "@/src/components/ui";
 
 export default function PhoneScreen() {
@@ -52,7 +52,7 @@ export default function PhoneScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <View style={{ paddingHorizontal: 24, flex: 1 }}>
+        <View style={{ paddingHorizontal: spacing[6], flex: 1 }}>
           <ScreenHeader onBack={() => router.back()} />
           <Text style={styles.title}>Enter your phone number</Text>
           <Text style={styles.subtitle}>We'll send you a verification code to continue.</Text>
@@ -113,22 +113,22 @@ export default function PhoneScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   title: {
-    marginTop: 16,
+    marginTop: spacing[4],
     fontSize: fontSize.display,
     fontWeight: fontWeight.bold,
     letterSpacing: -0.3,
     color: colors.text.primary,
   },
   subtitle: {
-    marginTop: 8,
+    marginTop: spacing[2],
     fontSize: fontSize.bodyLarge,
     lineHeight: 21,
     color: colors.text.muted,
   },
-  row: { marginTop: 24, flexDirection: "row", gap: 8, alignItems: "flex-start" },
+  row: { marginTop: spacing[6], flexDirection: "row", gap: spacing[2], alignItems: "flex-start" },
   inputWrap: { flex: 1, minWidth: 0 },
   hint: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     fontSize: fontSize.caption,
     lineHeight: 18,
     color: colors.text.muted,
@@ -137,11 +137,11 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontWeight: fontWeight.bold,
   },
-  cta: { marginTop: 18 },
+  cta: { marginTop: spacing[4.5] },
   legal: {
     textAlign: "center",
     fontSize: fontSize.caption,
     color: colors.text.muted,
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
 });

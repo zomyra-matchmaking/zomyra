@@ -28,7 +28,7 @@ import {
   PROFESSIONS,
 } from "@/src/lib/onboarding/data";
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
 import { Input } from "@/src/components/ui";
 
@@ -88,7 +88,7 @@ const Q1: QuestionScreen[] = [
       subtitle: "How you'd like to appear to your matches.",
       canNext: !!s.firstName.trim() && !!s.lastName.trim(),
       body: (
-        <View style={{ gap: 12 }}>
+        <View style={{ gap: spacing[3] }}>
           <NameField label="First name" value={s.firstName} onChange={(v) => set("firstName", v)} />
           <NameField label="Last name" value={s.lastName} onChange={(v) => set("lastName", v)} />
         </View>
@@ -104,7 +104,7 @@ const Q1: QuestionScreen[] = [
         subtitle: "Spin the wheels to set your date of birth.",
         canNext: !!s.dob && (age ?? 0) >= 18,
         body: (
-          <View style={{ alignItems: "center", gap: 16 }}>
+          <View style={{ alignItems: "center", gap: spacing[4] }}>
             <DateWheel value={s.dob} onChange={(v) => set("dob", v)} />
             <Text style={{ fontSize: fontSize.label, color: colors.text.muted }}>
               {age == null
@@ -165,7 +165,7 @@ const Q1: QuestionScreen[] = [
         canNext: !!s.heightCm,
         body: (
           <View>
-            <View style={{ alignItems: "center", marginBottom: 20 }}>
+            <View style={{ alignItems: "center", marginBottom: spacing[5] }}>
               <Text style={styles.bigValue}>{cmToImperial(cm)}</Text>
               <Text style={styles.smallValue}>{cm} cm</Text>
             </View>
@@ -589,11 +589,11 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.semibold,
     letterSpacing: 1.4,
     color: colors.text.muted,
-    marginBottom: 6,
+    marginBottom: spacing[1.5],
   },
   fieldInput: {
     height: 48,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing[4],
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   bigValue: { fontSize: fontSize.displayXl, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.6 },
-  smallValue: { marginTop: 4, fontSize: fontSize.caption, color: colors.text.muted },
-  rangeLabels: { marginTop: 8, flexDirection: "row", justifyContent: "space-between" },
+  smallValue: { marginTop: spacing[1], fontSize: fontSize.caption, color: colors.text.muted },
+  rangeLabels: { marginTop: spacing[2], flexDirection: "row", justifyContent: "space-between" },
   rangeLabel: { fontSize: fontSize.micro, color: colors.text.muted },
 });

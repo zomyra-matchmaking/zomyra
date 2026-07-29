@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 
 import { useRequestsStore } from "@/src/stores/requests-store";
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 type Item = {
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing[4],
   },
   bar: {
     width: "100%",
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingHorizontal: 6,
+    paddingHorizontal: spacing[1.5],
     shadowColor: colors.shadow.default,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 8 },
@@ -105,8 +105,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
-    paddingVertical: 4,
+    gap: spacing[0.5],
+    paddingVertical: spacing[1],
   },
   iconWrap: {
     width: 24,
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     right: -10,
     minWidth: 18,
     height: 18,
-    paddingHorizontal: 5,
+    paddingHorizontal: spacing[1],
     borderRadius: radii.full,
     backgroundColor: colors.brand.default,
     alignItems: "center",

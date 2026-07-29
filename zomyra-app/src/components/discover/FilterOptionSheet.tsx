@@ -17,7 +17,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
 const SCREEN_H = Dimensions.get("window").height;
@@ -105,7 +105,7 @@ export function FilterOptionSheet({
           <View style={styles.grabber} />
           <View style={styles.headerRow}>
             <Text style={styles.title}>{title}</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
               {draft !== null ? (
                 <Touchable
                   onPress={clear}
@@ -128,7 +128,7 @@ export function FilterOptionSheet({
           </View>
           <Text style={styles.subtitle}>Pick one option below.</Text>
 
-          <ScrollView style={{ maxHeight: SCREEN_H * 0.5 }} contentContainerStyle={{ gap: 10, paddingVertical: 12 }}>
+          <ScrollView style={{ maxHeight: SCREEN_H * 0.5 }} contentContainerStyle={{ gap: spacing[2.5], paddingVertical: spacing[3] }}>
             {options.map((opt) => {
               const active = draft === opt;
               return (
@@ -180,9 +180,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.default,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[8],
   },
   grabber: {
     alignSelf: "center",
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: radii.full,
     backgroundColor: colors.surface.muted,
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
   headerRow: {
     flexDirection: "row",
@@ -198,8 +198,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
-  subtitle: { marginTop: 4, fontSize: fontSize.label, color: colors.text.muted },
-  clearBtn: { paddingHorizontal: 4, paddingVertical: 4 },
+  subtitle: { marginTop: spacing[1], fontSize: fontSize.label, color: colors.text.muted },
+  clearBtn: { paddingHorizontal: spacing[1], paddingVertical: spacing[1] },
   clearText: { color: colors.brand.default, fontWeight: fontWeight.bold, fontSize: fontSize.label },
   closeBtn: {
     width: 32,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 14,
+    padding: spacing[3.5],
     borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
 
   cta: {
-    marginTop: 12,
+    marginTop: spacing[3],
     borderRadius: radii["2xl"],
     overflow: "hidden",
     shadowColor: colors.brand.default,

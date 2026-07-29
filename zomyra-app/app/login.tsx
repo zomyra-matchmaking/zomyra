@@ -4,7 +4,7 @@ import { Image, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { toast } from "@/src/components/ui/Toast";
-import { colors, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Button, Touchable } from "@/src/components/ui";
 
 function GoogleG() {
@@ -92,9 +92,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[3],
   },
   // Middle absorbs all the spare vertical space so the CTAs stay anchored.
   middle: {
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   // Lockup aspect is 795x1024 (mark over wordmark) — height/width kept in that
   // ratio so `contain` leaves no dead space around it.
-  lockup: { width: 202, height: 260, marginBottom: 28 },
+  lockup: { width: 202, height: 260, marginBottom: spacing[7] },
   title: {
     fontSize: fontSize.h1,
     lineHeight: 32,
@@ -114,14 +114,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    marginTop: 8,
+    marginTop: spacing[2],
     fontSize: fontSize.body,
     color: colors.text.muted,
     textAlign: "center",
   },
   // Bottom — anchored auth CTAs.
   bottom: {
-    gap: 12,
+    gap: spacing[3],
   },
   // Both auth CTAs are Buttons; this only makes them taller than the default
   // `lg` and gives the primary its brand lift, since they are the hero of the
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   legal: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     fontSize: fontSize.caption,
     lineHeight: 18,
     color: colors.text.muted,
@@ -162,10 +162,10 @@ const styles = StyleSheet.create({
   } as const,
   // TEMPORARY dev-only skip — remove with the button above.
   devSkipBtn: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     alignSelf: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.premium.icon,

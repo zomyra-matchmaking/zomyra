@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { Slider } from "./Slider";
-import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 
 type Props = {
   value: number;
@@ -12,7 +12,7 @@ type Props = {
 
 export function ScaleSlider({ value, onChange, left, right }: Props) {
   return (
-    <View style={{ paddingHorizontal: 8 }}>
+    <View style={{ paddingHorizontal: spacing[2] }}>
       <View style={styles.dots}>
         {[1, 2, 3, 4, 5].map((n) => (
           <View
@@ -24,7 +24,7 @@ export function ScaleSlider({ value, onChange, left, right }: Props) {
           />
         ))}
       </View>
-      <View style={{ marginTop: 18 }}>
+      <View style={{ marginTop: spacing[4.5] }}>
         <Slider min={1} max={5} step={1} value={value} onChange={onChange} />
       </View>
       <View style={styles.labels}>
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   dots: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
   dot: {
     width: 6,
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     backgroundColor: alpha(colors.brand.strong, 0.15),
   },
   labels: {
-    marginTop: 16,
+    marginTop: spacing[4],
     flexDirection: "row",
     justifyContent: "space-between",
   },
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   valueText: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     textAlign: "center",
     fontSize: fontSize.caption,
     color: colors.text.muted,
