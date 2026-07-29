@@ -14,7 +14,7 @@ Append a "Module log" entry at the end of every module, in the same session that
   output and is kept as the historical reference point; §6 records what each module changed.
   ⚠️ **§3's "Design language" subsection is now history, not current state** — the 281 hex literals,
   the 13 rival palettes and the four NFR-6a failures it records were all resolved in Module 1.
-- **Handoff state:** **Module 1 is finished and awaiting the owner.** Nine commits sit on
+- **Handoff state:** **Module 1 is finished and awaiting the owner.** Twelve commits sit on
   `module/1-design-system` (branched from `aa80d1a`), **committed but not pushed and with no PR
   open** — per C-6 the owner does both. A new session must not assume this work is on `master`;
   `git log master..module/1-design-system` shows what is pending. Module 0 is merged (PR #1).
@@ -783,6 +783,44 @@ values (`0` excepted — it means "none", not a rhythm choice).
 
 Verified on the simulator against the pre-migration screenshots: login, profile, **edit-profile**
 (the densest screen, most spacing literals) and filters all render unchanged.
+
+#### Module 1 addendum — PR review follow-ups (2026-07-30)
+
+Three review comments, all applied on the same branch.
+
+- **Fixed layout values moved out of the theme → `src/constants/`.** `NAV_CLEARANCE` and
+  `MIN_TOUCH_TARGET` were sitting in `src/theme/layout.ts` next to the scales. The line drawn, and
+  written at the top of the new file: **the theme holds scales you pick a step from; constants hold
+  values with one right answer.** `spacing[4]` is a design choice; the nav is as tall as it is.
+  `src/theme/layout.ts` is now purely `radii` + `spacing`. Screen-local one-offs (`ROW_ICON_INSET`,
+  `MENU_TOP_OFFSET`) deliberately stayed in their screens — hoisting single-use values into a shared
+  file turns it into a junk drawer.
+- **Numeric-suffixed icons aliased on import.** `Trash2`, `CheckCircle2`, `UserCircle2` — the digit
+  is lucide's *glyph variant* number and carries no meaning at the call site. Now
+  `Trash2 as TrashIcon` etc., so JSX reads `<TrashIcon />`. Five files. (Lucide's own `…Icon`
+  aliases keep the digit, so they do not help here.)
+- **`Platform.OS` comparisons replaced by `isIOS` / `isAndroid`** in `src/utils/platform.ts` — 16
+  comparisons across 11 files. There is deliberately **no `isWeb`**: web is out of scope (O-12) and
+  `app.json` declares `platforms: ["ios", "android"]`, so a web branch is unreachable code that
+  reads as live.
+
+**Three pieces of dead code fell out of that sweep**, which is the argument for the helper:
+
+| Found | Where |
+|---|---|
+| `keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}` — both branches identical | `app/chats/[id].tsx`, `OnboardingShell.tsx` |
+| `if (Platform.OS !== "web")` guarding a haptic — always true | `DateWheel.tsx` |
+| `if (Platform.OS === "web")` scroll-idle fallback, plus the `idleTimer` ref that only served it | `DateWheel.tsx` |
+
+The DateWheel removal was re-verified on the simulator: the wheel still snaps and the derived age
+still updates, so `commit()` was always coming from the momentum handlers.
+
+> ⚠️ **Left alone deliberately — a real inconsistency worth a decision.** `KeyboardAvoidingView`
+> uses `behavior={isIOS ? "padding" : "height"}` in three screens and `isIOS ? "padding" : undefined`
+> in three others. On Android with `adjustResize` (Expo's default) `undefined` is usually right and
+> `"height"` can double-adjust. Unifying them changes keyboard behaviour on Android, which **cannot
+> be verified on the iOS Simulator** — so it wants an Android dev-client build first. Module 3
+> (Navigation) or whoever runs the first Android build should settle it.
 
 <!--
 Template:

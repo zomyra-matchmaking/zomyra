@@ -16,10 +16,11 @@ import { toast } from "@/src/components/ui/Toast";
 import { useRequestsStore, type ConnectionRequest } from "@/src/stores/requests-store";
 import { useChatStore } from "@/src/stores/chat-store";
 import type { CompatibilityTier } from "@/src/lib/discover/mock";
-import { colors, alpha, fontSize, fontWeight, radii, spacing, NAV_CLEARANCE } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Button, Touchable } from "@/src/components/ui";
+import { NAV_CLEARANCE } from "@/src/constants";
 
 const TIER_COLOR: Record<CompatibilityTier, (typeof colors.tier)[keyof typeof colors.tier]> = {
   "Excellent Match": colors.tier.excellent,

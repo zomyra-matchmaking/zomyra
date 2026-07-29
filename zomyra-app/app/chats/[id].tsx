@@ -4,17 +4,7 @@
 import { ArrowLeft, BadgeCheck, MoreVertical, Send, Smile } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  FlatList,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { FlatList, Image, KeyboardAvoidingView, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScrollView } from "react-native";
 
@@ -26,6 +16,7 @@ import { chatToDiscoverProfile, type ChatMessage } from "@/src/lib/chats/mock";
 import { useChatStore, useConversation } from "@/src/stores/chat-store";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 const REPORT_REASONS = ["Fake profile", "Inappropriate behavior", "Harassment", "Spam", "Other"];
 
@@ -126,9 +117,9 @@ export default function Conversation() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={isIOS ? "padding" : undefined}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        keyboardVerticalOffset={0}
       >
         <FlatList
           ref={listRef}

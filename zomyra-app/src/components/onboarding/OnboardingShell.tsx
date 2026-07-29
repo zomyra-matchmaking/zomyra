@@ -1,20 +1,11 @@
 import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useRef, type ReactNode } from "react";
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Animated, Easing, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 type Props = {
   step: number;
@@ -128,9 +119,9 @@ export function OnboardingShell({
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        keyboardVerticalOffset={0}
       >
         <View style={styles.header}>
           <View style={styles.headerRow}>

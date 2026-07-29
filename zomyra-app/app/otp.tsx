@@ -1,13 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
@@ -15,6 +8,7 @@ import { toast } from "@/src/components/ui/Toast";
 import { authService } from "@/src/services/auth";
 import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Button, Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -125,7 +119,7 @@ export default function OtpScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <View style={{ paddingHorizontal: spacing[6], flex: 1 }}>

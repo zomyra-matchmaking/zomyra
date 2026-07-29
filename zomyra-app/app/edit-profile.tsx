@@ -19,7 +19,7 @@ import {
   ArrowLeft,
   Briefcase,
   Camera,
-  CheckCircle2,
+  CheckCircle2 as CheckCircleIcon,
   Cigarette,
   Dumbbell,
   GraduationCap,
@@ -31,25 +31,14 @@ import {
   Pencil,
   Plus,
   Sparkles,
-  Trash2,
+  Trash2 as TrashIcon,
   UserRound,
   Wine,
   X,
   type LucideIcon,
 } from "lucide-react-native";
 import { useMemo, useState, type ReactNode } from "react";
-import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, Image, KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
@@ -64,6 +53,7 @@ import type {
 } from "@/src/lib/onboarding/types";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 // Design tokens — match Discover so the screens feel related.
 
@@ -148,7 +138,7 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={isIOS ? "padding" : undefined}
         style={{ flex: 1 }}
       >
         {/* ── Sticky header ── */}
@@ -247,7 +237,7 @@ export default function EditProfileScreen() {
                       style={[styles.photoTileDelete]}
                       hitSlop={6}
                     >
-                      <Trash2 size={13} color={colors.text.onBrand} strokeWidth={2.4} />
+                      <TrashIcon size={13} color={colors.text.onBrand} strokeWidth={2.4} />
                     </Touchable>
                   </View>
                 );
@@ -562,7 +552,7 @@ function PickerSheet({
                   >
                     {opt}
                   </Text>
-                  {active ? <CheckCircle2 size={18} color={colors.brand.default} strokeWidth={2.2} /> : null}
+                  {active ? <CheckCircleIcon size={18} color={colors.brand.default} strokeWidth={2.2} /> : null}
                 </Touchable>
               );
             })}

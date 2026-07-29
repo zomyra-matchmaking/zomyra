@@ -12,15 +12,7 @@
  * navigating back preserves prior answers.
  */
 import { useMemo, useState } from "react";
-import {
-  Animated,
-  Easing,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Animated, Easing, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
@@ -30,6 +22,7 @@ import { colors, radii, alpha, fontSize, fontWeight, spacing } from "@/src/theme
 import { SCALE_QUESTIONS } from "@/src/lib/onboarding/scales";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
 import { Touchable } from "@/src/components/ui";
+import { isAndroid } from "@/src/utils/platform";
 
 type Props = {
   state: OnboardingState;
@@ -286,7 +279,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing[5],
-    paddingTop: Platform.OS === "android" ? 6 : 4,
+    paddingTop: isAndroid ? 6 : 4,
     paddingBottom: spacing[3],
   },
   headerRow: {

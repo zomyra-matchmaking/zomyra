@@ -4,7 +4,7 @@
  * if the user wants a different cover they can delete and re-upload in the
  * desired order.
  */
-import { GripVertical, ImagePlus, Star, Trash2 } from "lucide-react-native";
+import { GripVertical, ImagePlus, Star, Trash2 as TrashIcon } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { Image, Linking, StyleSheet, Text, View } from "react-native";
@@ -96,7 +96,7 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
                     onPress={() => setPendingDelete(slot.id)}
                     style={styles.removeBtn}
                   >
-                    <Trash2 size={14} color={colors.danger.default} />
+                    <TrashIcon size={14} color={colors.danger.default} />
                   </Touchable>
                 </View>
               ) : (

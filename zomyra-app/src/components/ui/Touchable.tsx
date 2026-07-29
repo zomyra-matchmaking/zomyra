@@ -18,16 +18,11 @@
  * element is already large enough and the slop would overlap a neighbour.
  */
 import { forwardRef } from "react";
-import {
-  Platform,
-  Pressable,
-  type PressableProps,
-  type StyleProp,
-  type View,
-  type ViewStyle,
-} from "react-native";
+import { Pressable, type PressableProps, type StyleProp, type View, type ViewStyle } from "react-native";
 
-import { alpha, colors, MIN_TOUCH_TARGET } from "@/src/theme";
+import { alpha, colors } from "@/src/theme";
+import { MIN_TOUCH_TARGET } from "@/src/constants";
+import { isAndroid } from "@/src/utils/platform";
 
 /** How the control should respond to touch. */
 export type TouchableFeedback =
@@ -75,7 +70,6 @@ export const Touchable = forwardRef<View, TouchableProps>(function Touchable(
   },
   ref,
 ) {
-  const isAndroid = Platform.OS === "android";
   const rippled = isAndroid && feedback !== "none";
 
   return (

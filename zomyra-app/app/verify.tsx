@@ -4,7 +4,7 @@
  */
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Camera, Check, Clock, ImagePlus, ShieldCheck, Sun, UserCircle2, X } from "lucide-react-native";
+import { Camera, Check, Clock, ImagePlus, ShieldCheck, Sun, UserCircle2 as UserCircleIcon, X } from "lucide-react-native";
 import { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
@@ -132,7 +132,7 @@ export default function VerifyScreen() {
         <View style={styles.tipsGrid}>
           {[
             { Icon: Sun, t: "Good lighting" },
-            { Icon: UserCircle2, t: "Full face visible" },
+            { Icon: UserCircleIcon, t: "Full face visible" },
             { Icon: X, t: "No sunglasses" },
             { Icon: X, t: "No hats or filters" },
           ].map((x) => (

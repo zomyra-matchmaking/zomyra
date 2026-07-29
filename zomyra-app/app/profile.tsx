@@ -12,7 +12,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
-  CheckCircle2,
+  CheckCircle2 as CheckCircleIcon,
   ChevronRight,
   Crown,
   Eye,
@@ -23,31 +23,21 @@ import {
   Pencil,
   ShieldAlert,
   Sparkles,
-  Trash2,
+  Trash2 as TrashIcon,
   X,
   type LucideIcon,
 } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import {
-  Animated,
-  Easing,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Animated, Easing, Image, KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
 import { useRequestsStore } from "@/src/stores/requests-store";
-import { colors, alpha, fontSize, fontWeight, radii, spacing, NAV_CLEARANCE } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
+import { NAV_CLEARANCE } from "@/src/constants";
+import { isIOS } from "@/src/utils/platform";
 
 const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80&auto=format&fit=crop";
@@ -163,7 +153,7 @@ export default function ProfileScreen() {
           <Divider />
           <ActionRow
             testID="profile-action-delete"
-            Icon={Trash2}
+            Icon={TrashIcon}
             iconBg={colors.danger.surface}
             iconColor={colors.danger.default}
             title="Delete account"
@@ -304,7 +294,7 @@ function Divider() {
 }
 
 function Benefit({
-  Icon = CheckCircle2,
+  Icon = CheckCircleIcon,
   label,
   comingSoon,
 }: {
@@ -443,7 +433,7 @@ function DeleteAccountDialog({
       statusBarTranslucent
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={isIOS ? "padding" : undefined}
         style={styles.dialogBackdrop}
       >
         <Touchable
@@ -548,7 +538,7 @@ function DeleteAccountDialog({
           ) : (
             <View>
               <View style={styles.trashIconCircle}>
-                <Trash2 size={28} color={colors.danger.default} strokeWidth={2} />
+                <TrashIcon size={28} color={colors.danger.default} strokeWidth={2} />
               </View>
               <Text style={styles.confirmTitle}>
                 Type <Text style={{ color: colors.danger.default, fontWeight: fontWeight.extrabold }}>DELETE</Text>{" "}
@@ -572,7 +562,7 @@ function DeleteAccountDialog({
                 onPress={onConfirm}
                 style={[styles.deleteCta, canDelete ? styles.deleteCtaActive : styles.deleteCtaDisabled]}
               >
-                <Trash2 size={18} color={colors.text.onBrand} strokeWidth={2.4} />
+                <TrashIcon size={18} color={colors.text.onBrand} strokeWidth={2.4} />
                 <Text style={styles.deleteCtaText}>Delete my account</Text>
               </Touchable>
               <View style={styles.lockNoteRow}>

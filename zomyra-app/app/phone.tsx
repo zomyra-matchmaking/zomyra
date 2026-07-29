@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CountrySelector } from "@/src/components/auth/CountrySelector";
@@ -9,6 +9,7 @@ import { DEFAULT_COUNTRY, type Country } from "@/src/lib/countries";
 import { authService } from "@/src/services/auth";
 import { colors, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Button, Input } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 export default function PhoneScreen() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function PhoneScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <View style={{ paddingHorizontal: spacing[6], flex: 1 }}>

@@ -10,8 +10,9 @@ import { useRouter } from "expo-router";
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useChatStore } from "@/src/stores/chat-store";
-import { colors, alpha, fontSize, fontWeight, radii, spacing, NAV_CLEARANCE } from "@/src/theme";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
+import { NAV_CLEARANCE } from "@/src/constants";
 
 export default function ChatsList() {
   const router = useRouter();

@@ -31,8 +31,9 @@ import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { discoverService } from "@/src/services/discover";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
-import { colors, fontSize, fontWeight, radii, spacing, NAV_CLEARANCE } from "@/src/theme";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
+import { NAV_CLEARANCE } from "@/src/constants";
 
 type QuickKey = "height" | "build" | "income" | "education";
 const QUICK_CHIPS: { key: QuickKey; label: string }[] = [

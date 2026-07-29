@@ -4,19 +4,11 @@
  */
 import { Check, Search, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import {
-  Dimensions,
-  Keyboard,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Dimensions, Keyboard, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 /* ============ OptionCard ============ */
 type OptionCardProps = {
@@ -175,8 +167,8 @@ export function SearchableSelect({
   const screenH = Dimensions.get("window").height;
 
   useEffect(() => {
-    const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showEvt = isIOS ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvt = isIOS ? "keyboardWillHide" : "keyboardDidHide";
     const showSub = Keyboard.addListener(showEvt, (e) => {
       setKbHeight(e.endCoordinates?.height ?? 0);
     });
