@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 const STEPS = [
   { Icon: UsersRound, text: "Scanning profiles aligned with your values" },
@@ -34,7 +34,7 @@ export default function Matching() {
           <View style={styles.haloMid} />
           <View style={styles.haloInner} />
           <View style={styles.iconCircle}>
-            <Heart size={36} color="#fff" fill="#fff" />
+            <Heart size={36} color={colors.text.onBrand} fill={colors.text.onBrand} />
           </View>
         </View>
 
@@ -54,13 +54,13 @@ export default function Matching() {
                 <View
                   style={[
                     styles.rowIcon,
-                    state === "done" && { backgroundColor: colors.primary },
-                    state === "active" && { backgroundColor: colors.secondary },
+                    state === "done" && { backgroundColor: colors.brand.default },
+                    state === "active" && { backgroundColor: colors.surface.brand },
                   ]}
                 >
                   <s.Icon
                     size={16}
-                    color={state === "done" ? "#fff" : state === "active" ? colors.primary : colors.mutedForeground}
+                    color={state === "done" ? colors.text.onBrand : state === "active" ? colors.brand.default : colors.text.muted}
                   />
                 </View>
                 <Text style={styles.rowText}>{s.text}</Text>
@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
   haloOuter: {
     width: 160,
     height: 160,
-    borderRadius: 999,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -88,26 +88,26 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 140,
     height: 140,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: "rgba(91,44,111,0.15)",
+    borderColor: alpha(colors.brand.default, 0.15),
   },
   haloInner: {
     position: "absolute",
     width: 110,
     height: 110,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: "rgba(91,44,111,0.10)",
+    borderColor: alpha(colors.brand.default, 0.10),
   },
   iconCircle: {
     width: 80,
     height: 80,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: colors.primary,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.35,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
@@ -115,17 +115,17 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: 32,
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.foreground,
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.3,
     textAlign: "center",
   },
   subtitle: {
     marginTop: 8,
-    fontSize: 14,
+    fontSize: fontSize.body,
     lineHeight: 20,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     textAlign: "center",
     maxWidth: 280,
   },
@@ -134,18 +134,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 14,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   rowIcon: {
     width: 32,
     height: 32,
-    borderRadius: 10,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  rowText: { fontSize: 13.5, fontWeight: "600", color: colors.foreground, flex: 1 },
+  rowText: { fontSize: fontSize.label, fontWeight: fontWeight.semibold, color: colors.text.primary, flex: 1 },
 });

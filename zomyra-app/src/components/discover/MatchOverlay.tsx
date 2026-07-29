@@ -24,9 +24,9 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 const SCREEN = Dimensions.get("window");
-const PURPLE = "#5B2C6F";
 
 type Props = {
   visible: boolean;
@@ -368,7 +368,7 @@ export function MatchOverlay({
               style={styles.primaryButton}
               onPress={onStartConversation}
             >
-              <MessageCircle size={20} color="#fff" strokeWidth={2.5} />
+              <MessageCircle size={20} color={colors.text.onBrand} strokeWidth={2.5} />
               <Text style={styles.primaryButtonText}>Start Conversation</Text>
             </Pressable>
 
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(53, 47, 63, 0.9)",
+    backgroundColor: alpha(colors.text.primary, 0.9),
     justifyContent: "center",
     alignItems: "center",
     zIndex: 9999,
@@ -414,9 +414,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 70,
     height: 70,
-    borderRadius: 35,
+    borderRadius: radii.full,
     borderWidth: 5,
-    borderColor: "#fff",
+    borderColor: colors.border.onBrand,
   },
   ringLeft: {
     left: 0,
@@ -427,17 +427,17 @@ const styles = StyleSheet.create({
     top: 5,
   },
   title: {
-    fontSize: 36,
-    fontWeight: "700",
-    color: "#fff",
+    fontSize: fontSize.displayXl,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     textAlign: "center",
     letterSpacing: -0.5,
     marginBottom: 12,
   },
   subtitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "rgba(255, 255, 255, 0.85)",
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.medium,
+    color: alpha(colors.text.onBrand, 0.85),
     textAlign: "center",
     lineHeight: 24,
     marginBottom: 32,
@@ -458,9 +458,9 @@ const styles = StyleSheet.create({
   photo: {
     width: 120,
     height: 120,
-    borderRadius: 60,
+    borderRadius: radii.full,
     borderWidth: 4,
-    borderColor: "#fff",
+    borderColor: colors.border.onBrand,
   },
   photoRing: {
     display: "none",
@@ -471,21 +471,21 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   profileName: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#fff",
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     marginBottom: 4,
   },
   profileJob: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.medium,
+    color: alpha(colors.text.onBrand, 0.8),
     marginBottom: 2,
   },
   profileLocation: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: alpha(colors.text.onBrand, 0.7),
     marginBottom: 12,
   },
   profileStats: {
@@ -499,12 +499,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statIcon: {
-    fontSize: 14,
+    fontSize: fontSize.body,
   },
   statText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "rgba(255, 255, 255, 0.75)",
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.medium,
+    color: alpha(colors.text.onBrand, 0.75),
   },
   // Buttons
   buttonsContainer: {
@@ -516,34 +516,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    backgroundColor: PURPLE,
+    backgroundColor: colors.brand.default,
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 12,
-    shadowColor: PURPLE,
+    borderRadius: radii.md,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.3,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
   },
   primaryButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#fff",
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     letterSpacing: 0.1,
   },
   secondaryButton: {
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.35)",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderColor: alpha(colors.text.onBrand, 0.35),
+    backgroundColor: alpha(colors.text.onBrand, 0.05),
   },
   secondaryButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "rgba(255, 255, 255, 0.85)",
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.semibold,
+    color: alpha(colors.text.onBrand, 0.85),
     textAlign: "center",
     letterSpacing: 0.1,
   },
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     right: 50,
   },
   heartEmoji: {
-    fontSize: 32,
+    fontSize: fontSize.displayLarge,
   },
   sparkle: {
     position: "absolute",
@@ -586,6 +586,6 @@ const styles = StyleSheet.create({
     right: 70,
   },
   sparkleEmoji: {
-    fontSize: 20,
+    fontSize: fontSize.subtitle,
   },
 });

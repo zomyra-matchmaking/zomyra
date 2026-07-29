@@ -31,13 +31,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 const SCREEN_H = Dimensions.get("window").height;
 
@@ -167,7 +161,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
                 hitSlop={10}
                 style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
               >
-                <X size={18} color={TEXT} strokeWidth={2.2} />
+                <X size={18} color={colors.text.primary} strokeWidth={2.2} />
               </Pressable>
             </View>
             <Text style={styles.subtitle}>
@@ -188,7 +182,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
                     <View style={[styles.optionIcon, active && styles.optionIconActive]}>
                       <I
                         size={20}
-                        color={active ? "#FFF" : PURPLE}
+                        color={active ? colors.text.onBrand : colors.brand.default}
                         strokeWidth={2}
                       />
                     </View>
@@ -216,7 +210,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
             {/* ── Privacy card ── */}
             <View style={styles.privacyCard}>
               <View style={styles.privacyIcon}>
-                <ShieldCheck size={18} color={PURPLE} strokeWidth={2} />
+                <ShieldCheck size={18} color={colors.brand.default} strokeWidth={2} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.privacyTitle}>Your choice is always private</Text>
@@ -236,7 +230,7 @@ export function CompatibilitySheet({ visible, selected, onClose, onApply }: Prop
               ]}
             >
               <LinearGradient
-                colors={[PURPLE, PURPLE_DEEP]}
+                colors={colors.gradient.brand}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.ctaGradient}
@@ -255,10 +249,10 @@ const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
   },
   sheet: {
-    backgroundColor: "#FFF",
+    backgroundColor: colors.surface.default,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
@@ -269,8 +263,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 40,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: "#E5E7EB",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.muted,
     marginBottom: 12,
   },
   headerRow: {
@@ -280,22 +274,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 19,
-    fontWeight: "700",
-    color: TEXT,
+    fontSize: fontSize.heading,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.3,
   },
   subtitle: {
     marginTop: 4,
-    fontSize: 12,
-    color: MUTED,
-    fontWeight: "400",
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
+    fontWeight: fontWeight.regular,
   },
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -306,54 +300,54 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 12,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   optionActive: {
-    borderColor: PURPLE,
-    backgroundColor: LIGHT_PURPLE,
+    borderColor: colors.brand.default,
+    backgroundColor: colors.surface.brand,
   },
   optionIcon: {
     width: 40,
     height: 40,
-    borderRadius: 14,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  optionIconActive: { backgroundColor: PURPLE },
+  optionIconActive: { backgroundColor: colors.brand.default },
   optionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   optionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TEXT,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.2,
   },
   recommendBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
-  recommendText: { color: "#FFF", fontSize: 10, fontWeight: "700" },
-  optionSub: { marginTop: 2, fontSize: 12.5, color: MUTED, lineHeight: 18 },
+  recommendText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold },
+  optionSub: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted, lineHeight: 18 },
   radio: {
     width: 22,
     height: 22,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
+    borderColor: colors.border.neutralStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: PURPLE },
+  radioActive: { borderColor: colors.brand.default },
   radioDot: {
     width: 10,
     height: 10,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
 
   // privacy
@@ -363,28 +357,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 14,
-    borderRadius: 18,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii["2xl"],
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
   privacyIcon: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: "#FFF",
+    borderRadius: radii.md,
+    backgroundColor: colors.surface.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  privacyTitle: { fontSize: 14, fontWeight: "700", color: TEXT },
-  privacySub: { marginTop: 2, fontSize: 12, color: MUTED },
+  privacyTitle: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary },
+  privacySub: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
 
   // CTA
   cta: {
     marginTop: 20,
-    borderRadius: 18,
+    borderRadius: radii["2xl"],
     overflow: "hidden",
-    shadowColor: PURPLE,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
@@ -395,5 +389,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaText: { color: "#FFF", fontSize: 18, fontWeight: "700", letterSpacing: -0.2 },
+  ctaText: { color: colors.text.onBrand, fontSize: fontSize.heading, fontWeight: fontWeight.bold, letterSpacing: -0.2 },
 });

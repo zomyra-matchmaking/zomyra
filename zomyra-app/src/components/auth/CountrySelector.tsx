@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight } from "@/src/theme";
 import { COUNTRIES, type Country } from "@/src/lib/countries";
 
 type Props = {
@@ -44,7 +44,7 @@ export function CountrySelector({ value, onChange }: Props) {
       >
         <Text style={styles.flag}>{value.flag}</Text>
         <Text style={styles.dial}>{value.dial}</Text>
-        <ChevronDown size={14} color={colors.mutedForeground} strokeWidth={2.4} />
+        <ChevronDown size={14} color={colors.text.muted} strokeWidth={2.4} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
@@ -56,12 +56,12 @@ export function CountrySelector({ value, onChange }: Props) {
             <View style={styles.grabber} />
             <Text style={styles.title}>Select country</Text>
             <View style={styles.searchBox}>
-              <Search size={16} color={colors.mutedForeground} />
+              <Search size={16} color={colors.text.muted} />
               <TextInput
                 value={q}
                 onChangeText={setQ}
                 placeholder="Search country or code"
-                placeholderTextColor={colors.mutedForeground}
+                placeholderTextColor={colors.text.muted}
                 style={styles.searchInput}
                 autoFocus
               />
@@ -83,13 +83,13 @@ export function CountrySelector({ value, onChange }: Props) {
                     }}
                     style={({ pressed }) => [
                       styles.row,
-                      pressed && { backgroundColor: colors.secondary },
+                      pressed && { backgroundColor: colors.surface.brand },
                     ]}
                   >
                     <Text style={styles.rowFlag}>{item.flag}</Text>
                     <Text style={styles.rowName}>{item.name}</Text>
                     <Text style={styles.rowDial}>{item.dial}</Text>
-                    {selected ? <Check size={16} color={colors.primary} /> : null}
+                    {selected ? <Check size={16} color={colors.brand.default} /> : null}
                   </Pressable>
                 );
               }}
@@ -108,16 +108,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  flag: { fontSize: 20 },
-  dial: { fontSize: 15, fontWeight: "600", color: colors.foreground },
+  flag: { fontSize: fontSize.subtitle },
+  dial: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.semibold, color: colors.text.primary },
   backdrop: {
     flex: 1,
-    backgroundColor: colors.overlay,
+    backgroundColor: colors.overlay.scrim,
     justifyContent: "flex-end",
   },
   sheet: {
@@ -132,31 +132,31 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 40,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: colors.border,
+    borderRadius: radii.full,
+    backgroundColor: colors.border.default,
     marginBottom: 4,
   },
   title: {
     paddingHorizontal: 4,
     paddingTop: 8,
     paddingBottom: 8,
-    fontSize: 17,
-    fontWeight: "700",
-    color: colors.foreground,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
   },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     height: 46,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.border.default,
     paddingHorizontal: 12,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface.default,
     marginBottom: 8,
   },
-  searchInput: { flex: 1, fontSize: 15, color: colors.foreground },
+  searchInput: { flex: 1, fontSize: fontSize.bodyLarge, color: colors.text.primary },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -164,9 +164,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 14,
   },
-  rowFlag: { fontSize: 22 },
-  rowName: { flex: 1, fontSize: 15, fontWeight: "600", color: colors.foreground },
-  rowDial: { fontSize: 14, color: colors.mutedForeground },
+  rowFlag: { fontSize: fontSize.h2 },
+  rowName: { flex: 1, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  rowDial: { fontSize: fontSize.body, color: colors.text.muted },
 });
 
 void radii;

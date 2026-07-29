@@ -25,7 +25,7 @@ import { ProfileView } from "@/src/components/discover/ProfileView";
 import { toast } from "@/src/components/ui/Toast";
 import { chatToDiscoverProfile, type ChatMessage } from "@/src/lib/chats/mock";
 import { useChatStore, useConversation } from "@/src/stores/chat-store";
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 const REPORT_REASONS = ["Fake profile", "Inappropriate behavior", "Harassment", "Spam", "Other"];
 
@@ -99,7 +99,7 @@ export default function Conversation() {
           style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
           hitSlop={8}
         >
-          <ArrowLeft size={20} color={colors.foreground} />
+          <ArrowLeft size={20} color={colors.text.primary} />
         </Pressable>
         <Pressable
           onPress={() => setProfileOpen(true)}
@@ -111,7 +111,7 @@ export default function Conversation() {
               <Text style={styles.headerName} numberOfLines={1}>
                 {conversation.name}
               </Text>
-              {conversation.verified ? <BadgeCheck size={13} color={colors.primary} fill={colors.primary} /> : null}
+              {conversation.verified ? <BadgeCheck size={13} color={colors.brand.default} fill={colors.brand.default} /> : null}
             </View>
             <Text style={styles.headerSubtitle}>Active recently</Text>
           </View>
@@ -121,7 +121,7 @@ export default function Conversation() {
           onPress={() => setMenuOpen(true)}
           style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
         >
-          <MoreVertical size={18} color={colors.mutedForeground} />
+          <MoreVertical size={18} color={colors.text.muted} />
         </Pressable>
       </View>
 
@@ -151,14 +151,14 @@ export default function Conversation() {
                   style={[
                     styles.bubble,
                     mine
-                      ? { backgroundColor: colors.chatMine, borderBottomRightRadius: 4 }
-                      : { backgroundColor: colors.chatTheir, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.chatTheirBorder },
+                      ? { backgroundColor: colors.chat.mineSurface, borderBottomRightRadius: 4 }
+                      : { backgroundColor: colors.chat.theirSurface, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.chat.theirBorder },
                   ]}
                 >
-                  <Text style={[styles.bubbleText, { color: mine ? colors.chatMineText : colors.chatTheirText }]}>
+                  <Text style={[styles.bubbleText, { color: mine ? colors.chat.mineText : colors.chat.theirText }]}>
                     {item.text}
                   </Text>
-                  <Text style={[styles.bubbleTime, { color: mine ? "#6B4A8A" : "#8A8A8A" }]}>{item.time}</Text>
+                  <Text style={[styles.bubbleTime, { color: mine ? colors.brand.muted : colors.text.muted }]}>{item.time}</Text>
                 </View>
               </View>
             );
@@ -168,13 +168,13 @@ export default function Conversation() {
 
         <View style={styles.composer}>
           <View style={styles.inputWrap}>
-            <Smile size={16} color={colors.mutedForeground} />
+            <Smile size={16} color={colors.text.muted} />
             <TextInput
               testID="message-input"
               value={draft}
               onChangeText={setDraft}
               placeholder="Message"
-              placeholderTextColor={colors.mutedForeground}
+              placeholderTextColor={colors.text.muted}
               style={styles.input}
               onSubmitEditing={send}
               returnKeyType="send"
@@ -186,7 +186,7 @@ export default function Conversation() {
             disabled={!draft.trim()}
             style={({ pressed }) => [styles.sendBtn, !draft.trim() && { opacity: 0.4 }, pressed && draft.trim() && { transform: [{ scale: 0.96 }] }]}
           >
-            <Send size={16} color="#fff" />
+            <Send size={16} color={colors.text.onBrand} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -224,7 +224,7 @@ export default function Conversation() {
                   setReportOpen(false);
                   toast.success(`Reported: ${r}. Our team will review.`);
                 }}
-                style={({ pressed }) => [styles.reportItem, pressed && { backgroundColor: colors.secondary }]}
+                style={({ pressed }) => [styles.reportItem, pressed && { backgroundColor: colors.surface.brand }]}
               >
                 <Text style={styles.reportItemText}>{r}</Text>
               </Pressable>
@@ -267,12 +267,12 @@ function MenuItem({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.menuItem, pressed && { backgroundColor: colors.secondary }]}
+      style={({ pressed }) => [styles.menuItem, pressed && { backgroundColor: colors.surface.brand }]}
     >
       <Text
         style={[
           styles.menuItemText,
-          destructive && { color: colors.destructive },
+          destructive && { color: colors.danger.default },
         ]}
       >
         {label}
@@ -290,26 +290,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
+    borderBottomColor: colors.border.subtle,
   },
   headerBtn: {
     width: 36,
     height: 36,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
   },
-  headerAvatar: { width: 36, height: 36, borderRadius: 999, backgroundColor: colors.secondary },
-  headerName: { fontSize: 14.5, fontWeight: "700", color: colors.foreground, flex: 1 },
-  headerSubtitle: { fontSize: 11, color: colors.mutedForeground },
+  headerAvatar: { width: 36, height: 36, borderRadius: radii.full, backgroundColor: colors.surface.brand },
+  headerName: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, flex: 1 },
+  headerSubtitle: { fontSize: fontSize.micro, color: colors.text.muted },
   bubble: {
     maxWidth: "78%",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: radii.xl,
   },
-  bubbleText: { fontSize: 14, lineHeight: 20 },
-  bubbleTime: { marginTop: 2, fontSize: 10, textAlign: "right" },
+  bubbleText: { fontSize: fontSize.body, lineHeight: 20 },
+  bubbleTime: { marginTop: 2, fontSize: fontSize.nano, textAlign: "right" },
   composer: {
     flexDirection: "row",
     alignItems: "center",
@@ -317,8 +317,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: colors.borderSubtle,
-    backgroundColor: colors.card,
+    borderTopColor: colors.border.subtle,
+    backgroundColor: colors.surface.default,
   },
   inputWrap: {
     flex: 1,
@@ -327,36 +327,36 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 44,
     paddingHorizontal: 12,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border.subtle,
     backgroundColor: colors.background,
   },
-  input: { flex: 1, fontSize: 14, color: colors.foreground },
+  input: { flex: 1, fontSize: fontSize.body, color: colors.text.primary },
   sendBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  menuBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)", justifyContent: "flex-start", paddingTop: 60, alignItems: "flex-end", paddingRight: 8 },
+  menuBackdrop: { flex: 1, backgroundColor: alpha(colors.overlay.base, 0.3), justifyContent: "flex-start", paddingTop: 60, alignItems: "flex-end", paddingRight: 8 },
   menu: {
     minWidth: 180,
-    borderRadius: 14,
-    backgroundColor: colors.card,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface.default,
     paddingVertical: 6,
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.14,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
   menuItem: { paddingHorizontal: 14, paddingVertical: 11 },
-  menuItemText: { fontSize: 14, color: colors.foreground, fontWeight: "600" },
-  reportTitle: { fontSize: 16, fontWeight: "700", color: colors.foreground },
-  reportSubtitle: { marginTop: 4, fontSize: 12.5, color: colors.mutedForeground },
-  reportItem: { paddingHorizontal: 12, paddingVertical: 12, borderRadius: 12 },
-  reportItemText: { fontSize: 14, color: colors.foreground, fontWeight: "600" },
+  menuItemText: { fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.semibold },
+  reportTitle: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
+  reportSubtitle: { marginTop: 4, fontSize: fontSize.caption, color: colors.text.muted },
+  reportItem: { paddingHorizontal: 12, paddingVertical: 12, borderRadius: radii.md },
+  reportItemText: { fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.semibold },
 });

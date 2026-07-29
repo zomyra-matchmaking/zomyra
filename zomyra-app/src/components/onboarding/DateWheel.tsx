@@ -16,7 +16,7 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 const ITEM_H = 40;
 const VISIBLE = 5;
@@ -246,9 +246,9 @@ const styles = StyleSheet.create({
     height: ITEM_H,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "rgba(91,44,111,0.25)",
-    backgroundColor: "rgba(91,44,111,0.05)",
-    borderRadius: 12,
+    borderColor: alpha(colors.brand.default, 0.25),
+    backgroundColor: alpha(colors.brand.default, 0.05),
+    borderRadius: radii.md,
     zIndex: 1,
   },
   item: {
@@ -256,11 +256,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   itemText: {
-    fontSize: 16,
-    color: "rgba(122,107,137,0.6)",
+    fontSize: fontSize.title,
+    color: alpha(colors.text.muted, 0.6),
   },
   itemTextActive: {
-    color: colors.foreground,
-    fontWeight: "700",
+    color: colors.text.primary,
+    fontWeight: fontWeight.bold,
   },
 });

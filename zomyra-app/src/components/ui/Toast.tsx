@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii, shadows } from "@/src/theme/colors";
+import { colors, radii, shadows, fontSize, fontWeight } from "@/src/theme";
 
 type ToastVariant = "default" | "success";
 
@@ -64,13 +64,13 @@ export function ToastHost() {
       <View
         style={[
           styles.toast,
-          item.variant === "success" && { backgroundColor: colors.primary },
+          item.variant === "success" && { backgroundColor: colors.brand.default },
         ]}
       >
         <Text
           style={[
             styles.text,
-            item.variant === "success" && { color: colors.primaryForeground },
+            item.variant === "success" && { color: colors.brand.onBrand },
           ]}
         >
           {item.text}
@@ -89,17 +89,17 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   toast: {
-    backgroundColor: "#1F1235",
+    backgroundColor: colors.brand.strong,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: radii.pill,
+    borderRadius: radii.full,
     maxWidth: "86%",
     ...shadows.card,
   },
   text: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "600",
+    color: colors.text.onBrand,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.semibold,
     textAlign: "center",
   },
 });

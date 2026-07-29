@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react-native";
 import { Pressable, StyleSheet, View } from "react-native";
 
-import { colors } from "@/src/theme/colors";
+import { colors, radii } from "@/src/theme";
 
 export function ScreenHeader({ onBack }: { onBack: () => void }) {
   return (
@@ -12,7 +12,7 @@ export function ScreenHeader({ onBack }: { onBack: () => void }) {
         style={({ pressed }) => [styles.btn, pressed && { opacity: 0.7 }]}
         hitSlop={8}
       >
-        <ArrowLeft size={20} color={colors.foreground} strokeWidth={2.2} />
+        <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
       </Pressable>
     </View>
   );
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   btn: {
     width: 44,
     height: 44,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: -8,

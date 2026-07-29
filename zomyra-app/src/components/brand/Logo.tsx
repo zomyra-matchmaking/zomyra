@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Text } from "react-native";
+import { colors, fontSize, fontWeight, letterSpacing } from "@/src/theme";
 
 type LogoProps = {
   size?: number;
@@ -17,12 +18,14 @@ export function Logo({ size = 56 }: LogoProps) {
   );
 }
 
-export function Wordmark({ fontSize = 28 }: { fontSize?: number }) {
+export function Wordmark({ size = fontSize.display }: { size?: number }) {
   return (
     <Text
       style={[
         styles.text,
-        { fontSize, color: "#7C3AED" },
+        // The wordmark is the brand purple, same as the mark beside it.
+        // It used to be #7C3AED — one of the four rival purples §10.1 records.
+        { fontSize: size, color: colors.brand.default },
       ]}
     >
       Zomyra
@@ -32,8 +35,8 @@ export function Wordmark({ fontSize = 28 }: { fontSize?: number }) {
 
 const styles = StyleSheet.create({
   text: {
-    fontWeight: "800",
-    letterSpacing: -0.4,
+    fontWeight: fontWeight.extrabold,
+    letterSpacing: letterSpacing.tight,
     // Strip any baseline padding the platform might add so the wordmark
     // sits exactly next to the logo glyph (centered with it horizontally).
     includeFontPadding: false,

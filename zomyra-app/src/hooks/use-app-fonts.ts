@@ -4,7 +4,10 @@
 // fontWeight; either approach resolves to the same file on every platform.
 import { useFonts } from "expo-font";
 
-export const FONT_FAMILY = "PlusJakartaSans";
+// The family name is a design token, not a loader detail — `src/theme` owns it
+// and this hook registers whatever the theme declares. Re-exported so existing
+// call sites keep working.
+export { FONT_FAMILY } from "@/src/theme";
 
 export const useAppFonts = (): readonly [boolean, Error | null] =>
   useFonts({

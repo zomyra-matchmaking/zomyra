@@ -3,7 +3,7 @@
  */
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight } from "@/src/theme";
 
 type Props = {
   open: boolean;
@@ -69,7 +69,7 @@ export function ConfirmDialog({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: colors.overlay,
+    backgroundColor: colors.overlay.scrim,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
@@ -77,20 +77,20 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 340,
-    borderRadius: 20,
-    backgroundColor: colors.card,
+    borderRadius: radii["3xl"],
+    backgroundColor: colors.surface.default,
     padding: 20,
   },
   title: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: colors.foreground,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
   },
   description: {
     marginTop: 6,
-    fontSize: 13.5,
+    fontSize: fontSize.label,
     lineHeight: 19,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   actions: {
     marginTop: 18,
@@ -105,22 +105,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   btnGhost: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   btnGhostText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.foreground,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
   },
   btnPrimary: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
   },
   btnDestructive: {
-    backgroundColor: colors.destructive,
+    backgroundColor: colors.danger.default,
   },
   btnPrimaryText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.primaryForeground,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.bold,
+    color: colors.brand.onBrand,
   },
 });

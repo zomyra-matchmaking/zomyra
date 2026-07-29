@@ -15,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { toast } from "@/src/components/ui/Toast";
 import { authService } from "@/src/services/auth";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight } from "@/src/theme";
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -133,7 +133,7 @@ export default function OtpScreen() {
           <ScreenHeader onBack={() => router.back()} />
           <Text style={styles.title}>Verify your number</Text>
           <Text style={styles.subtitle}>
-            Enter the 6-digit code sent to <Text style={{ color: colors.foreground, fontWeight: "700" }}>{masked}</Text>
+            Enter the 6-digit code sent to <Text style={{ color: colors.text.primary, fontWeight: fontWeight.bold }}>{masked}</Text>
           </Text>
 
           <View style={styles.row}>
@@ -158,16 +158,16 @@ export default function OtpScreen() {
           </View>
 
           <View style={styles.resendRow}>
-            <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
+            <Text style={{ color: colors.text.muted, fontSize: fontSize.label }}>
               Didn't receive the code?
             </Text>
             {secondsLeft > 0 ? (
-              <Text style={{ color: colors.mutedForeground, fontSize: 13, fontWeight: "600" }}>
+              <Text style={{ color: colors.text.muted, fontSize: fontSize.label, fontWeight: fontWeight.semibold }}>
                 {" "}Resend in {mm}:{ss}
               </Text>
             ) : (
               <Pressable testID="otp-resend" onPress={resend} disabled={resending} hitSlop={6}>
-                <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13 }}>
+                <Text style={{ color: colors.brand.default, fontWeight: fontWeight.bold, fontSize: fontSize.label }}>
                   {" "}{resending ? "Resending…" : "Resend OTP"}
                 </Text>
               </Pressable>
@@ -186,7 +186,7 @@ export default function OtpScreen() {
               pressed && isComplete && { opacity: 0.92 },
             ]}
           >
-            {verifying ? <ActivityIndicator color={colors.primaryForeground} /> : null}
+            {verifying ? <ActivityIndicator color={colors.brand.onBrand} /> : null}
             <Text style={styles.ctaText}>{verifying ? "Verifying…" : "Verify & Continue"}</Text>
           </Pressable>
         </View>
@@ -199,16 +199,16 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   title: {
     marginTop: 16,
-    fontSize: 28,
-    fontWeight: "700",
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.3,
-    color: colors.foreground,
+    color: colors.text.primary,
   },
   subtitle: {
     marginTop: 8,
-    fontSize: 15,
+    fontSize: fontSize.bodyLarge,
     lineHeight: 21,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   row: { marginTop: 24, flexDirection: "row", gap: 8, alignItems: "stretch" },
   box: {
@@ -220,25 +220,25 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border.neutral,
+    backgroundColor: colors.surface.default,
     textAlign: "center",
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.foreground,
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     paddingHorizontal: 0,
   },
   resendRow: { marginTop: 16, flexDirection: "row", justifyContent: "center", alignItems: "center" },
   cta: {
     height: 52,
     borderRadius: radii.lg,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
     marginBottom: 18,
   },
-  ctaDisabled: { backgroundColor: "#D6CFE0" },
-  ctaText: { color: colors.primaryForeground, fontSize: 15, fontWeight: "700" },
+  ctaDisabled: { backgroundColor: colors.surface.disabled },
+  ctaText: { color: colors.brand.onBrand, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold },
 });

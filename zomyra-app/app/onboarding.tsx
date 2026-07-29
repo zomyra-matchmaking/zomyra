@@ -28,7 +28,7 @@ import {
   PROFESSIONS,
 } from "@/src/lib/onboarding/data";
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
-import { colors } from "@/src/theme/colors";
+import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
 
 type Section = 1 | 2 | 3;
@@ -105,7 +105,7 @@ const Q1: QuestionScreen[] = [
         body: (
           <View style={{ alignItems: "center", gap: 16 }}>
             <DateWheel value={s.dob} onChange={(v) => set("dob", v)} />
-            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>
+            <Text style={{ fontSize: fontSize.label, color: colors.text.muted }}>
               {age == null
                 ? "Set your date of birth"
                 : age < 18
@@ -378,7 +378,7 @@ const Q1: QuestionScreen[] = [
             value={s.bio}
             onChangeText={(t) => set("bio", t.slice(0, 500))}
             placeholder="I love long walks, weekend hikes, and honest conversations over coffee…"
-            placeholderTextColor={colors.mutedForeground}
+            placeholderTextColor={colors.text.muted}
             multiline
             style={styles.bioInput}
           />
@@ -514,7 +514,7 @@ export default function OnboardingScreen() {
   // Wait for the persisted state to rehydrate before rendering so the
   // user always resumes on the correct step.
   if (!hasHydrated) {
-    return <View style={{ flex: 1, backgroundColor: "#fff" }} />;
+    return <View style={{ flex: 1, backgroundColor: colors.surface.default }} />;
   }
 
   if (screen.kind === "intro") {
@@ -576,7 +576,7 @@ function NameField({
         onChangeText={onChange}
         maxLength={40}
         style={styles.fieldInput}
-        placeholderTextColor={colors.mutedForeground}
+        placeholderTextColor={colors.text.muted}
       />
     </View>
   );
@@ -584,44 +584,44 @@ function NameField({
 
 const styles = StyleSheet.create({
   fieldLabel: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
     letterSpacing: 1.4,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     marginBottom: 6,
   },
   fieldInput: {
     height: 48,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    fontSize: 15,
-    color: colors.foreground,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
+    fontSize: fontSize.bodyLarge,
+    color: colors.text.primary,
   },
-  bigValue: { fontSize: 36, fontWeight: "700", color: colors.foreground, letterSpacing: -0.6 },
-  smallValue: { marginTop: 4, fontSize: 12, color: colors.mutedForeground },
+  bigValue: { fontSize: fontSize.displayXl, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.6 },
+  smallValue: { marginTop: 4, fontSize: fontSize.caption, color: colors.text.muted },
   rangeLabels: { marginTop: 8, flexDirection: "row", justifyContent: "space-between" },
-  rangeLabel: { fontSize: 11, color: colors.mutedForeground },
+  rangeLabel: { fontSize: fontSize.micro, color: colors.text.muted },
   bioInput: {
     minHeight: 140,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    fontSize: 15,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
+    fontSize: fontSize.bodyLarge,
     lineHeight: 22,
-    color: colors.foreground,
+    color: colors.text.primary,
     textAlignVertical: "top",
   },
   bioCount: {
     marginTop: 6,
     alignSelf: "flex-end",
-    fontSize: 11,
-    fontWeight: "600",
-    color: colors.mutedForeground,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.muted,
   },
 });

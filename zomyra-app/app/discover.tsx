@@ -31,12 +31,7 @@ import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { discoverService } from "@/src/services/discover";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
-
-const PURPLE = "#5B2C6F";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 
 type QuickKey = "height" | "build" | "income" | "education";
 const QUICK_CHIPS: { key: QuickKey; label: string }[] = [
@@ -224,7 +219,7 @@ export default function Discover() {
               pressed && { transform: [{ scale: 0.94 }] },
             ]}
           >
-            <X size={22} color={TEXT} strokeWidth={2.4} />
+            <X size={22} color={colors.text.primary} strokeWidth={2.4} />
           </Pressable>
           <Pressable
             testID="discover-action-interest"
@@ -238,7 +233,7 @@ export default function Discover() {
           >
             <Send
               size={22}
-              color="#FFFFFF"
+              color={colors.text.onBrand}
               strokeWidth={2.2}
               style={{ transform: [{ translateX: -1 }] }}
             />
@@ -266,12 +261,12 @@ export default function Discover() {
               pressed && { opacity: 0.85 },
             ]}
           >
-            <Sparkles size={12} color={PURPLE} strokeWidth={2} />
+            <Sparkles size={12} color={colors.brand.default} strokeWidth={2} />
             <Text style={styles.statusPillText} numberOfLines={1}>
               Showing your best{" "}
               <Text style={styles.statusPillHi}>{dimLabel}</Text> matches
             </Text>
-            <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
+            <ChevronDown size={12} color={colors.brand.default} strokeWidth={2} />
           </Pressable>
 
           <Pressable
@@ -283,7 +278,7 @@ export default function Discover() {
             ]}
             hitSlop={8}
           >
-            <SlidersHorizontal size={16} color={PURPLE} strokeWidth={2} />
+            <SlidersHorizontal size={16} color={colors.brand.default} strokeWidth={2} />
           </Pressable>
         </View>
 
@@ -301,8 +296,8 @@ export default function Discover() {
               style={styles.chip}
             >
               <Text style={styles.chipLabel}>{c.label}</Text>
-              <Crown size={11} color="#F59E0B" strokeWidth={2} fill="#F59E0B" />
-              <ChevronDown size={12} color={MUTED} strokeWidth={2} />
+              <Crown size={11} color={colors.premium.icon} strokeWidth={2} fill={colors.premium.icon} />
+              <ChevronDown size={12} color={colors.text.muted} strokeWidth={2} />
             </Pressable>
           ))}
         </ScrollView>
@@ -478,7 +473,7 @@ function OptionList({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  root: { flex: 1, backgroundColor: colors.surface.default },
 
   // Header overlay (position:absolute so it can fade out over content)
   headerOverlay: {
@@ -486,7 +481,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.default,
     zIndex: 5,
   },
 
@@ -508,10 +503,10 @@ const styles = StyleSheet.create({
     gap: 6,
     height: 32,
     paddingHorizontal: 12,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: LIGHT_PURPLE,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.brand,
   },
   brandDot: {
     width: 28,
@@ -521,32 +516,32 @@ const styles = StyleSheet.create({
   },
   statusPillText: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: "600",
-    color: TEXT,
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
-  statusPillHi: { color: PURPLE, fontWeight: "800" },
+  statusPillHi: { color: colors.brand.default, fontWeight: fontWeight.extrabold },
   kicker: {
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 2,
-    color: PURPLE,
+    color: colors.brand.default,
   },
   titleH1: {
     marginTop: 2,
-    fontSize: 26,
-    fontWeight: "800",
-    color: TEXT,
+    fontSize: fontSize.h1,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.5,
   },
   settingsBtn: {
     width: 32,
     height: 32,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -563,16 +558,16 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     minWidth: 110,
   },
   headerPillText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: PURPLE,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
+    color: colors.brand.default,
     letterSpacing: -0.1,
   },
 
@@ -589,18 +584,18 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     height: 28,
     paddingHorizontal: 10,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
   },
   chipLabel: {
-    fontSize: 11.5,
-    fontWeight: "600",
-    color: TEXT,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -613,14 +608,14 @@ const styles = StyleSheet.create({
   pickerChip: {
     paddingHorizontal: 14,
     paddingVertical: 9,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  pickerChipActive: { borderColor: PURPLE, backgroundColor: LIGHT_PURPLE },
-  pickerChipText: { fontSize: 14, fontWeight: "600", color: TEXT },
-  pickerChipTextActive: { color: PURPLE, fontWeight: "700" },
+  pickerChipActive: { borderColor: colors.brand.default, backgroundColor: colors.surface.brand },
+  pickerChipText: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  pickerChipTextActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
   optionRow: {
     flexDirection: "row",
@@ -628,25 +623,25 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  optionRowActive: { borderColor: PURPLE, backgroundColor: LIGHT_PURPLE },
-  optionRowText: { fontSize: 15, fontWeight: "600", color: TEXT },
-  optionRowTextActive: { color: PURPLE, fontWeight: "700" },
+  optionRowActive: { borderColor: colors.brand.default, backgroundColor: colors.surface.brand },
+  optionRowText: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  optionRowTextActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
   radio: {
     width: 20,
     height: 20,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
+    borderColor: colors.border.neutralStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: PURPLE },
-  radioDot: { width: 10, height: 10, borderRadius: 999, backgroundColor: PURPLE },
+  radioActive: { borderColor: colors.brand.default },
+  radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
 
   // banner
   banner: {
@@ -655,19 +650,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  bannerText: { fontSize: 11, fontWeight: "500", color: TEXT },
-  bannerHi: { color: PURPLE, fontWeight: "700" },
+  bannerText: { fontSize: fontSize.micro, fontWeight: fontWeight.medium, color: colors.text.primary },
+  bannerHi: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
-  empty: { padding: 32, textAlign: "center", color: MUTED },
+  empty: { padding: 32, textAlign: "center", color: colors.text.muted },
 
   // Floating action pill — sits above the FloatingNav.
   actionFloat: {
@@ -683,23 +678,23 @@ const styles = StyleSheet.create({
   actionFloatBtn: {
     width: 52,
     height: 52,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
   },
   actionFloatDecline: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.default,
     borderWidth: 1.5,
-    borderColor: BORDER,
-    shadowColor: "#000",
+    borderColor: colors.border.default,
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.08,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
   actionFloatInterest: {
-    backgroundColor: PURPLE,
-    shadowColor: PURPLE,
+    backgroundColor: colors.brand.default,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.35,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },

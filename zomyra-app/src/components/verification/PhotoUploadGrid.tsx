@@ -13,7 +13,7 @@ import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { toast } from "@/src/components/ui/Toast";
 import { MAX_PHOTOS, type UploadedPhoto } from "@/src/lib/verification/types";
 import { uploadService } from "@/src/services/upload";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, alpha, fontSize, fontWeight } from "@/src/theme";
 
 // Short, warm, matrimony-appropriate prompts shown on the empty upload
 // slots. Each hints at what kind of photo would work well for that slot.
@@ -83,19 +83,19 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
                   <Image source={{ uri: slot.uri }} style={StyleSheet.absoluteFillObject} />
                   {isCover ? (
                     <View style={styles.coverChip}>
-                      <Star size={10} color="#fff" strokeWidth={3} />
+                      <Star size={10} color={colors.text.onBrand} strokeWidth={3} />
                       <Text style={styles.coverText}>COVER</Text>
                     </View>
                   ) : null}
                   <View style={styles.gripBadge}>
-                    <GripVertical size={12} color={colors.mutedForeground} />
+                    <GripVertical size={12} color={colors.text.muted} />
                   </View>
                   <Pressable
                     testID={`delete-photo-${i}`}
                     onPress={() => setPendingDelete(slot.id)}
                     style={styles.removeBtn}
                   >
-                    <Trash2 size={14} color={colors.destructive} />
+                    <Trash2 size={14} color={colors.danger.default} />
                   </Pressable>
                 </View>
               ) : (
@@ -104,7 +104,7 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
                   onPress={pick}
                   style={[styles.tile, styles.placeholder]}
                 >
-                  <ImagePlus size={20} color={colors.mutedForeground} />
+                  <ImagePlus size={20} color={colors.text.muted} />
                   <Text style={styles.placeholderLabel} numberOfLines={2}>
                     {prompt}
                   </Text>
@@ -146,33 +146,33 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     overflow: "hidden",
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.border.default,
     position: "relative",
   },
   placeholder: {
     borderStyle: "dashed",
-    backgroundColor: "rgba(244,234,251,0.5)",
+    backgroundColor: alpha(colors.surface.brand, 0.5),
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
   },
   placeholderLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: colors.mutedForeground,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.muted,
     textAlign: "center",
     lineHeight: 14,
     marginTop: 4,
     paddingHorizontal: 4,
   },
   placeholderHint: {
-    fontSize: 9.5,
+    fontSize: fontSize.nano,
     letterSpacing: 1,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     marginTop: 2,
   },
   coverChip: {
@@ -184,18 +184,18 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
-  coverText: { color: "#fff", fontSize: 9, fontWeight: "700", letterSpacing: 0.8 },
+  coverText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold, letterSpacing: 0.8 },
   gripBadge: {
     position: "absolute",
     top: 6,
     right: 6,
     width: 22,
     height: 22,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.onBrand, 0.85),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -205,15 +205,15 @@ const styles = StyleSheet.create({
     right: 6,
     width: 28,
     height: 28,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.95)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.onBrand, 0.95),
     alignItems: "center",
     justifyContent: "center",
   },
   help: {
     marginTop: 12,
-    fontSize: 12,
-    color: colors.mutedForeground,
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
   },
 });
 

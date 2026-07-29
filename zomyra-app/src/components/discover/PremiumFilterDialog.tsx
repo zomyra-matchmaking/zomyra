@@ -20,13 +20,7 @@ import {
   Text,
   View,
 } from "react-native";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 type Props = {
   visible: boolean;
@@ -103,7 +97,7 @@ export function PremiumFilterDialog({
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <X size={18} color={TEXT} strokeWidth={2.2} />
+              <X size={18} color={colors.text.primary} strokeWidth={2.2} />
             </Pressable>
           </View>
 
@@ -129,7 +123,7 @@ export function PremiumFilterDialog({
               ]}
             >
               <LinearGradient
-                colors={[PURPLE, PURPLE_DEEP]}
+                colors={colors.gradient.brand}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.applyGradient}
@@ -147,7 +141,7 @@ export function PremiumFilterDialog({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
@@ -155,10 +149,10 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: "#FFF",
-    borderRadius: 24,
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
     padding: 22,
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.2,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 16 },
@@ -169,13 +163,13 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 12,
   },
-  title: { fontSize: 20, fontWeight: "700", color: TEXT, letterSpacing: -0.3 },
-  subtitle: { marginTop: 4, fontSize: 13, color: MUTED, lineHeight: 18 },
+  title: { fontSize: fontSize.subtitle, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
+  subtitle: { marginTop: 4, fontSize: fontSize.label, color: colors.text.muted, lineHeight: 18 },
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
     marginTop: -2,
@@ -189,19 +183,19 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     height: 50,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFF",
+    backgroundColor: colors.surface.default,
   },
-  cancelText: { fontSize: 15, fontWeight: "700", color: TEXT },
+  cancelText: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold, color: colors.text.primary },
   applyBtn: {
     flex: 1.4,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     overflow: "hidden",
-    shadowColor: PURPLE,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
@@ -212,5 +206,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  applyText: { color: "#FFF", fontSize: 15, fontWeight: "700", letterSpacing: -0.1 },
+  applyText: { color: colors.text.onBrand, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold, letterSpacing: -0.1 },
 });

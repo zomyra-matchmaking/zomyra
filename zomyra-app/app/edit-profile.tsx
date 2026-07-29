@@ -63,13 +63,9 @@ import type {
   IncomeRange,
   Smoking,
 } from "@/src/lib/onboarding/types";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 // Design tokens — match Discover so the screens feel related.
-const PURPLE = "#5B2C6F";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
 
 // Option lists (mirror onboarding types.ts)
 const BUILD_OPTS: BodyType[] = ["Slim", "Average", "Athletic", "Curvy", "Plus Size", "Prefer Not To Say"];
@@ -163,7 +159,7 @@ export default function EditProfileScreen() {
             hitSlop={10}
             style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
           >
-            <ArrowLeft size={20} color={TEXT} strokeWidth={2.2} />
+            <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
           </Pressable>
           <Text style={styles.headerTitle}>Edit Profile</Text>
           <Pressable
@@ -191,7 +187,7 @@ export default function EditProfileScreen() {
                   value={state.firstName}
                   onChangeText={(t) => set("firstName", t)}
                   placeholder="First name"
-                  placeholderTextColor={MUTED}
+                  placeholderTextColor={colors.text.muted}
                   style={[
                     styles.identityNameInput,
                     // Size the input to its content so ", age" sits inline.
@@ -207,13 +203,13 @@ export default function EditProfileScreen() {
                 {age != null ? <Text style={styles.identityName}>, {age}</Text> : null}
               </View>
               <View style={styles.identityLocRow}>
-                <MapPin size={14} color={MUTED} strokeWidth={2} />
+                <MapPin size={14} color={colors.text.muted} strokeWidth={2} />
                 <TextInput
                   testID="edit-city"
                   value={state.city}
                   onChangeText={(t) => set("city", t)}
                   placeholder="Add your city"
-                  placeholderTextColor={MUTED}
+                  placeholderTextColor={colors.text.muted}
                   style={styles.identityLocInput}
                 />
               </View>
@@ -229,7 +225,7 @@ export default function EditProfileScreen() {
             >
               <Image source={{ uri: photos[0] }} style={styles.heroPhoto} />
               <View style={styles.heroEditChip}>
-                <Pencil size={14} color="#FFF" strokeWidth={2.4} />
+                <Pencil size={14} color={colors.text.onBrand} strokeWidth={2.4} />
                 <Text style={styles.heroEditText}>Change photo</Text>
               </View>
             </Pressable>
@@ -254,7 +250,7 @@ export default function EditProfileScreen() {
                       ]}
                       hitSlop={6}
                     >
-                      <Trash2 size={13} color="#FFF" strokeWidth={2.4} />
+                      <Trash2 size={13} color={colors.text.onBrand} strokeWidth={2.4} />
                     </Pressable>
                   </View>
                 );
@@ -267,7 +263,7 @@ export default function EditProfileScreen() {
                   pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
                 ]}
               >
-                <Plus size={22} color={PURPLE} strokeWidth={2.4} />
+                <Plus size={22} color={colors.brand.default} strokeWidth={2.4} />
                 <Text style={styles.photoAddText}>Add photo</Text>
               </Pressable>
             </View>
@@ -281,7 +277,7 @@ export default function EditProfileScreen() {
                 value={state.profession}
                 onChangeText={(t) => set("profession", t)}
                 placeholder="What you do"
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.text.muted}
                 style={styles.fieldInput}
               />
             </FieldRow>
@@ -416,7 +412,7 @@ export default function EditProfileScreen() {
                   )
                 }
                 placeholder="English, Hindi…"
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.text.muted}
                 style={styles.fieldInput}
               />
             </FieldRow>
@@ -449,7 +445,7 @@ function SectionCard({
     <View style={styles.card} testID={testID}>
       <View style={styles.kickerRow}>
         <View style={styles.kickerIcon}>
-          <Icon size={13} color={PURPLE} strokeWidth={2.4} />
+          <Icon size={13} color={colors.brand.default} strokeWidth={2.4} />
         </View>
         <Text style={styles.kickerText}>{kicker}</Text>
       </View>
@@ -470,7 +466,7 @@ function FieldRow({
   return (
     <View style={styles.fieldRow}>
       <View style={styles.fieldIcon}>
-        <Icon size={16} color={PURPLE} strokeWidth={2.2} />
+        <Icon size={16} color={colors.brand.default} strokeWidth={2.2} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.fieldLabel}>{label}</Text>
@@ -502,21 +498,21 @@ function PickField({
       style={({ pressed }) => [styles.fieldRow, pressed && { opacity: 0.85 }]}
     >
       <View style={styles.fieldIcon}>
-        <Icon size={16} color={PURPLE} strokeWidth={2.2} />
+        <Icon size={16} color={colors.brand.default} strokeWidth={2.2} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.fieldLabel}>{label}</Text>
         <Text
           style={[
             styles.fieldStatic,
-            !value && { color: MUTED, fontWeight: "500" },
+            !value && { color: colors.text.muted, fontWeight: fontWeight.medium },
           ]}
           numberOfLines={1}
         >
           {value || placeholder}
         </Text>
       </View>
-      <Pencil size={15} color={MUTED} strokeWidth={2} />
+      <Pencil size={15} color={colors.text.muted} strokeWidth={2} />
     </Pressable>
   );
 }
@@ -546,7 +542,7 @@ function PickerSheet({
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>{picker?.title ?? ""}</Text>
             <Pressable onPress={onClose} hitSlop={8} style={styles.sheetClose}>
-              <X size={18} color={TEXT} strokeWidth={2.2} />
+              <X size={18} color={colors.text.primary} strokeWidth={2.2} />
             </Pressable>
           </View>
           <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
@@ -563,18 +559,18 @@ function PickerSheet({
                   style={({ pressed }) => [
                     styles.sheetItem,
                     active && styles.sheetItemActive,
-                    pressed && !active && { backgroundColor: "#FAF8FE" },
+                    pressed && !active && { backgroundColor: colors.surface.brand },
                   ]}
                 >
                   <Text
                     style={[
                       styles.sheetItemText,
-                      active && { color: PURPLE, fontWeight: "700" },
+                      active && { color: colors.brand.default, fontWeight: fontWeight.bold },
                     ]}
                   >
                     {opt}
                   </Text>
-                  {active ? <CheckCircle2 size={18} color={PURPLE} strokeWidth={2.2} /> : null}
+                  {active ? <CheckCircle2 size={18} color={colors.brand.default} strokeWidth={2.2} /> : null}
                 </Pressable>
               );
             })}
@@ -588,7 +584,7 @@ function PickerSheet({
 /* ════════════ styles ════════════ */
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  root: { flex: 1, backgroundColor: colors.surface.default },
   scroll: { paddingBottom: 32 },
 
   // Header
@@ -600,25 +596,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   iconBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  headerTitle: { fontSize: 17, fontWeight: "800", color: TEXT, letterSpacing: -0.3 },
+  headerTitle: { fontSize: fontSize.title, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.3 },
   doneBtn: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
-  doneText: { color: "#FFF", fontSize: 14, fontWeight: "800" },
+  doneText: { color: colors.text.onBrand, fontSize: fontSize.body, fontWeight: fontWeight.extrabold },
 
   // Identity
   identityRow: {
@@ -630,20 +626,20 @@ const styles = StyleSheet.create({
   },
   editableNameRow: { flexDirection: "row", alignItems: "baseline" },
   identityNameInput: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: TEXT,
+    fontSize: fontSize.h1,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.5,
     padding: 0,
     minWidth: 60,
   },
-  identityName: { fontSize: 26, fontWeight: "800", color: TEXT, letterSpacing: -0.5 },
+  identityName: { fontSize: fontSize.h1, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.5 },
   identityLocRow: { marginTop: 2, flexDirection: "row", alignItems: "center", gap: 4 },
   identityLocInput: {
     flex: 1,
-    fontSize: 13.5,
-    color: TEXT,
-    fontWeight: "500",
+    fontSize: fontSize.label,
+    color: colors.text.primary,
+    fontWeight: fontWeight.medium,
     padding: 0,
   },
   identityChip: {
@@ -652,23 +648,23 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  identityChipText: { fontSize: 11, fontWeight: "700", color: PURPLE },
+  identityChipText: { fontSize: fontSize.micro, fontWeight: fontWeight.bold, color: colors.brand.default },
 
   // Section card
   card: {
     marginHorizontal: 16,
     marginTop: 14,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     padding: 16,
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
@@ -678,33 +674,33 @@ const styles = StyleSheet.create({
   kickerIcon: {
     width: 24,
     height: 24,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
   kickerText: {
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 1.5,
-    color: PURPLE,
+    color: colors.brand.default,
   },
-  helper: { marginTop: 10, fontSize: 12, color: MUTED, fontWeight: "500" },
+  helper: { marginTop: 10, fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.medium },
   helperRight: {
     marginTop: 6,
     alignSelf: "flex-end",
-    fontSize: 11,
-    color: MUTED,
-    fontWeight: "600",
+    fontSize: fontSize.micro,
+    color: colors.text.muted,
+    fontWeight: fontWeight.semibold,
   },
 
   // Primary photo
   heroPhotoWrap: {
     width: "100%",
     aspectRatio: 4 / 5,
-    borderRadius: 18,
+    borderRadius: radii["2xl"],
     overflow: "hidden",
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     position: "relative",
   },
   heroPhoto: { width: "100%", height: "100%" },
@@ -717,19 +713,19 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "rgba(17,24,39,0.85)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.primary, 0.85),
   },
-  heroEditText: { color: "#FFF", fontSize: 12.5, fontWeight: "700" },
+  heroEditText: { color: colors.text.onBrand, fontSize: fontSize.caption, fontWeight: fontWeight.bold },
 
   // Photo grid
   photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   photoTile: {
     width: "48%",
     aspectRatio: 4 / 5,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     overflow: "hidden",
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     position: "relative",
   },
   photoTileImage: { width: "100%", height: "100%" },
@@ -739,30 +735,30 @@ const styles = StyleSheet.create({
     right: 8,
     width: 26,
     height: 26,
-    borderRadius: 999,
-    backgroundColor: "rgba(17,24,39,0.85)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.primary, 0.85),
     alignItems: "center",
     justifyContent: "center",
   },
   photoAdd: {
     width: "48%",
     aspectRatio: 4 / 5,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 2,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     borderStyle: "dashed",
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
   },
-  photoAddText: { fontSize: 12.5, fontWeight: "700", color: PURPLE },
+  photoAddText: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.brand.default },
 
   // Bio
   bioInput: {
     minHeight: 92,
-    fontSize: 14,
-    color: TEXT,
+    fontSize: fontSize.body,
+    color: colors.text.primary,
     lineHeight: 21,
     textAlignVertical: "top",
     padding: 0,
@@ -778,35 +774,35 @@ const styles = StyleSheet.create({
   fieldIcon: {
     width: 32,
     height: 32,
-    borderRadius: 10,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
   fieldLabel: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
     letterSpacing: 0.8,
-    color: MUTED,
+    color: colors.text.muted,
     textTransform: "uppercase",
   },
   fieldInput: {
-    fontSize: 14.5,
-    fontWeight: "600",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     padding: 0,
   },
-  fieldStatic: { fontSize: 14.5, fontWeight: "600", color: TEXT },
-  divider: { height: 1, backgroundColor: BORDER, marginVertical: 4 },
+  fieldStatic: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  divider: { height: 1, backgroundColor: colors.border.default, marginVertical: 4 },
 
   // Picker sheet
   sheetBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.default,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 16,
@@ -816,8 +812,8 @@ const styles = StyleSheet.create({
   sheetGrabber: {
     width: 36,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: BORDER,
+    borderRadius: radii.full,
+    backgroundColor: colors.border.default,
     alignSelf: "center",
     marginBottom: 10,
   },
@@ -828,12 +824,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingBottom: 6,
   },
-  sheetTitle: { fontSize: 16, fontWeight: "800", color: TEXT, letterSpacing: -0.2 },
+  sheetTitle: { fontSize: fontSize.title, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.2 },
   sheetClose: {
     width: 28,
     height: 28,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -843,8 +839,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 12,
     paddingVertical: 13,
-    borderRadius: 14,
+    borderRadius: radii.lg,
   },
-  sheetItemActive: { backgroundColor: LIGHT_PURPLE },
-  sheetItemText: { fontSize: 14.5, fontWeight: "600", color: TEXT },
+  sheetItemActive: { backgroundColor: colors.surface.brand },
+  sheetItemText: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary },
 });

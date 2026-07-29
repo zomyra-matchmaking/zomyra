@@ -16,7 +16,7 @@ import {
   View,
 } from "react-native";
 
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight } from "@/src/theme";
 
 /* ============ OptionCard ============ */
 type OptionCardProps = {
@@ -40,12 +40,12 @@ export function OptionCard({ selected, onSelect, title, description, compact }: 
       ]}
     >
       <View style={{ flex: 1 }}>
-        <Text style={[styles.optTitle, compact && { fontSize: 14 }]}>{title}</Text>
+        <Text style={[styles.optTitle, compact && { fontSize: fontSize.body }]}>{title}</Text>
         {description ? <Text style={styles.optDesc}>{description}</Text> : null}
       </View>
       {selected ? (
         <View style={styles.optCheck}>
-          <Check size={12} color={colors.primaryForeground} strokeWidth={3.5} />
+          <Check size={12} color={colors.brand.onBrand} strokeWidth={3.5} />
         </View>
       ) : null}
     </Pressable>
@@ -91,7 +91,7 @@ export function OptionGrid<T extends string>({
             </Text>
             {selected ? (
               <View style={styles.chipCheck}>
-                <Check size={10} color={colors.primaryForeground} strokeWidth={3.5} />
+                <Check size={10} color={colors.brand.onBrand} strokeWidth={3.5} />
               </View>
             ) : null}
           </Pressable>
@@ -350,7 +350,7 @@ export function SearchableSelect({
                       {item}
                     </Text>
                     {selected ? (
-                      <Check size={16} color={colors.primary} />
+                      <Check size={16} color={colors.brand.default} />
                     ) : null}
                   </Pressable>
                 );
@@ -376,7 +376,7 @@ export function SearchableSelect({
           focused && styles.searchableInputWrapFocused,
         ]}
       >
-        <Search size={16} color={colors.mutedForeground} />
+        <Search size={16} color={colors.text.muted} />
         <TextInput
           testID="searchable-select-input"
           value={q}
@@ -384,7 +384,7 @@ export function SearchableSelect({
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
-          placeholderTextColor={colors.mutedForeground}
+          placeholderTextColor={colors.text.muted}
           style={styles.searchableInput}
           autoCorrect={false}
           autoCapitalize="words"
@@ -396,7 +396,7 @@ export function SearchableSelect({
             onPress={clear}
             hitSlop={8}
           >
-            <X size={16} color={colors.mutedForeground} />
+            <X size={16} color={colors.text.muted} />
           </Pressable>
         ) : null}
       </View>
@@ -422,35 +422,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   optCardCompact: {
     paddingVertical: 11,
   },
   optCardSelected: {
-    borderColor: colors.primary,
+    borderColor: colors.brand.default,
     borderWidth: 2,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   optTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: colors.foreground,
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
   },
   optDesc: {
     marginTop: 2,
-    fontSize: 13,
+    fontSize: fontSize.label,
     lineHeight: 17,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   optCheck: {
     width: 22,
     height: 22,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 12,
@@ -467,35 +467,35 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
   },
   chipCardSelected: {
-    borderColor: colors.primary,
+    borderColor: colors.brand.default,
     borderWidth: 2,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   chipCardText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.foreground,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     textAlign: "center",
   },
   chipCardTextSelected: {
-    color: colors.primary,
+    color: colors.brand.default,
   },
   chipCheck: {
     marginLeft: 8,
     width: 16,
     height: 16,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -508,38 +508,38 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 9,
-    borderRadius: 10,
+    borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   chipSelected: {
-    borderColor: colors.primary,
+    borderColor: colors.brand.default,
     borderWidth: 2,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   chipText: {
-    fontSize: 13.5,
-    fontWeight: "600",
-    color: colors.foreground,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
   },
   chipTextSelected: {
-    color: colors.primary,
+    color: colors.brand.default,
   },
   selectTrigger: {
     height: 52,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   selectText: {
-    fontSize: 15,
-    color: colors.foreground,
+    fontSize: fontSize.bodyLarge,
+    color: colors.text.primary,
     flex: 1,
   },
   // ─── Inline autosuggest ─────────────────────────────────────────
@@ -555,21 +555,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     height: 52,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     paddingHorizontal: 14,
   },
   searchableInputWrapFocused: {
-    borderColor: colors.primary,
+    borderColor: colors.brand.default,
     borderWidth: 2,
     paddingHorizontal: 13,
   },
   searchableInput: {
     flex: 1,
-    fontSize: 15,
-    color: colors.foreground,
+    fontSize: fontSize.bodyLarge,
+    color: colors.text.primary,
     // Compensate for the border-width jump between focused/blurred so text
     // doesn't jump on focus.
     paddingVertical: 0,
@@ -577,8 +577,8 @@ const styles = StyleSheet.create({
   searchableHelper: {
     marginTop: 6,
     marginLeft: 4,
-    fontSize: 12,
-    color: colors.mutedForeground,
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
   },
   // Floating suggestions panel. Absolute-positioned relative to the wrap.
   // The `top` / `bottom` and `maxHeight` are set inline so the component
@@ -588,12 +588,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    backgroundColor: colors.card,
-    borderRadius: 14,
+    backgroundColor: colors.surface.default,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.border.default,
     // Subtle shadow so the panel looks like it floats over the screen.
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
@@ -611,21 +611,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: colors.border.default,
   },
   suggestItemPressed: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   suggestItemSelected: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   suggestItemText: {
-    fontSize: 15,
-    color: colors.foreground,
+    fontSize: fontSize.bodyLarge,
+    color: colors.text.primary,
   },
   suggestItemTextSelected: {
-    color: colors.primary,
-    fontWeight: "600",
+    color: colors.brand.default,
+    fontWeight: fontWeight.semibold,
   },
   suggestEmpty: {
     paddingVertical: 20,
@@ -633,8 +633,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   suggestEmptyText: {
-    fontSize: 13,
-    color: colors.mutedForeground,
+    fontSize: fontSize.label,
+    color: colors.text.muted,
     textAlign: "center",
   },
 });

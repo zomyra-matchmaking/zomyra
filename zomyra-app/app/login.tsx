@@ -4,7 +4,7 @@ import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { toast } from "@/src/components/ui/Toast";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight } from "@/src/theme";
 
 export default function Login() {
   const router = useRouter();
@@ -41,7 +41,7 @@ export default function Login() {
             onPress={() => router.push("/phone")}
             style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.92 }]}
           >
-            <Phone size={20} color={colors.primaryForeground} strokeWidth={2.4} />
+            <Phone size={20} color={colors.brand.onBrand} strokeWidth={2.4} />
             <Text style={styles.primaryBtnText}>Continue with Phone</Text>
           </Pressable>
 
@@ -100,17 +100,17 @@ const styles = StyleSheet.create({
   // ratio so `contain` leaves no dead space around it.
   lockup: { width: 202, height: 260, marginBottom: 28 },
   title: {
-    fontSize: 26,
+    fontSize: fontSize.h1,
     lineHeight: 32,
-    fontWeight: "800",
-    color: colors.foreground,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.4,
     textAlign: "center",
   },
   subtitle: {
     marginTop: 8,
-    fontSize: 14,
-    color: colors.mutedForeground,
+    fontSize: fontSize.body,
+    color: colors.text.muted,
     textAlign: "center",
   },
   // Bottom — anchored auth CTAs.
@@ -120,45 +120,45 @@ const styles = StyleSheet.create({
   primaryBtn: {
     height: 56,
     borderRadius: radii.lg,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    shadowColor: colors.primary,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
     elevation: 4,
   },
   primaryBtnText: {
-    color: colors.primaryForeground,
-    fontSize: 16,
-    fontWeight: "700",
+    color: colors.brand.onBrand,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
   },
   secondaryBtn: {
     height: 56,
     borderRadius: radii.lg,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.default,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border.neutral,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
   },
-  secondaryBtnText: { fontSize: 16, fontWeight: "700", color: colors.foreground },
+  secondaryBtnText: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
   googleG: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: "#EA4335",
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.extrabold,
+    color: colors.external.google,
     fontStyle: "italic",
   },
   legal: {
     marginTop: 14,
-    fontSize: 12,
+    fontSize: fontSize.caption,
     lineHeight: 18,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     textAlign: "center",
   },
   // Modern mobile pattern: bold colored link text instead of underline
@@ -167,8 +167,8 @@ const styles = StyleSheet.create({
   // On web we also suppress the default tap-highlight + selection box so
   // tapping the link doesn't paint a gray rectangle around the text.
   legalLink: {
-    color: colors.primary,
-    fontWeight: "700",
+    color: colors.brand.default,
+    fontWeight: fontWeight.bold,
     ...Platform.select({
       web: {
         cursor: "pointer",
@@ -185,16 +185,16 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: "#F59E0B",
+    borderColor: colors.premium.icon,
     borderStyle: "dashed",
-    backgroundColor: "#FEF3C7",
+    backgroundColor: colors.premium.surface,
   },
   devSkipText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#92400E",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
+    color: colors.premium.textStrong,
     letterSpacing: 0.3,
   },
 });

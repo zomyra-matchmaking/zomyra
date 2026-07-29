@@ -18,13 +18,7 @@ import {
   Text,
   View,
 } from "react-native";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 const SCREEN_H = Dimensions.get("window").height;
 
@@ -134,7 +128,7 @@ export function FilterOptionSheet({
                   pressed && { opacity: 0.7 },
                 ]}
               >
-                <X size={18} color={TEXT} strokeWidth={2.2} />
+                <X size={18} color={colors.text.primary} strokeWidth={2.2} />
               </Pressable>
             </View>
           </View>
@@ -170,7 +164,7 @@ export function FilterOptionSheet({
             ]}
           >
             <LinearGradient
-              colors={[PURPLE, PURPLE_DEEP]}
+              colors={colors.gradient.brand}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.ctaGradient}
@@ -188,10 +182,10 @@ const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
   },
   sheet: {
-    backgroundColor: "#FFF",
+    backgroundColor: colors.surface.default,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
@@ -202,8 +196,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 40,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: "#E5E7EB",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.muted,
     marginBottom: 12,
   },
   headerRow: {
@@ -211,15 +205,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  title: { fontSize: 22, fontWeight: "700", color: TEXT, letterSpacing: -0.3 },
-  subtitle: { marginTop: 4, fontSize: 13, color: MUTED },
+  title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
+  subtitle: { marginTop: 4, fontSize: fontSize.label, color: colors.text.muted },
   clearBtn: { paddingHorizontal: 4, paddingVertical: 4 },
-  clearText: { color: PURPLE, fontWeight: "700", fontSize: 13 },
+  clearText: { color: colors.brand.default, fontWeight: fontWeight.bold, fontSize: fontSize.label },
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -229,36 +223,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 14,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  optionActive: { borderColor: PURPLE, backgroundColor: LIGHT_PURPLE },
-  optionTitle: { fontSize: 16, fontWeight: "600", color: TEXT, letterSpacing: -0.2 },
-  optionTitleActive: { color: PURPLE, fontWeight: "700" },
+  optionActive: { borderColor: colors.brand.default, backgroundColor: colors.surface.brand },
+  optionTitle: { fontSize: fontSize.title, fontWeight: fontWeight.semibold, color: colors.text.primary, letterSpacing: -0.2 },
+  optionTitleActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
   radio: {
     width: 22,
     height: 22,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
+    borderColor: colors.border.neutralStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: PURPLE },
-  radioDot: { width: 10, height: 10, borderRadius: 999, backgroundColor: PURPLE },
+  radioActive: { borderColor: colors.brand.default },
+  radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
 
   cta: {
     marginTop: 12,
-    borderRadius: 18,
+    borderRadius: radii["2xl"],
     overflow: "hidden",
-    shadowColor: PURPLE,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
     elevation: 6,
   },
   ctaGradient: { height: 58, alignItems: "center", justifyContent: "center" },
-  ctaText: { color: "#FFF", fontSize: 18, fontWeight: "700", letterSpacing: -0.2 },
+  ctaText: { color: colors.text.onBrand, fontSize: fontSize.heading, fontWeight: fontWeight.bold, letterSpacing: -0.2 },
 });

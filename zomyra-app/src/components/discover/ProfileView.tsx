@@ -18,8 +18,8 @@
  *  10. Fourth Image
  *  11. Fifth Image
  *
- * Tokens: PURPLE #5B2C6F · LIGHT_PURPLE #F5F3FF · BORDER #ECEAF7 ·
- *         TEXT #111827 · MUTED #6B7280 · HAIRLINE #EEEBF3.
+ * Colours come from the semantic tokens in `@/src/theme` — see that module for
+ * the values and their measured contrast.
  */
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -56,6 +56,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import type { CompatibilityDimension, DiscoverProfile } from "@/src/lib/discover/mock";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 const SCREEN = Dimensions.get("window");
 const SCREEN_W = Math.min(SCREEN.width, 430);
@@ -65,12 +66,6 @@ const SCREEN_H_FULL = SCREEN.height;
 const PAD_X = 24;
 
 // ───── Design tokens ─────
-const PURPLE = "#5B2C6F";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const HAIRLINE = "#EEEBF3";
-const TEXT = "#111827";
-const SOFT = "#9CA3AF";
 
 // Lifestyle label → icon. Spec-mandated pairings first.
 const LIFESTYLE_ICONS: Record<string, LucideIcon> = {
@@ -210,7 +205,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             pressed && { opacity: 0.9 },
           ]}
         >
-          <Sparkles size={12} color="#FFF" strokeWidth={2.4} />
+          <Sparkles size={12} color={colors.text.onBrand} strokeWidth={2.4} />
           {tierExpanded ? (
             <Animated.View
               entering={FadeIn.duration(240)}
@@ -235,7 +230,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         {/* Scrim + identity overlay */}
         <LinearGradient
           pointerEvents="none"
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.82)"]}
+          colors={["transparent", alpha(colors.overlay.base, 0.55), alpha(colors.overlay.base, 0.82)]}
           locations={[0, 0.55, 1]}
           style={styles.heroScrim}
         />
@@ -247,13 +242,13 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             </Text>
             {profile.premium ? (
               <View testID="discover-premium-badge" style={styles.heroPremiumBadge}>
-                <Crown size={11} color="#F59E0B" strokeWidth={2.4} fill="#F59E0B" />
+                <Crown size={11} color={colors.premium.onDark} strokeWidth={2.4} fill={colors.premium.onDark} />
                 <Text style={styles.heroPremiumText}>Premium</Text>
               </View>
             ) : null}
           </View>
           <View style={styles.heroLocRow}>
-            <MapPin size={13} color="rgba(255,255,255,0.9)" strokeWidth={2} />
+            <MapPin size={13} color={alpha(colors.text.onBrand, 0.9)} strokeWidth={2} />
             <Text style={styles.heroLoc} numberOfLines={1}>
               {profile.location}
             </Text>
@@ -275,7 +270,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             const I = LIFESTYLE_ICONS[label] ?? Sparkles;
             return (
               <View key={label} style={styles.factGridItem}>
-                <I size={16} color={PURPLE} strokeWidth={1.8} />
+                <I size={16} color={colors.brand.default} strokeWidth={1.8} />
                 <Text style={styles.factGridLabel} numberOfLines={1}>
                   {label}
                 </Text>
@@ -293,13 +288,13 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         testID="discover-profession-income"
       >
         <View style={styles.professionRow}>
-          <BriefcaseBusiness size={16} color={PURPLE} strokeWidth={1.8} />
+          <BriefcaseBusiness size={16} color={colors.brand.default} strokeWidth={1.8} />
           <Text style={styles.professionText} numberOfLines={2}>
             {profession}
           </Text>
         </View>
         <View style={styles.professionRow}>
-          <IndianRupee size={16} color={PURPLE} strokeWidth={1.8} />
+          <IndianRupee size={16} color={colors.brand.default} strokeWidth={1.8} />
           <Text style={styles.professionText} numberOfLines={2}>
             {income}
           </Text>
@@ -346,7 +341,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
                 testID={`discover-align-chip-${s.label}`}
                 style={styles.alignChip}
               >
-                <HeartHandshake size={13} color={PURPLE} strokeWidth={1.8} />
+                <HeartHandshake size={13} color={colors.brand.default} strokeWidth={1.8} />
                 <Text style={styles.alignChipText} numberOfLines={2}>
                   {s.label}
                 </Text>
@@ -408,7 +403,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         >
           <Pressable style={styles.reasonCard} onPress={() => {}}>
             <View style={styles.reasonChip}>
-              <Sparkles size={12} color="#FFF" strokeWidth={2.6} />
+              <Sparkles size={12} color={colors.text.onBrand} strokeWidth={2.6} />
               <Text style={styles.reasonChipText}>
                 {dimScore?.tier ?? profile.compatibility}
               </Text>
@@ -443,7 +438,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             style={styles.viewerClose}
             activeOpacity={0.8}
           >
-            <X size={22} color="#FFF" strokeWidth={2} />
+            <X size={22} color={colors.text.onBrand} strokeWidth={2} />
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={1}
@@ -482,7 +477,7 @@ function Section({
   return (
     <View style={styles.section} testID={testID}>
       <View style={styles.sectionHeader}>
-        {Icon ? <Icon size={12} color={PURPLE} strokeWidth={2} /> : null}
+        {Icon ? <Icon size={12} color={colors.brand.default} strokeWidth={2} /> : null}
         <Text style={styles.kicker}>{kicker}</Text>
       </View>
       <View style={styles.sectionBody}>{children}</View>
@@ -557,7 +552,7 @@ function EditorialPhoto({
           <>
             <LinearGradient
               pointerEvents="none"
-              colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.62)"]}
+              colors={["transparent", alpha(colors.overlay.base, 0.62)]}
               locations={[0, 1]}
               style={styles.photoCaptionScrim}
             />
@@ -594,14 +589,14 @@ function QuickFact({
 
 const styles = StyleSheet.create({
   root: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.default,
     paddingBottom: 24,
   },
 
   // ─── Hero ───
   hero: {
     width: SCREEN_W,
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     overflow: "hidden",
     position: "relative",
   },
@@ -625,16 +620,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   heroName: {
-    fontSize: 34,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: fontSize.displayLarge,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     letterSpacing: -0.9,
     lineHeight: 40,
   },
   heroAge: {
-    fontSize: 34,
-    fontWeight: "300",
-    color: "#FFFFFF",
+    fontSize: fontSize.displayLarge,
+    fontWeight: fontWeight.regular,
+    color: colors.text.onBrand,
     letterSpacing: -0.9,
   },
   heroPremiumBadge: {
@@ -643,15 +638,15 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 9,
     paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
+    borderColor: alpha(colors.text.onBrand, 0.35),
   },
   heroPremiumText: {
-    fontSize: 9.5,
-    fontWeight: "800",
-    color: "#FFF",
+    fontSize: fontSize.nano,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.onBrand,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
@@ -662,9 +657,9 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   heroLoc: {
-    fontSize: 13.5,
-    color: "rgba(255,255,255,0.92)",
-    fontWeight: "500",
+    fontSize: fontSize.label,
+    color: alpha(colors.text.onBrand, 0.92),
+    fontWeight: fontWeight.medium,
     letterSpacing: 0.1,
   },
   heroTierChip: {
@@ -675,10 +670,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.overlay.base, 0.4),
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderColor: alpha(colors.text.onBrand, 0.2),
     zIndex: 2,
     overflow: "hidden",
   },
@@ -686,9 +681,9 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   heroTierText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#FFF",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     letterSpacing: 0.2,
   },
 
@@ -696,23 +691,23 @@ const styles = StyleSheet.create({
   langRow: {
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: HAIRLINE,
+    borderBottomColor: colors.border.subtle,
   },
   langRowLast: {
     borderBottomWidth: 0,
   },
   langLabel: {
-    fontSize: 11.5,
-    fontWeight: "500",
-    color: SOFT,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   langValue: {
     marginTop: 4,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -728,17 +723,17 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   kicker: {
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 1.6,
-    color: PURPLE,
+    color: colors.brand.default,
     textTransform: "uppercase",
   },
   sectionTitle: {
     marginTop: 6,
-    fontSize: 22,
-    fontWeight: "700",
-    color: TEXT,
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.5,
   },
   sectionBody: {
@@ -749,22 +744,22 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginHorizontal: PAD_X,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: HAIRLINE,
+    backgroundColor: colors.border.subtle,
   },
 
   // ─── About body ───
   bodyText: {
-    fontSize: 14.5,
+    fontSize: fontSize.body,
     lineHeight: 22,
-    color: TEXT,
-    fontWeight: "500",
+    color: colors.text.primary,
+    fontWeight: fontWeight.medium,
     letterSpacing: -0.1,
   },
   expandToggle: { marginTop: 10, alignSelf: "flex-start" },
   expandToggleText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: PURPLE,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.bold,
+    color: colors.brand.default,
     letterSpacing: 0.2,
   },
 
@@ -784,9 +779,9 @@ const styles = StyleSheet.create({
   },
   factGridLabel: {
     flex: 1,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -799,9 +794,9 @@ const styles = StyleSheet.create({
   },
   professionText: {
     flex: 1,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -812,7 +807,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: HAIRLINE,
+    borderBottomColor: colors.border.subtle,
   },
   detailIcon: {
     width: 24,
@@ -821,17 +816,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   detailLabel: {
-    fontSize: 11.5,
-    fontWeight: "500",
-    color: SOFT,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   detailValue: {
     marginTop: 2,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -846,17 +841,17 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   quickFactLabel: {
-    fontSize: 11.5,
-    fontWeight: "500",
-    color: SOFT,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   quickFactValue: {
     marginTop: 4,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -868,7 +863,7 @@ const styles = StyleSheet.create({
     width: SCREEN_W,
     height: Math.round(SCREEN_W * 1.15),
     overflow: "hidden",
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     position: "relative",
   },
   photoCaptionScrim: {
@@ -885,12 +880,12 @@ const styles = StyleSheet.create({
     bottom: 20,
   },
   photoCaptionText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    fontSize: fontSize.heading,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.onBrand,
     letterSpacing: -0.2,
     lineHeight: 24,
-    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowColor: alpha(colors.overlay.base, 0.4),
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 8,
   },
@@ -907,15 +902,15 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   alignChipText: {
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
     maxWidth: SCREEN_W - PAD_X * 2 - 60,
   },
@@ -925,7 +920,7 @@ const styles = StyleSheet.create({
   // ─── Reason modal ───
   reasonBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 24,
@@ -933,11 +928,11 @@ const styles = StyleSheet.create({
   reasonCard: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: "#FFF",
-    borderRadius: 24,
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
     padding: 24,
     gap: 12,
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.18,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 12 },
@@ -950,29 +945,29 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
-  reasonChipText: { color: "#FFF", fontSize: 11, fontWeight: "700" },
+  reasonChipText: { color: colors.text.onBrand, fontSize: fontSize.micro, fontWeight: fontWeight.bold },
   reasonTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: TEXT,
+    fontSize: fontSize.subtitle,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     letterSpacing: -0.3,
   },
-  reasonBody: { fontSize: 16, lineHeight: 24, color: TEXT, fontWeight: "400" },
+  reasonBody: { fontSize: fontSize.title, lineHeight: 24, color: colors.text.primary, fontWeight: fontWeight.regular },
   reasonCloseBtn: {
     marginTop: 8,
     alignSelf: "flex-end",
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 18,
-    backgroundColor: PURPLE,
+    borderRadius: radii["2xl"],
+    backgroundColor: colors.brand.default,
   },
-  reasonCloseText: { color: "#FFF", fontSize: 14, fontWeight: "600" },
+  reasonCloseText: { color: colors.text.onBrand, fontSize: fontSize.body, fontWeight: fontWeight.semibold },
 
   // ─── Photo viewer ───
-  viewerRoot: { flex: 1, backgroundColor: "#000" },
+  viewerRoot: { flex: 1, backgroundColor: colors.surface.media },
   viewerBackdrop: { flex: 1, alignItems: "center", justifyContent: "center" },
   viewerImage: { width: SCREEN_W, height: SCREEN_H_FULL * 0.85 },
   viewerClose: {
@@ -982,8 +977,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
     width: 40,
     height: 40,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.onBrand, 0.18),
     alignItems: "center",
     justifyContent: "center",
   },

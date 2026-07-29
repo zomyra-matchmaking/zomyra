@@ -10,7 +10,7 @@ import { useRouter } from "expo-router";
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useChatStore } from "@/src/stores/chat-store";
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 export default function ChatsList() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function ChatsList() {
           testID="chats-search"
           style={({ pressed }) => [styles.searchBtn, pressed && { opacity: 0.85 }]}
         >
-          <Search size={16} color={colors.mutedForeground} />
+          <Search size={16} color={colors.text.muted} />
         </Pressable>
       </View>
 
@@ -51,7 +51,7 @@ export default function ChatsList() {
               testID={`chat-row-${item.id}`}
               onPress={() => router.push(`/chats/${item.id}` as never)}
               onLongPress={() => setPendingUnmatch(item.id)}
-              style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.secondary }]}
+              style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface.brand }]}
             >
               <Image source={{ uri: item.avatar }} style={styles.avatar} />
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -62,14 +62,14 @@ export default function ChatsList() {
                     </Text>
                     {item.premium ? (
                       <View testID={`chat-premium-${item.id}`} style={styles.premiumDot}>
-                        <Crown size={9} color="#FFF" strokeWidth={2.4} fill="#FFF" />
+                        <Crown size={9} color={colors.text.onBrand} strokeWidth={2.4} fill={colors.text.onBrand} />
                       </View>
                     ) : null}
                   </View>
                   <Text
                     style={[
                       styles.time,
-                      item.unread > 0 && { color: colors.primary, fontWeight: "700" },
+                      item.unread > 0 && { color: colors.brand.default, fontWeight: fontWeight.bold },
                     ]}
                   >
                     {item.time}
@@ -79,7 +79,7 @@ export default function ChatsList() {
                   <Text
                     style={[
                       styles.preview,
-                      item.unread > 0 && { color: colors.foreground },
+                      item.unread > 0 && { color: colors.text.primary },
                     ]}
                     numberOfLines={1}
                   >
@@ -125,15 +125,15 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
-  title: { fontSize: 22, fontWeight: "700", color: colors.foreground, letterSpacing: -0.3 },
-  subtitle: { marginTop: 2, fontSize: 12, color: colors.mutedForeground },
+  title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
+  subtitle: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
   searchBtn: {
     width: 38,
     height: 38,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: "rgba(232,225,239,0.6)",
-    backgroundColor: colors.card,
+    borderColor: alpha(colors.border.default, 0.6),
+    backgroundColor: colors.surface.default,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -143,41 +143,41 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: radii.md,
   },
-  avatar: { width: 48, height: 48, borderRadius: 999, backgroundColor: colors.secondary },
+  avatar: { width: 48, height: 48, borderRadius: radii.full, backgroundColor: colors.surface.brand },
   rowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1, marginRight: 6 },
-  name: { fontSize: 14.5, fontWeight: "700", color: colors.foreground, flexShrink: 1 },
+  name: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, flexShrink: 1 },
   premiumDot: {
     width: 18,
     height: 18,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  time: { fontSize: 11, color: colors.mutedForeground },
+  time: { fontSize: fontSize.micro, color: colors.text.muted },
   rowBottom: { marginTop: 2, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  preview: { flex: 1, fontSize: 13, color: colors.mutedForeground, marginRight: 6 },
+  preview: { flex: 1, fontSize: fontSize.label, color: colors.text.muted, marginRight: 6 },
   badge: {
     minWidth: 18,
     height: 18,
     paddingHorizontal: 5,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  badgeText: { color: "#fff", fontSize: 10.5, fontWeight: "700" },
+  badgeText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
-  emptyTitle: { fontSize: 17, fontWeight: "700", color: colors.foreground },
+  emptyTitle: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
   emptySubtitle: {
     marginTop: 6,
     maxWidth: 260,
     textAlign: "center",
-    fontSize: 13.5,
+    fontSize: fontSize.label,
     lineHeight: 19,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
 });

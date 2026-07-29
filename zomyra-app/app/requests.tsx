@@ -16,14 +16,14 @@ import { toast } from "@/src/components/ui/Toast";
 import { useRequestsStore, type ConnectionRequest } from "@/src/stores/requests-store";
 import { useChatStore } from "@/src/stores/chat-store";
 import type { CompatibilityTier } from "@/src/lib/discover/mock";
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 
-const TIER_COLOR: Record<CompatibilityTier, { dot: string; bg: string; text: string; border: string }> = {
-  "Excellent Match": { dot: "#8B5CF6", bg: "rgba(139,92,246,0.10)", text: "#6D28D9", border: "rgba(139,92,246,0.25)" },
-  "Great Match": { dot: "#10B981", bg: "rgba(16,185,129,0.10)", text: "#047857", border: "rgba(16,185,129,0.25)" },
-  "Potential Match": { dot: "#F59E0B", bg: "rgba(245,158,11,0.12)", text: "#B45309", border: "rgba(245,158,11,0.30)" },
+const TIER_COLOR: Record<CompatibilityTier, (typeof colors.tier)[keyof typeof colors.tier]> = {
+  "Excellent Match": colors.tier.excellent,
+  "Great Match": colors.tier.great,
+  "Potential Match": colors.tier.potential,
 };
 
 export default function Requests() {
@@ -110,11 +110,11 @@ export default function Requests() {
           style={[
             styles.premiumChip,
             isPremium
-              ? { backgroundColor: "rgba(91,44,111,0.10)", borderColor: "rgba(91,44,111,0.40)" }
-              : { backgroundColor: colors.card, borderColor: colors.border },
+              ? { backgroundColor: alpha(colors.brand.default, 0.10), borderColor: alpha(colors.brand.default, 0.40) }
+              : { backgroundColor: colors.surface.default, borderColor: colors.border.default },
           ]}
         >
-          <Text style={{ color: isPremium ? colors.primary : colors.mutedForeground, fontWeight: "700", fontSize: 11 }}>
+          <Text style={{ color: isPremium ? colors.brand.default : colors.text.muted, fontWeight: fontWeight.bold, fontSize: fontSize.micro }}>
             {isPremium ? "Premium" : "Free"}
           </Text>
         </Pressable>
@@ -154,7 +154,7 @@ export default function Requests() {
                     onPress={() => setPendingDecline(active.id)}
                     style={({ pressed }) => [styles.sheetBtn, styles.sheetBtnGhost, pressed && { opacity: 0.9 }]}
                   >
-                    <X size={16} color={colors.foreground} />
+                    <X size={16} color={colors.text.primary} />
                     <Text style={styles.sheetBtnGhostText}>Decline</Text>
                   </Pressable>
                   <Pressable
@@ -163,7 +163,7 @@ export default function Requests() {
                     disabled={accepting}
                     style={({ pressed }) => [styles.sheetBtn, styles.sheetBtnPrimary, pressed && { opacity: 0.92 }]}
                   >
-                    <Check size={16} color={colors.primaryForeground} />
+                    <Check size={16} color={colors.brand.onBrand} />
                     <Text style={styles.sheetBtnPrimaryText}>
                       {accepting ? "Accepting…" : "Accept"}
                     </Text>
@@ -206,7 +206,7 @@ function UpsellCard({ onUpgrade }: { onUpgrade: () => void }) {
     <View style={styles.upsell}>
       <View style={{ flexDirection: "row", gap: 12 }}>
         <View style={styles.upsellIcon}>
-          <Sparkles size={16} color={colors.primaryForeground} />
+          <Sparkles size={16} color={colors.brand.onBrand} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.upsellTitle}>See who wants to connect with you</Text>
@@ -232,7 +232,7 @@ function TierChip({ tier }: { tier: CompatibilityTier }) {
     <View
       style={[
         styles.tierChip,
-        { backgroundColor: c.bg, borderColor: c.border },
+        { backgroundColor: c.surface, borderColor: c.border },
       ]}
     >
       <View style={[styles.tierDot, { backgroundColor: c.dot }]} />
@@ -258,7 +258,7 @@ function PremiumCard({ request, onOpen }: { request: ConnectionRequest; onOpen: 
             </Text>
             {p.premium ? (
               <View testID={`request-premium-${request.id}`} style={styles.premiumDot}>
-                <Crown size={9} color="#FFF" strokeWidth={2.4} fill="#FFF" />
+                <Crown size={9} color={colors.text.onBrand} strokeWidth={2.4} fill={colors.text.onBrand} />
               </View>
             ) : null}
           </View>
@@ -279,15 +279,15 @@ function PremiumCard({ request, onOpen }: { request: ConnectionRequest; onOpen: 
 function BlurredCard({ request }: { request: ConnectionRequest }) {
   return (
     <View style={styles.card}>
-      <View style={[styles.cardAvatar, { backgroundColor: colors.secondary, alignItems: "center", justifyContent: "center" }]}>
-        <Lock size={14} color="#fff" />
+      <View style={[styles.cardAvatar, { backgroundColor: colors.surface.brand, alignItems: "center", justifyContent: "center" }]}>
+        <Lock size={14} color={colors.text.onBrand} />
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <View style={{ width: 96, height: 12, backgroundColor: "rgba(31,18,53,0.12)", borderRadius: 6 }} />
+          <View style={{ width: 96, height: 12, backgroundColor: alpha(colors.brand.strong, 0.12), borderRadius: radii.xs }} />
           <Text style={styles.cardTime}>{request.receivedAt}</Text>
         </View>
-        <View style={{ marginTop: 6, width: 64, height: 10, backgroundColor: "rgba(31,18,53,0.08)", borderRadius: 6 }} />
+        <View style={{ marginTop: 6, width: 64, height: 10, backgroundColor: alpha(colors.brand.strong, 0.08), borderRadius: radii.xs }} />
         <View style={{ marginTop: 6 }}>
           <TierChip tier={request.profile.compatibility} />
         </View>
@@ -303,7 +303,7 @@ function EmptyState() {
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <UserPlus size={28} color={colors.primary} />
+        <UserPlus size={28} color={colors.brand.default} />
       </View>
       <Text style={styles.emptyTitle}>No requests yet</Text>
       <Text style={styles.emptySubtitle}>
@@ -323,66 +323,66 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
-  title: { fontSize: 22, fontWeight: "700", color: colors.foreground, letterSpacing: -0.3 },
-  subtitle: { marginTop: 2, fontSize: 12, color: colors.mutedForeground },
+  title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
+  subtitle: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
   premiumChip: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
   },
   upsell: {
     marginTop: 4,
     marginBottom: 6,
     padding: 16,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: "rgba(91,44,111,0.25)",
-    backgroundColor: "rgba(244,234,251,0.45)",
+    borderColor: alpha(colors.brand.default, 0.25),
+    backgroundColor: alpha(colors.surface.brand, 0.45),
   },
   upsellIcon: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  upsellTitle: { fontSize: 14, fontWeight: "700", color: colors.foreground, lineHeight: 18 },
-  upsellSubtitle: { marginTop: 4, fontSize: 12, color: colors.mutedForeground, lineHeight: 16 },
+  upsellTitle: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, lineHeight: 18 },
+  upsellSubtitle: { marginTop: 4, fontSize: fontSize.caption, color: colors.text.muted, lineHeight: 16 },
   upsellBtn: {
     marginTop: 12,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  upsellBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  upsellBtnText: { color: colors.text.onBrand, fontSize: fontSize.label, fontWeight: fontWeight.bold },
   card: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
     padding: 12,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  cardAvatar: { width: 64, height: 64, borderRadius: 12 },
+  cardAvatar: { width: 64, height: 64, borderRadius: radii.md },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1, marginRight: 6 },
-  cardName: { fontSize: 14, fontWeight: "700", color: colors.foreground, flexShrink: 1 },
+  cardName: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, flexShrink: 1 },
   premiumDot: {
     width: 18,
     height: 18,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  cardLoc: { marginTop: 2, fontSize: 12, color: colors.mutedForeground },
-  cardTime: { fontSize: 10.5, color: colors.mutedForeground },
-  cardTeaser: { marginTop: 6, fontSize: 12, color: "rgba(31,18,53,0.85)", lineHeight: 17 },
+  cardLoc: { marginTop: 2, fontSize: fontSize.caption, color: colors.text.muted },
+  cardTime: { fontSize: fontSize.nano, color: colors.text.muted },
+  cardTeaser: { marginTop: 6, fontSize: fontSize.caption, color: alpha(colors.brand.strong, 0.85), lineHeight: 17 },
   tierChip: {
     alignSelf: "flex-start",
     flexDirection: "row",
@@ -390,33 +390,33 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
   },
-  tierDot: { width: 5, height: 5, borderRadius: 999 },
-  tierText: { fontSize: 10, fontWeight: "700" },
+  tierDot: { width: 5, height: 5, borderRadius: radii.full },
+  tierText: { fontSize: fontSize.nano, fontWeight: fontWeight.bold },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
   emptyIcon: {
     width: 80,
     height: 80,
-    borderRadius: 24,
-    backgroundColor: colors.secondary,
+    borderRadius: radii["4xl"],
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyTitle: { marginTop: 20, fontSize: 17, fontWeight: "700", color: colors.foreground },
+  emptyTitle: { marginTop: 20, fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
   emptySubtitle: {
     marginTop: 6,
     maxWidth: 260,
     textAlign: "center",
-    fontSize: 13.5,
+    fontSize: fontSize.label,
     lineHeight: 19,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   sheetBtn: {
     flex: 1,
     height: 48,
-    borderRadius: 12,
+    borderRadius: radii.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -424,10 +424,10 @@ const styles = StyleSheet.create({
   },
   sheetBtnGhost: {
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  sheetBtnGhostText: { fontSize: 13, fontWeight: "700", color: colors.foreground },
-  sheetBtnPrimary: { backgroundColor: colors.primary },
-  sheetBtnPrimaryText: { fontSize: 13, fontWeight: "700", color: colors.primaryForeground },
+  sheetBtnGhostText: { fontSize: fontSize.label, fontWeight: fontWeight.bold, color: colors.text.primary },
+  sheetBtnPrimary: { backgroundColor: colors.brand.default },
+  sheetBtnPrimaryText: { fontSize: fontSize.label, fontWeight: fontWeight.bold, color: colors.brand.onBrand },
 });

@@ -12,11 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
-
-const PURPLE = "#5B2C6F";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 
 const THUMB = 26;
 
@@ -168,13 +164,13 @@ const styles = StyleSheet.create({
   valuePill: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "#F5F3FF",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  valueText: { fontSize: 15, fontWeight: "700", color: PURPLE, letterSpacing: -0.2 },
-  dash: { color: MUTED, fontWeight: "700" },
+  valueText: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold, color: colors.brand.default, letterSpacing: -0.2 },
+  dash: { color: colors.text.muted, fontWeight: fontWeight.bold },
 
   trackHost: {
     height: THUMB,
@@ -183,25 +179,25 @@ const styles = StyleSheet.create({
   },
   track: {
     height: 6,
-    borderRadius: 999,
-    backgroundColor: BORDER,
+    borderRadius: radii.full,
+    backgroundColor: colors.border.default,
   },
   trackFilled: {
     position: "absolute",
     height: 6,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
   thumb: {
     position: "absolute",
     top: 0,
     width: THUMB,
     height: THUMB,
-    borderRadius: 999,
-    backgroundColor: "#FFF",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.default,
     borderWidth: 2,
-    borderColor: PURPLE,
-    shadowColor: "#000",
+    borderColor: colors.brand.default,
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.18,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
@@ -214,5 +210,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 2,
   },
-  minMaxText: { fontSize: 12, color: TEXT, fontWeight: "500" },
+  minMaxText: { fontSize: fontSize.caption, color: colors.text.primary, fontWeight: fontWeight.medium },
 });

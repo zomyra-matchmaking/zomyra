@@ -11,6 +11,7 @@ import { View } from "react-native";
 
 import { PersonalityQuiz } from "@/src/components/onboarding/PersonalityQuiz";
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
+import { colors } from "@/src/theme";
 
 export default function PersonalityTestScreen() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function PersonalityTestScreen() {
   const hasHydrated = useOnboardingStore((s) => s._hasHydrated);
 
   if (!hasHydrated) {
-    return <View style={{ flex: 1, backgroundColor: "#fff" }} />;
+    return <View style={{ flex: 1, backgroundColor: colors.surface.default }} />;
   }
 
   const handleBack = () => {
@@ -39,7 +40,7 @@ export default function PersonalityTestScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }} testID="personality-test-screen">
+    <View style={{ flex: 1, backgroundColor: colors.surface.default }} testID="personality-test-screen">
       <PersonalityQuiz
         state={state}
         onUpdateScale={(id, value) => set("scales", { ...state.scales, [id]: value })}

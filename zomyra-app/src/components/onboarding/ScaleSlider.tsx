@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { Slider } from "./Slider";
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii } from "@/src/theme";
 
 type Props = {
   value: number;
@@ -19,7 +19,7 @@ export function ScaleSlider({ value, onChange, left, right }: Props) {
             key={n}
             style={[
               styles.dot,
-              value === n && { backgroundColor: colors.primary, transform: [{ scale: 1.6 }] },
+              value === n && { backgroundColor: colors.brand.default, transform: [{ scale: 1.6 }] },
             ]}
           />
         ))}
@@ -45,8 +45,8 @@ const styles = StyleSheet.create({
   dot: {
     width: 6,
     height: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(31,18,53,0.15)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.brand.strong, 0.15),
   },
   labels: {
     marginTop: 16,
@@ -54,16 +54,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   labelText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.mutedForeground,
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.muted,
     maxWidth: "45%",
     lineHeight: 16,
   },
   valueText: {
     marginTop: 18,
     textAlign: "center",
-    fontSize: 12,
-    color: colors.mutedForeground,
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
   },
 });

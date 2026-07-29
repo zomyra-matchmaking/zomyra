@@ -21,13 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 
 type Option = {
   key: CompatibilityDimension;
@@ -118,7 +112,7 @@ export default function DiscoveryMode() {
                 >
                   <opt.Icon
                     size={20}
-                    color={active ? "#FFF" : PURPLE}
+                    color={active ? colors.text.onBrand : colors.brand.default}
                     strokeWidth={2}
                   />
                 </View>
@@ -150,7 +144,7 @@ export default function DiscoveryMode() {
           ]}
         >
           <LinearGradient
-            colors={[PURPLE, PURPLE_DEEP]}
+            colors={colors.gradient.brand}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.ctaGradient}
@@ -164,32 +158,32 @@ export default function DiscoveryMode() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  root: { flex: 1, backgroundColor: colors.surface.default },
   scroll: {
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 24,
   },
   kicker: {
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 1.6,
-    color: PURPLE,
+    color: colors.brand.default,
     textTransform: "uppercase",
   },
   title: {
     marginTop: 8,
-    fontSize: 28,
-    fontWeight: "700",
-    color: TEXT,
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.6,
     lineHeight: 34,
   },
   subtitle: {
     marginTop: 10,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: MUTED,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     lineHeight: 22,
     letterSpacing: -0.1,
   },
@@ -203,28 +197,28 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingVertical: 14,
     paddingHorizontal: 14,
-    borderRadius: 20,
+    borderRadius: radii["3xl"],
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   optionActive: {
-    borderColor: PURPLE,
-    backgroundColor: LIGHT_PURPLE,
+    borderColor: colors.brand.default,
+    backgroundColor: colors.surface.brand,
   },
   optionIconWrap: {
     width: 42,
     height: 42,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     alignItems: "center",
     justifyContent: "center",
   },
   optionIconWrapActive: {
-    backgroundColor: PURPLE,
-    borderColor: PURPLE,
+    backgroundColor: colors.brand.default,
+    borderColor: colors.brand.default,
   },
   optionTitleRow: {
     flexDirection: "row",
@@ -233,59 +227,59 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   optionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TEXT,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.2,
   },
   recommendedTag: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: PURPLE,
+    fontSize: fontSize.nano,
+    fontWeight: fontWeight.bold,
+    color: colors.brand.default,
     letterSpacing: 0.6,
     textTransform: "uppercase",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: "#EDE7F6",
+    borderRadius: radii.xs,
+    backgroundColor: colors.surface.brandStrong,
   },
   optionSubtitle: {
     marginTop: 3,
-    fontSize: 13,
-    fontWeight: "500",
-    color: MUTED,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     letterSpacing: -0.1,
   },
   radio: {
     width: 22,
     height: 22,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
+    borderColor: colors.border.neutralStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: PURPLE },
-  radioDot: { width: 10, height: 10, borderRadius: 999, backgroundColor: PURPLE },
+  radioActive: { borderColor: colors.brand.default },
+  radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
 
   footer: {
     paddingHorizontal: 24,
     paddingBottom: 12,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BORDER,
-    backgroundColor: "#FFFFFF",
+    borderTopColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  cta: { borderRadius: 999, overflow: "hidden" },
+  cta: { borderRadius: radii.full, overflow: "hidden" },
   ctaGradient: {
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   ctaText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     letterSpacing: 0.2,
   },
 });

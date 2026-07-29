@@ -16,7 +16,7 @@ import { CountrySelector } from "@/src/components/auth/CountrySelector";
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { DEFAULT_COUNTRY, type Country } from "@/src/lib/countries";
 import { authService } from "@/src/services/auth";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight } from "@/src/theme";
 
 export default function PhoneScreen() {
   const router = useRouter();
@@ -81,11 +81,11 @@ export default function PhoneScreen() {
               onBlur={() => setTouched(true)}
               keyboardType="number-pad"
               placeholder="Enter mobile number"
-              placeholderTextColor={colors.mutedForeground}
+              placeholderTextColor={colors.text.muted}
               autoComplete="tel"
               autoCorrect={false}
               textContentType="telephoneNumber"
-              style={[styles.input, showError && { borderColor: colors.destructive }]}
+              style={[styles.input, showError && { borderColor: colors.danger.default }]}
             />
           </View>
 
@@ -111,7 +111,7 @@ export default function PhoneScreen() {
               pressed && isValid && { opacity: 0.92 },
             ]}
           >
-            {sending ? <ActivityIndicator color={colors.primaryForeground} /> : null}
+            {sending ? <ActivityIndicator color={colors.brand.onBrand} /> : null}
             <Text style={styles.ctaText}>{sending ? "Sending OTP…" : "Send OTP"}</Text>
           </Pressable>
 
@@ -128,16 +128,16 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   title: {
     marginTop: 16,
-    fontSize: 28,
-    fontWeight: "700",
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.3,
-    color: colors.foreground,
+    color: colors.text.primary,
   },
   subtitle: {
     marginTop: 8,
-    fontSize: 15,
+    fontSize: fontSize.bodyLarge,
     lineHeight: 21,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   row: { marginTop: 24, flexDirection: "row", gap: 8, alignItems: "stretch" },
   input: {
@@ -148,48 +148,48 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border.neutral,
+    backgroundColor: colors.surface.default,
     paddingHorizontal: 16,
-    fontSize: 16,
-    color: colors.foreground,
+    fontSize: fontSize.title,
+    color: colors.text.primary,
   },
   errorText: {
     marginTop: 8,
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.destructive,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.semibold,
+    color: colors.danger.default,
   },
   hint: {
     marginTop: 14,
-    fontSize: 12.5,
+    fontSize: fontSize.caption,
     lineHeight: 18,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   hintStrong: {
-    color: colors.foreground,
-    fontWeight: "700",
+    color: colors.text.primary,
+    fontWeight: fontWeight.bold,
   },
   cta: {
     marginTop: 18,
     height: 52,
     borderRadius: radii.lg,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
-  ctaDisabled: { backgroundColor: "#D6CFE0" },
+  ctaDisabled: { backgroundColor: colors.surface.disabled },
   ctaText: {
-    color: colors.primaryForeground,
-    fontSize: 15,
-    fontWeight: "700",
+    color: colors.brand.onBrand,
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.bold,
   },
   legal: {
     textAlign: "center",
-    fontSize: 12,
-    color: colors.mutedForeground,
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
     marginBottom: 12,
   },
 });

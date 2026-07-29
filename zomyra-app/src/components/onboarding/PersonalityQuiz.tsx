@@ -27,7 +27,7 @@ import { ArrowLeft, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
 import { Slider } from "@/src/components/onboarding/Slider";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, alpha, fontSize, fontWeight } from "@/src/theme";
 import { SCALE_QUESTIONS } from "@/src/lib/onboarding/scales";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
 
@@ -110,7 +110,7 @@ export function PersonalityQuiz({
             style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
             hitSlop={10}
           >
-            <ArrowLeft size={20} color={colors.foreground} strokeWidth={2.2} />
+            <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
           </Pressable>
           <Text style={styles.counter} testID="personality-counter">
             {index + 1} / {total}
@@ -232,7 +232,7 @@ function QuestionBody({
         ]}
       >
         <View style={styles.titleRow}>
-          <Sparkles size={16} color={colors.primary} />
+          <Sparkles size={16} color={colors.brand.default} />
           <Text style={styles.titleTag}>{title}</Text>
         </View>
         <Text style={styles.prompt}>{prompt}</Text>
@@ -301,16 +301,16 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: -8,
   },
   counter: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1.2,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   progressRow: {
     flexDirection: "row",
@@ -320,16 +320,16 @@ const styles = StyleSheet.create({
   progressSegment: {
     flex: 1,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
   },
   progressSegmentCompleted: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
   },
   progressSegmentActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     // Slight glow-ish emphasis: brighter than completed but same fill.
-    shadowColor: colors.primary,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.4,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 0 },
@@ -353,18 +353,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   titleTag: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1.2,
-    color: colors.primary,
+    color: colors.brand.default,
     textTransform: "uppercase",
   },
   prompt: {
-    fontSize: 22,
+    fontSize: fontSize.h2,
     lineHeight: 30,
-    fontWeight: "700",
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.3,
-    color: colors.foreground,
+    color: colors.text.primary,
     textAlign: "center",
     paddingHorizontal: 4,
   },
@@ -382,11 +382,11 @@ const styles = StyleSheet.create({
   dot: {
     width: 7,
     height: 7,
-    borderRadius: 999,
-    backgroundColor: "rgba(31,18,53,0.14)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.brand.strong, 0.14),
   },
   dotActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     transform: [{ scale: 1.5 }],
   },
   sliderWrap: {
@@ -398,9 +398,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   axisLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.foregroundMuted,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.muted,
     maxWidth: "45%",
     lineHeight: 18,
   },
@@ -414,30 +414,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.border.default,
     backgroundColor: colors.background,
   },
   nextBtn: {
     height: 52,
     borderRadius: radii.md + 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
   nextBtnDisabled: {
-    backgroundColor: "#D6CFE0",
+    backgroundColor: colors.surface.disabled,
   },
   nextLabel: {
-    color: colors.primaryForeground,
-    fontSize: 15,
-    fontWeight: "700",
+    color: colors.brand.onBrand,
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.1,
   },
   helperText: {
     marginTop: 8,
     textAlign: "center",
-    fontSize: 12,
-    color: colors.foregroundSubtle,
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
   },
   helperSpacer: {
     marginTop: 8,

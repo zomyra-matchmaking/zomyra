@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii } from "@/src/theme";
 
 type Props = {
   open: boolean;
@@ -51,7 +51,7 @@ export function BottomSheet({ open, onClose, children, heightFraction = 0.88 }: 
           <Pressable
             testID="bottom-sheet-backdrop"
             onPress={onClose}
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }]}
+            style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay.scrim }]}
           />
         </Animated.View>
         <Animated.View
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.2,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: -6 },
@@ -91,8 +91,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 40,
     height: 5,
-    borderRadius: radii.pill,
-    backgroundColor: colors.border,
+    borderRadius: radii.full,
+    backgroundColor: colors.border.default,
     marginTop: 8,
     marginBottom: 6,
   },

@@ -42,13 +42,7 @@ import {
   type MultiFilterKey,
 } from "@/src/stores/discover-filters-store";
 import { useRequestsStore } from "@/src/stores/requests-store";
-
-const PURPLE = "#5B2C6F";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
-const GOLD = "#F59E0B";
+import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 
 type RowKey = "age" | "height" | MultiFilterKey;
 
@@ -191,13 +185,13 @@ export default function FiltersScreen() {
           ]}
         >
           <View style={styles.rowIcon}>
-            <row.Icon size={18} color={PURPLE} strokeWidth={2} />
+            <row.Icon size={18} color={colors.brand.default} strokeWidth={2} />
           </View>
           <Text style={styles.rowLabel}>{row.label}</Text>
           <View style={{ flex: 1 }} />
           {locked ? (
             <View style={styles.lockBadge}>
-              <Lock size={11} color={GOLD} strokeWidth={2.4} />
+              <Lock size={11} color={colors.premium.text} strokeWidth={2.4} />
               <Text style={styles.lockText}>Premium</Text>
             </View>
           ) : (
@@ -212,9 +206,9 @@ export default function FiltersScreen() {
                 {summaryOf(row.key)}
               </Text>
               {isOpen ? (
-                <ChevronUp size={18} color={MUTED} strokeWidth={2} />
+                <ChevronUp size={18} color={colors.text.muted} strokeWidth={2} />
               ) : (
-                <ChevronDown size={18} color={MUTED} strokeWidth={2} />
+                <ChevronDown size={18} color={colors.text.muted} strokeWidth={2} />
               )}
             </>
           )}
@@ -234,7 +228,7 @@ export default function FiltersScreen() {
           style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
           hitSlop={8}
         >
-          <ArrowLeft size={22} color={TEXT} strokeWidth={2} />
+          <ArrowLeft size={22} color={colors.text.primary} strokeWidth={2} />
         </Pressable>
         <Text style={styles.headerTitle}>Filters</Text>
         <Pressable
@@ -258,7 +252,7 @@ export default function FiltersScreen() {
 
         <View style={styles.premiumTitleRow}>
           <Text style={styles.sectionTitle}>PREMIUM FILTERS</Text>
-          <Crown size={14} color={GOLD} strokeWidth={2} fill={GOLD} />
+          <Crown size={14} color={colors.premium.text} strokeWidth={2} fill={colors.premium.text} />
           {isPremium ? (
             <View style={styles.unlockedPill}>
               <Text style={styles.unlockedPillText}>Unlocked</Text>
@@ -274,7 +268,7 @@ export default function FiltersScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  root: { flex: 1, backgroundColor: colors.surface.default },
   header: {
     paddingHorizontal: 16,
     paddingTop: 4,
@@ -286,19 +280,19 @@ const styles = StyleSheet.create({
   headerBtn: {
     minWidth: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 8,
   },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: TEXT, letterSpacing: -0.2 },
-  resetText: { fontSize: 14, fontWeight: "700", color: PURPLE },
+  headerTitle: { fontSize: fontSize.heading, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.2 },
+  resetText: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.brand.default },
 
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1,
-    color: PURPLE,
+    color: colors.brand.default,
     textTransform: "uppercase",
     marginTop: 8,
     marginBottom: 10,
@@ -313,21 +307,21 @@ const styles = StyleSheet.create({
   unlockedPill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     marginLeft: 4,
   },
-  unlockedPillText: { fontSize: 10, fontWeight: "800", color: PURPLE, letterSpacing: 0.3 },
+  unlockedPillText: { fontSize: fontSize.nano, fontWeight: fontWeight.extrabold, color: colors.brand.default, letterSpacing: 0.3 },
 
   card: {
-    backgroundColor: "#FFF",
-    borderRadius: 24,
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     overflow: "hidden",
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.04,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
@@ -339,52 +333,52 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: "#FFF",
+    backgroundColor: colors.surface.default,
   },
-  rowOpen: { backgroundColor: "#FBF8FE" },
-  rowDivider: { borderBottomWidth: 1, borderBottomColor: BORDER },
+  rowOpen: { backgroundColor: colors.surface.brand },
+  rowDivider: { borderBottomWidth: 1, borderBottomColor: colors.border.default },
   rowIcon: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  rowLabel: { fontSize: 16, fontWeight: "600", color: TEXT },
-  rowValue: { fontSize: 13.5, color: MUTED, fontWeight: "500", maxWidth: 160 },
-  rowValueSet: { color: PURPLE, fontWeight: "700" },
+  rowLabel: { fontSize: fontSize.title, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  rowValue: { fontSize: fontSize.label, color: colors.text.muted, fontWeight: fontWeight.medium, maxWidth: 160 },
+  rowValueSet: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
   editor: {
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 16,
-    backgroundColor: "#FBF8FE",
+    backgroundColor: colors.surface.brand,
   },
   chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  chipActive: { borderColor: PURPLE, backgroundColor: LIGHT_PURPLE },
-  chipText: { fontSize: 13, fontWeight: "600", color: TEXT },
-  chipTextActive: { color: PURPLE, fontWeight: "700" },
+  chipActive: { borderColor: colors.brand.default, backgroundColor: colors.surface.brand },
+  chipText: { fontSize: fontSize.label, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  chipTextActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
   clearChip: {
     alignSelf: "flex-start",
     marginTop: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "#FFF",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.default,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  clearChipText: { fontSize: 12, fontWeight: "700", color: MUTED },
-  dividerLine: { height: 1, backgroundColor: BORDER, marginHorizontal: 16 },
+  clearChipText: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.text.muted },
+  dividerLine: { height: 1, backgroundColor: colors.border.default, marginHorizontal: 16 },
 
   lockBadge: {
     flexDirection: "row",
@@ -392,10 +386,10 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: "#FEF3C7",
+    borderRadius: radii.full,
+    backgroundColor: colors.premium.surface,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: colors.premium.border,
   },
-  lockText: { fontSize: 11, fontWeight: "700", color: "#92400E" },
+  lockText: { fontSize: fontSize.micro, fontWeight: fontWeight.bold, color: colors.premium.textStrong },
 });

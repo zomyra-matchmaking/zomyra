@@ -8,11 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 
 import { useRequestsStore } from "@/src/stores/requests-store";
-
-const PURPLE = "#5B2C6F";
-const MUTED = "#6B7280";
-const BORDER = "#ECEAF7";
-const LIGHT_PURPLE = "#F5F3FF";
+import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 
 type Item = {
   key: "profile" | "discover" | "requests" | "chats";
@@ -45,7 +41,7 @@ export function FloatingNav() {
       <View style={styles.bar}>
         {ITEMS.map((item) => {
           const active = isActive(item.path);
-          const color = active ? PURPLE : MUTED;
+          const color = active ? colors.brand.default : colors.text.muted;
           const stroke = active ? 2.4 : 2;
 
           let Icon = UserRound;
@@ -90,15 +86,15 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 340,
     height: 56,
-    borderRadius: 999,
-    backgroundColor: "#FFF",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.default,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
     paddingHorizontal: 6,
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 24,
@@ -117,7 +113,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  label: { fontSize: 10, fontWeight: "600", letterSpacing: -0.1 },
+  label: { fontSize: fontSize.nano, fontWeight: fontWeight.semibold, letterSpacing: -0.1 },
   badge: {
     position: "absolute",
     top: -6,
@@ -125,14 +121,14 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     paddingHorizontal: 5,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#FFF",
+    borderColor: colors.border.onBrand,
   },
-  badgeText: { color: "#FFF", fontSize: 10, fontWeight: "700" },
+  badgeText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold },
 });
 
-void LIGHT_PURPLE;
+void colors.surface.brand;

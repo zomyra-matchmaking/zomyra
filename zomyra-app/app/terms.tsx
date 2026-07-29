@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors } from "@/src/theme/colors";
+import { colors, fontSize, fontWeight, radii } from "@/src/theme";
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
@@ -48,7 +48,7 @@ export default function TermsScreen() {
           hitSlop={10}
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
         >
-          <ArrowLeft size={20} color={colors.foreground} strokeWidth={2.2} />
+          <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
         </Pressable>
         <Text style={styles.headerTitle}>Terms of Service</Text>
         <View style={{ width: 40 }} />
@@ -87,51 +87,51 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.border.default,
   },
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: -8,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.foreground,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
   },
   content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
   kicker: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1.4,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     marginBottom: 8,
   },
   intro: {
-    fontSize: 15,
+    fontSize: fontSize.bodyLarge,
     lineHeight: 23,
-    color: colors.foreground,
+    color: colors.text.primary,
     marginBottom: 8,
   },
   section: { marginTop: 22 },
   sectionHeading: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.foreground,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     marginBottom: 8,
   },
   sectionBody: {
-    fontSize: 14.5,
+    fontSize: fontSize.body,
     lineHeight: 22,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   footnote: {
     marginTop: 28,
-    fontSize: 12,
+    fontSize: fontSize.caption,
     fontStyle: "italic",
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
 });

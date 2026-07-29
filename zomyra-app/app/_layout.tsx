@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAppFonts, FONT_FAMILY } from "@/src/hooks/use-app-fonts";
 import { ToastHost } from "@/src/components/ui/Toast";
+import { colors } from "@/src/theme";
 
 LogBox.ignoreAllLogs(true);
 SplashScreen.preventAutoHideAsync();
@@ -58,7 +59,7 @@ export default function RootLayout() {
             screenOptions={{
               headerShown: false,
               animation: "slide_from_right",
-              contentStyle: { backgroundColor: "#FFFFFF" },
+              contentStyle: { backgroundColor: colors.surface.default },
             }}
           />
           <ToastHost />

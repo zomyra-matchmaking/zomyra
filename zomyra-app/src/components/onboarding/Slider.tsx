@@ -22,7 +22,7 @@ import {
   View,
 } from "react-native";
 
-import { colors } from "@/src/theme/colors";
+import { colors, radii } from "@/src/theme";
 
 type Props = {
   min: number;
@@ -194,26 +194,26 @@ const styles = StyleSheet.create({
   },
   track: {
     height: 6,
-    borderRadius: 999,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
   },
   activeTrack: {
     position: "absolute",
     left: 0,
     height: 6,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
   thumb: {
     position: "absolute",
     left: 0,
     width: THUMB,
     height: THUMB,
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.default,
     borderWidth: 2,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
+    borderColor: colors.brand.default,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
