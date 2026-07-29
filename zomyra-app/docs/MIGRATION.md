@@ -634,12 +634,8 @@ Tailwind config"*.
 
 **Still stubbed / deferred:**
 
-- **Spacing is tokenised but not applied.** `src/theme/layout.ts` defines a 4pt scale, and the 603
-  padding/margin/gap literals in the screens are untouched. Deliberate: unlike colour, spacing had
-  no rival-palette problem and no accessibility failure, and its 26 distinct values include off-grid
-  ones (2, 3, 5, 7, 9, 11, 13) whose snapping would shift layout on every screen at once with no way
-  to verify them all. Modules 3–9 rewrite most of these screens; each should adopt the scale as it
-  goes. The same reasoning left `lineHeight` literals alone.
+- ~~Spacing is tokenised but not applied~~ — **superseded: spacing was migrated in full on the
+  owner's ask. See the spacing subsection below.** `lineHeight` literals are still raw.
 - **Eight tokens ship unreferenced** — `text.secondary`, `text.disabled`, `text.link`,
   `success.text`, `surface.media`, `overlay.scrimStrong`, `premium.textStrong`, `border.onBrand`
   are roles the system needs to be coherent but that today's screens do not reach for. Noted here
@@ -675,8 +671,10 @@ Tailwind config"*.
   values.
 - The no-raw-colour rule is an **error, not a warning**. A warning would have been absorbed into the
   15 the project already tolerates.
-- Spacing was **not** mass-migrated (reasoning above). This is the one part of "design system" that
-  Module 1 leaves incomplete, and it is a deliberate call rather than an oversight.
+- ~~Spacing was **not** mass-migrated~~ — **reversed on the owner's ask; see the spacing subsection.**
+  The reversal was right for a reason the first pass missed: the objection was that snapping to a 4pt
+  grid would move ~200 elements, but the app is not on a 4pt grid — it is on a **2pt** one, and once
+  the scale matches reality the migration is a substitution, not a re-design.
 
 #### Module 1 addendum — component primitives (owner ask, 2026-07-29)
 
@@ -738,6 +736,51 @@ colour rule exists.
 > The real fix is a single modal host with a portal, rather than `Modal` per surface — which the
 > `Overlay` primitive now makes a **one-file change** instead of an eleven-file one. Left for
 > whichever module needs the flow to work; Module 8 owns Requests.
+
+#### Module 1 addendum — spacing (owner ask, 2026-07-30)
+
+Module 1 originally shipped a spacing scale without applying it, on the argument that snapping
+~200 off-grid values would shift layout everywhere with no way to verify. The owner pushed back:
+spacing belongs in the design language. **That was right, and the original objection rested on a
+wrong premise.**
+
+**The scale was wrong, not the migration.** The first pass assumed a 4pt grid and then found that
+2, 6, 10, 14 and 18 did not fit it. Counting the real distribution across 603 literals:
+
+| | | | | | | | | | | | | |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **2** | **4** | **6** | **8** | **10** | **12** | **14** | **16** | 18 | **20** | **24** | **28** | **32** · **40** |
+| 31 | 45 | 49 | 97 | 51 | 80 | 43 | 52 | 17 | 16 | 34 | 8 | 18 · 5 |
+
+That is a **2pt grid**, and the bolded values are **exactly Tailwind's default spacing scale**
+(`0.5 1 1.5 2 2.5 3 3.5 4 5 6 7 8 10`) — the same provenance §3 records for the greys, surviving the
+same web→RN conversion. Adopting the real grid turns the migration into a substitution: only
+**27 occurrences** were genuinely off-scale (3, 5, 7, 9, 11, 13, 22, 36), and each snapped by 1–2pt,
+which is imperceptible. Forcing 4pt would have moved 6 → 8, 10 → 12 and 14 → 16 on ~200 elements.
+
+**`spacing[n]` is keyed by step index, not pixel value.** `spacing[4]` is four steps — 16pt today.
+`STEP` in `layout.ts` rescales the app's whole rhythm from one line, which is the property C-4 asks
+for. `4.5` (18pt) is the one step Tailwind does not ship; it is here because 18pt has 17 uses and
+snapping them away would have been a change made to match someone else's table.
+
+**Migrated:** 581 literals → scale steps. **2 left as named local constants** because they are
+layout decisions rather than rhythm — `ROW_ICON_INSET` (68, aligns profile row dividers past the
+icon tile) and `MENU_TOP_OFFSET` (60, drops the chat overflow menu below the header).
+
+**One real inconsistency fixed:** three screens padded their scroll by `120` to clear the floating
+nav and `app/profile.tsx` used `110`, leaving its last row 10pt higher than everywhere else for no
+stated reason. All four now use **`NAV_CLEARANCE`**.
+
+**Enforced:** a third `no-restricted-syntax` selector rejects numeric `padding`/`margin`/`gap`
+values (`0` excepted — it means "none", not a rhythm choice).
+
+> ⚠️ **esquery gotcha, cost real time:** matching a numeric literal with a regex
+> (`Literal[value=/^[0-9.]+$/]`) **silently matches nothing** — esquery does not stringify numbers.
+> The rule reported zero problems while two known violations sat in the tree. Compare
+> (`Literal[value!=0]`), do not regex-match. Noted in the config beside the selector.
+
+Verified on the simulator against the pre-migration screenshots: login, profile, **edit-profile**
+(the densest screen, most spacing literals) and filters all render unchanged.
 
 <!--
 Template:
