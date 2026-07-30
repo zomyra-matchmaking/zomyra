@@ -4,7 +4,7 @@
  */
 import { Check, Crown, Lock, Sparkles, UserPlus, X } from "lucide-react-native";
 import { useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomSheet } from "@/src/components/ui/BottomSheet";
@@ -16,14 +16,16 @@ import { toast } from "@/src/components/ui/Toast";
 import { useRequestsStore, type ConnectionRequest } from "@/src/stores/requests-store";
 import { useChatStore } from "@/src/stores/chat-store";
 import type { CompatibilityTier } from "@/src/lib/discover/mock";
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
+import { Button, Touchable } from "@/src/components/ui";
+import { NAV_CLEARANCE } from "@/src/constants";
 
-const TIER_COLOR: Record<CompatibilityTier, { dot: string; bg: string; text: string; border: string }> = {
-  "Excellent Match": { dot: "#8B5CF6", bg: "rgba(139,92,246,0.10)", text: "#6D28D9", border: "rgba(139,92,246,0.25)" },
-  "Great Match": { dot: "#10B981", bg: "rgba(16,185,129,0.10)", text: "#047857", border: "rgba(16,185,129,0.25)" },
-  "Potential Match": { dot: "#F59E0B", bg: "rgba(245,158,11,0.12)", text: "#B45309", border: "rgba(245,158,11,0.30)" },
+const TIER_COLOR: Record<CompatibilityTier, (typeof colors.tier)[keyof typeof colors.tier]> = {
+  "Excellent Match": colors.tier.excellent,
+  "Great Match": colors.tier.great,
+  "Potential Match": colors.tier.potential,
 };
 
 export default function Requests() {
@@ -104,20 +106,20 @@ export default function Requests() {
           <Text style={styles.title}>Requests</Text>
           <Text style={styles.subtitle}>People who want to connect with you</Text>
         </View>
-        <Pressable
+        <Touchable
           testID="toggle-premium"
           onPress={() => setPremium(!isPremium)}
           style={[
             styles.premiumChip,
             isPremium
-              ? { backgroundColor: "rgba(91,44,111,0.10)", borderColor: "rgba(91,44,111,0.40)" }
-              : { backgroundColor: colors.card, borderColor: colors.border },
+              ? { backgroundColor: alpha(colors.brand.default, 0.10), borderColor: alpha(colors.brand.default, 0.40) }
+              : { backgroundColor: colors.surface.default, borderColor: colors.border.default },
           ]}
         >
-          <Text style={{ color: isPremium ? colors.primary : colors.mutedForeground, fontWeight: "700", fontSize: 11 }}>
+          <Text style={{ color: isPremium ? colors.brand.default : colors.text.muted, fontWeight: fontWeight.bold, fontSize: fontSize.micro }}>
             {isPremium ? "Premium" : "Free"}
           </Text>
-        </Pressable>
+        </Touchable>
       </View>
 
       {requests.length === 0 ? (
@@ -127,7 +129,7 @@ export default function Requests() {
           data={requests}
           keyExtractor={(r) => r.id}
           ListHeaderComponent={!isPremium ? <UpsellCard onUpgrade={() => setPremium(true)} /> : null}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, paddingTop: 8 }}
+          contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: NAV_CLEARANCE, paddingTop: spacing[2] }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) =>
             isPremium ? (
@@ -144,30 +146,27 @@ export default function Requests() {
 
       <BottomSheet open={!!active} onClose={() => setActiveId(null)}>
         {active ? (
-          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: spacing[6] }}>
             <ProfileView
               profile={active.profile}
               footer={
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Pressable
+                <View style={{ flexDirection: "row", gap: spacing[2] }}>
+                  <Button
                     testID="request-decline"
+                    label="Decline"
+                    variant="ghost"
+                    icon={X}
                     onPress={() => setPendingDecline(active.id)}
-                    style={({ pressed }) => [styles.sheetBtn, styles.sheetBtnGhost, pressed && { opacity: 0.9 }]}
-                  >
-                    <X size={16} color={colors.foreground} />
-                    <Text style={styles.sheetBtnGhostText}>Decline</Text>
-                  </Pressable>
-                  <Pressable
+                    style={styles.sheetBtn}
+                  />
+                  <Button
                     testID="request-accept"
+                    label={accepting ? "Accepting…" : "Accept"}
+                    icon={Check}
+                    loading={accepting}
                     onPress={() => accept(active)}
-                    disabled={accepting}
-                    style={({ pressed }) => [styles.sheetBtn, styles.sheetBtnPrimary, pressed && { opacity: 0.92 }]}
-                  >
-                    <Check size={16} color={colors.primaryForeground} />
-                    <Text style={styles.sheetBtnPrimaryText}>
-                      {accepting ? "Accepting…" : "Accept"}
-                    </Text>
-                  </Pressable>
+                    style={styles.sheetBtn}
+                  />
                 </View>
               }
             />
@@ -204,9 +203,9 @@ export default function Requests() {
 function UpsellCard({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <View style={styles.upsell}>
-      <View style={{ flexDirection: "row", gap: 12 }}>
+      <View style={{ flexDirection: "row", gap: spacing[3] }}>
         <View style={styles.upsellIcon}>
-          <Sparkles size={16} color={colors.primaryForeground} />
+          <Sparkles size={16} color={colors.brand.onBrand} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.upsellTitle}>See who wants to connect with you</Text>
@@ -215,13 +214,13 @@ function UpsellCard({ onUpgrade }: { onUpgrade: () => void }) {
           </Text>
         </View>
       </View>
-      <Pressable
+      <Touchable
         testID="upgrade-premium"
         onPress={onUpgrade}
-        style={({ pressed }) => [styles.upsellBtn, pressed && { opacity: 0.92 }]}
+        style={[styles.upsellBtn]}
       >
         <Text style={styles.upsellBtnText}>Upgrade to Premium</Text>
-      </Pressable>
+      </Touchable>
     </View>
   );
 }
@@ -232,7 +231,7 @@ function TierChip({ tier }: { tier: CompatibilityTier }) {
     <View
       style={[
         styles.tierChip,
-        { backgroundColor: c.bg, borderColor: c.border },
+        { backgroundColor: c.surface, borderColor: c.border },
       ]}
     >
       <View style={[styles.tierDot, { backgroundColor: c.dot }]} />
@@ -244,10 +243,10 @@ function TierChip({ tier }: { tier: CompatibilityTier }) {
 function PremiumCard({ request, onOpen }: { request: ConnectionRequest; onOpen: () => void }) {
   const p = request.profile;
   return (
-    <Pressable
+    <Touchable
       testID={`request-card-${request.id}`}
       onPress={onOpen}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.95 }]}
+      style={[styles.card]}
     >
       <Image source={{ uri: p.hero }} style={styles.cardAvatar} />
       <View style={{ flex: 1 }}>
@@ -258,37 +257,37 @@ function PremiumCard({ request, onOpen }: { request: ConnectionRequest; onOpen: 
             </Text>
             {p.premium ? (
               <View testID={`request-premium-${request.id}`} style={styles.premiumDot}>
-                <Crown size={9} color="#FFF" strokeWidth={2.4} fill="#FFF" />
+                <Crown size={9} color={colors.text.onBrand} strokeWidth={2.4} fill={colors.text.onBrand} />
               </View>
             ) : null}
           </View>
           <Text style={styles.cardTime}>{request.receivedAt}</Text>
         </View>
         <Text style={styles.cardLoc}>{p.location}</Text>
-        <View style={{ marginTop: 6 }}>
+        <View style={{ marginTop: spacing[1.5] }}>
           <TierChip tier={p.compatibility} />
         </View>
         <Text style={styles.cardTeaser} numberOfLines={2}>
           {request.teaser}
         </Text>
       </View>
-    </Pressable>
+    </Touchable>
   );
 }
 
 function BlurredCard({ request }: { request: ConnectionRequest }) {
   return (
     <View style={styles.card}>
-      <View style={[styles.cardAvatar, { backgroundColor: colors.secondary, alignItems: "center", justifyContent: "center" }]}>
-        <Lock size={14} color="#fff" />
+      <View style={[styles.cardAvatar, { backgroundColor: colors.surface.brand, alignItems: "center", justifyContent: "center" }]}>
+        <Lock size={14} color={colors.text.onBrand} />
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <View style={{ width: 96, height: 12, backgroundColor: "rgba(31,18,53,0.12)", borderRadius: 6 }} />
+          <View style={{ width: 96, height: 12, backgroundColor: alpha(colors.brand.strong, 0.12), borderRadius: radii.xs }} />
           <Text style={styles.cardTime}>{request.receivedAt}</Text>
         </View>
-        <View style={{ marginTop: 6, width: 64, height: 10, backgroundColor: "rgba(31,18,53,0.08)", borderRadius: 6 }} />
-        <View style={{ marginTop: 6 }}>
+        <View style={{ marginTop: spacing[1.5], width: 64, height: 10, backgroundColor: alpha(colors.brand.strong, 0.08), borderRadius: radii.xs }} />
+        <View style={{ marginTop: spacing[1.5] }}>
           <TierChip tier={request.profile.compatibility} />
         </View>
         <Text style={styles.cardTeaser} numberOfLines={2}>
@@ -303,7 +302,7 @@ function EmptyState() {
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <UserPlus size={28} color={colors.primary} />
+        <UserPlus size={28} color={colors.brand.default} />
       </View>
       <Text style={styles.emptyTitle}>No requests yet</Text>
       <Text style={styles.emptySubtitle}>
@@ -316,118 +315,102 @@ function EmptyState() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
-  title: { fontSize: 22, fontWeight: "700", color: colors.foreground, letterSpacing: -0.3 },
-  subtitle: { marginTop: 2, fontSize: 12, color: colors.mutedForeground },
+  title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
+  subtitle: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
   premiumChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1],
+    borderRadius: radii.full,
     borderWidth: 1,
   },
   upsell: {
-    marginTop: 4,
-    marginBottom: 6,
-    padding: 16,
-    borderRadius: 16,
+    marginTop: spacing[1],
+    marginBottom: spacing[1.5],
+    padding: spacing[4],
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: "rgba(91,44,111,0.25)",
-    backgroundColor: "rgba(244,234,251,0.45)",
+    borderColor: alpha(colors.brand.default, 0.25),
+    backgroundColor: alpha(colors.surface.brand, 0.45),
   },
   upsellIcon: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  upsellTitle: { fontSize: 14, fontWeight: "700", color: colors.foreground, lineHeight: 18 },
-  upsellSubtitle: { marginTop: 4, fontSize: 12, color: colors.mutedForeground, lineHeight: 16 },
+  upsellTitle: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, lineHeight: 18 },
+  upsellSubtitle: { marginTop: spacing[1], fontSize: fontSize.caption, color: colors.text.muted, lineHeight: 16 },
   upsellBtn: {
-    marginTop: 12,
+    marginTop: spacing[3],
     height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  upsellBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  upsellBtnText: { color: colors.text.onBrand, fontSize: fontSize.label, fontWeight: fontWeight.bold },
   card: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
-    padding: 12,
-    borderRadius: 16,
+    gap: spacing[3],
+    padding: spacing[3],
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  cardAvatar: { width: 64, height: 64, borderRadius: 12 },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1, marginRight: 6 },
-  cardName: { fontSize: 14, fontWeight: "700", color: colors.foreground, flexShrink: 1 },
+  cardAvatar: { width: 64, height: 64, borderRadius: radii.md },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: spacing[1.5], flex: 1, marginRight: spacing[1.5] },
+  cardName: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, flexShrink: 1 },
   premiumDot: {
     width: 18,
     height: 18,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  cardLoc: { marginTop: 2, fontSize: 12, color: colors.mutedForeground },
-  cardTime: { fontSize: 10.5, color: colors.mutedForeground },
-  cardTeaser: { marginTop: 6, fontSize: 12, color: "rgba(31,18,53,0.85)", lineHeight: 17 },
+  cardLoc: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
+  cardTime: { fontSize: fontSize.nano, color: colors.text.muted },
+  cardTeaser: { marginTop: spacing[1.5], fontSize: fontSize.caption, color: alpha(colors.brand.strong, 0.85), lineHeight: 17 },
   tierChip: {
     alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[0.5],
+    borderRadius: radii.full,
     borderWidth: 1,
   },
-  tierDot: { width: 5, height: 5, borderRadius: 999 },
-  tierText: { fontSize: 10, fontWeight: "700" },
-  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
+  tierDot: { width: 5, height: 5, borderRadius: radii.full },
+  tierText: { fontSize: fontSize.nano, fontWeight: fontWeight.bold },
+  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[8] },
   emptyIcon: {
     width: 80,
     height: 80,
-    borderRadius: 24,
-    backgroundColor: colors.secondary,
+    borderRadius: radii["4xl"],
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyTitle: { marginTop: 20, fontSize: 17, fontWeight: "700", color: colors.foreground },
+  emptyTitle: { marginTop: spacing[5], fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
   emptySubtitle: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     maxWidth: 260,
     textAlign: "center",
-    fontSize: 13.5,
+    fontSize: fontSize.label,
     lineHeight: 19,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
-  sheetBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  sheetBtnGhost: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  sheetBtnGhostText: { fontSize: 13, fontWeight: "700", color: colors.foreground },
-  sheetBtnPrimary: { backgroundColor: colors.primary },
-  sheetBtnPrimaryText: { fontSize: 13, fontWeight: "700", color: colors.primaryForeground },
+  sheetBtn: { flex: 1 },
 });

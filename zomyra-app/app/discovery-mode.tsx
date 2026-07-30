@@ -16,18 +16,13 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type Option = {
   key: CompatibilityDimension;
@@ -103,22 +98,18 @@ export default function DiscoveryMode() {
           {OPTIONS.map((opt) => {
             const active = draft === opt.key;
             return (
-              <Pressable
+              <Touchable
                 key={opt.key}
                 testID={`discovery-mode-${opt.key}`}
                 onPress={() => setDraft(opt.key)}
-                style={({ pressed }) => [
-                  styles.option,
-                  active && styles.optionActive,
-                  pressed && { opacity: 0.92 },
-                ]}
+                style={[styles.option, active && styles.optionActive]}
               >
                 <View
                   style={[styles.optionIconWrap, active && styles.optionIconWrapActive]}
                 >
                   <opt.Icon
                     size={20}
-                    color={active ? "#FFF" : PURPLE}
+                    color={active ? colors.text.onBrand : colors.brand.default}
                     strokeWidth={2}
                   />
                 </View>
@@ -134,158 +125,156 @@ export default function DiscoveryMode() {
                 <View style={[styles.radio, active && styles.radioActive]}>
                   {active ? <View style={styles.radioDot} /> : null}
                 </View>
-              </Pressable>
+              </Touchable>
             );
           })}
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <Pressable
+        <Touchable
+          feedback="scale"
           testID="discovery-mode-continue"
           onPress={apply}
-          style={({ pressed }) => [
-            styles.cta,
-            pressed && { transform: [{ scale: 0.98 }] },
-          ]}
+          style={[styles.cta]}
         >
           <LinearGradient
-            colors={[PURPLE, PURPLE_DEEP]}
+            colors={colors.gradient.brand}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.ctaGradient}
           >
             <Text style={styles.ctaText}>Show me matches</Text>
           </LinearGradient>
-        </Pressable>
+        </Touchable>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  root: { flex: 1, backgroundColor: colors.surface.default },
   scroll: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 24,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[6],
+    paddingBottom: spacing[6],
   },
   kicker: {
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 1.6,
-    color: PURPLE,
+    color: colors.brand.default,
     textTransform: "uppercase",
   },
   title: {
-    marginTop: 8,
-    fontSize: 28,
-    fontWeight: "700",
-    color: TEXT,
+    marginTop: spacing[2],
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.6,
     lineHeight: 34,
   },
   subtitle: {
-    marginTop: 10,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: MUTED,
+    marginTop: spacing[2.5],
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     lineHeight: 22,
     letterSpacing: -0.1,
   },
   options: {
-    marginTop: 28,
-    gap: 12,
+    marginTop: spacing[7],
+    gap: spacing[3],
   },
   option: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    gap: spacing[3.5],
+    paddingVertical: spacing[3.5],
+    paddingHorizontal: spacing[3.5],
+    borderRadius: radii["3xl"],
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   optionActive: {
-    borderColor: PURPLE,
-    backgroundColor: LIGHT_PURPLE,
+    borderColor: colors.brand.default,
+    backgroundColor: colors.surface.brand,
   },
   optionIconWrap: {
     width: 42,
     height: 42,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     alignItems: "center",
     justifyContent: "center",
   },
   optionIconWrapActive: {
-    backgroundColor: PURPLE,
-    borderColor: PURPLE,
+    backgroundColor: colors.brand.default,
+    borderColor: colors.brand.default,
   },
   optionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing[2],
     flexWrap: "wrap",
   },
   optionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TEXT,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.2,
   },
   recommendedTag: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: PURPLE,
+    fontSize: fontSize.nano,
+    fontWeight: fontWeight.bold,
+    color: colors.brand.default,
     letterSpacing: 0.6,
     textTransform: "uppercase",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: "#EDE7F6",
+    paddingHorizontal: spacing[1.5],
+    paddingVertical: spacing[0.5],
+    borderRadius: radii.xs,
+    backgroundColor: colors.surface.brandStrong,
   },
   optionSubtitle: {
-    marginTop: 3,
-    fontSize: 13,
-    fontWeight: "500",
-    color: MUTED,
+    marginTop: spacing[1],
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     letterSpacing: -0.1,
   },
   radio: {
     width: 22,
     height: 22,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
+    borderColor: colors.border.neutralStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: PURPLE },
-  radioDot: { width: 10, height: 10, borderRadius: 999, backgroundColor: PURPLE },
+  radioActive: { borderColor: colors.brand.default },
+  radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
 
   footer: {
-    paddingHorizontal: 24,
-    paddingBottom: 12,
-    paddingTop: 8,
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[3],
+    paddingTop: spacing[2],
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BORDER,
-    backgroundColor: "#FFFFFF",
+    borderTopColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  cta: { borderRadius: 999, overflow: "hidden" },
+  cta: { borderRadius: radii.full, overflow: "hidden" },
   ctaGradient: {
-    paddingVertical: 16,
+    paddingVertical: spacing[4],
     alignItems: "center",
     justifyContent: "center",
   },
   ctaText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     letterSpacing: 0.2,
   },
 });

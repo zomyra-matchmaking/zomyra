@@ -3,16 +3,13 @@
  * Icons: User, Users, HeartHandshake, MessageCircle (lucide).
  */
 import { HeartHandshake, MessageCircle, UserRound, Users } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 
 import { useRequestsStore } from "@/src/stores/requests-store";
-
-const PURPLE = "#5B2C6F";
-const MUTED = "#6B7280";
-const BORDER = "#ECEAF7";
-const LIGHT_PURPLE = "#F5F3FF";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type Item = {
   key: "profile" | "discover" | "requests" | "chats";
@@ -45,7 +42,7 @@ export function FloatingNav() {
       <View style={styles.bar}>
         {ITEMS.map((item) => {
           const active = isActive(item.path);
-          const color = active ? PURPLE : MUTED;
+          const color = active ? colors.brand.default : colors.text.muted;
           const stroke = active ? 2.4 : 2;
 
           let Icon = UserRound;
@@ -54,7 +51,7 @@ export function FloatingNav() {
           else if (item.key === "chats") Icon = MessageCircle;
 
           return (
-            <Pressable
+            <Touchable
               key={item.key}
               testID={`tab-${item.key}`}
               onPress={() => router.push(item.path as never)}
@@ -69,7 +66,7 @@ export function FloatingNav() {
                 ) : null}
               </View>
               <Text style={[styles.label, { color }]}>{item.label}</Text>
-            </Pressable>
+            </Touchable>
           );
         })}
       </View>
@@ -84,21 +81,21 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing[4],
   },
   bar: {
     width: "100%",
     maxWidth: 340,
     height: 56,
-    borderRadius: 999,
-    backgroundColor: "#FFF",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.default,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingHorizontal: 6,
-    shadowColor: "#000",
+    paddingHorizontal: spacing[1.5],
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 24,
@@ -108,8 +105,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
-    paddingVertical: 4,
+    gap: spacing[0.5],
+    paddingVertical: spacing[1],
   },
   iconWrap: {
     width: 24,
@@ -117,22 +114,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  label: { fontSize: 10, fontWeight: "600", letterSpacing: -0.1 },
+  label: { fontSize: fontSize.nano, fontWeight: fontWeight.semibold, letterSpacing: -0.1 },
   badge: {
     position: "absolute",
     top: -6,
     right: -10,
     minWidth: 18,
     height: 18,
-    paddingHorizontal: 5,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    paddingHorizontal: spacing[1],
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#FFF",
+    borderColor: colors.border.onBrand,
   },
-  badgeText: { color: "#FFF", fontSize: 10, fontWeight: "700" },
+  badgeText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold },
 });
 
-void LIGHT_PURPLE;
+void colors.surface.brand;

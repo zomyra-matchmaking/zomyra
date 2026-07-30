@@ -14,9 +14,10 @@
  */
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { isIOS } from "@/src/utils/platform";
 
 const ITEM_H = 40;
 const VISIBLE = 5;
@@ -35,7 +36,6 @@ function Wheel({
 }) {
   const ref = useRef<ScrollView>(null);
   const lastEmitted = useRef(selectedIndex);
-  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isUserScrolling = useRef(false);
 
   // Live "currently centered" index — this is what gets highlighted.
@@ -59,11 +59,10 @@ function Wheel({
     if (i !== centerIndex) {
       setCenterIndex(i);
       // Subtle selection haptic on every value change while scrolling.
-      // Wrapped in try/catch because Haptics is a no-op on web and
-      // can throw on some Android devices without vibrator support.
-      if (Platform.OS !== "web") {
-        Haptics.selectionAsync().catch(() => {});
-      }
+      // The .catch() matters: Haptics throws on Android devices with no
+      // vibrator. (The old `Platform.OS !== "web"` guard around this was
+      // dead — web is out of scope, O-12.)
+      Haptics.selectionAsync().catch(() => {});
     }
   };
 
@@ -86,7 +85,7 @@ function Wheel({
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_H}
         snapToAlignment="start"
-        decelerationRate={Platform.OS === "ios" ? "normal" : "fast"}
+        decelerationRate={isIOS ? "normal" : "fast"}
         // High event throttle so `updateCenter` runs on every frame and
         // the highlighted text + haptic feel tight and "alive".
         scrollEventThrottle={16}
@@ -102,15 +101,6 @@ function Wheel({
         onScroll={(e) => {
           const y = e.nativeEvent.contentOffset.y;
           updateCenter(y);
-          // Web fallback: native ScrollView on web doesn't reliably fire
-          // momentum events, so we commit after a short idle.
-          if (Platform.OS === "web") {
-            if (idleTimer.current) clearTimeout(idleTimer.current);
-            idleTimer.current = setTimeout(() => {
-              commit(y);
-              isUserScrolling.current = false;
-            }, 140);
-          }
         }}
         onScrollEndDrag={(e) => {
           commit(e.nativeEvent.contentOffset.y);
@@ -234,7 +224,7 @@ export function DateWheel({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", justifyContent: "center", gap: 10 },
+  row: { flexDirection: "row", justifyContent: "center", gap: spacing[2.5] },
   wheelWrap: {
     position: "relative",
   },
@@ -246,9 +236,9 @@ const styles = StyleSheet.create({
     height: ITEM_H,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "rgba(91,44,111,0.25)",
-    backgroundColor: "rgba(91,44,111,0.05)",
-    borderRadius: 12,
+    borderColor: alpha(colors.brand.default, 0.25),
+    backgroundColor: alpha(colors.brand.default, 0.05),
+    borderRadius: radii.md,
     zIndex: 1,
   },
   item: {
@@ -256,11 +246,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   itemText: {
-    fontSize: 16,
-    color: "rgba(122,107,137,0.6)",
+    fontSize: fontSize.title,
+    color: alpha(colors.text.muted, 0.6),
   },
   itemTextActive: {
-    color: colors.foreground,
-    fontWeight: "700",
+    color: colors.text.primary,
+    fontWeight: fontWeight.bold,
   },
 });

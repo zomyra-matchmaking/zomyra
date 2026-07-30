@@ -1,22 +1,15 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CountrySelector } from "@/src/components/auth/CountrySelector";
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { DEFAULT_COUNTRY, type Country } from "@/src/lib/countries";
 import { authService } from "@/src/services/auth";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, fontSize, fontWeight, spacing } from "@/src/theme";
+import { Button, Input } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 export default function PhoneScreen() {
   const router = useRouter();
@@ -57,10 +50,10 @@ export default function PhoneScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <View style={{ paddingHorizontal: 24, flex: 1 }}>
+        <View style={{ paddingHorizontal: spacing[6], flex: 1 }}>
           <ScreenHeader onBack={() => router.back()} />
           <Text style={styles.title}>Enter your phone number</Text>
           <Text style={styles.subtitle}>We'll send you a verification code to continue.</Text>
@@ -74,26 +67,24 @@ export default function PhoneScreen() {
                 setTouched(false);
               }}
             />
-            <TextInput
+            <Input
               testID="phone-input"
               value={phone}
               onChangeText={onChangePhone}
               onBlur={() => setTouched(true)}
               keyboardType="number-pad"
               placeholder="Enter mobile number"
-              placeholderTextColor={colors.mutedForeground}
               autoComplete="tel"
               autoCorrect={false}
               textContentType="telephoneNumber"
-              style={[styles.input, showError && { borderColor: colors.destructive }]}
+              error={
+                showError
+                  ? `Enter a valid ${country.length}-digit number for ${country.name}.`
+                  : undefined
+              }
+              containerStyle={styles.inputWrap}
             />
           </View>
-
-          {showError ? (
-            <Text style={styles.errorText}>
-              Enter a valid {country.length}-digit number for {country.name}.
-            </Text>
-          ) : null}
 
           <Text style={styles.hint}>
             {isValid
@@ -101,19 +92,15 @@ export default function PhoneScreen() {
               : "We'll send a verification code to your phone number."}
           </Text>
 
-          <Pressable
+          <Button
             testID="phone-send-otp"
-            disabled={!isValid || sending}
+            label={sending ? "Sending OTP…" : "Send OTP"}
+            loading={sending}
+            disabled={!isValid}
             onPress={send}
-            style={({ pressed }) => [
-              styles.cta,
-              (!isValid || sending) && styles.ctaDisabled,
-              pressed && isValid && { opacity: 0.92 },
-            ]}
-          >
-            {sending ? <ActivityIndicator color={colors.primaryForeground} /> : null}
-            <Text style={styles.ctaText}>{sending ? "Sending OTP…" : "Send OTP"}</Text>
-          </Pressable>
+            fullWidth
+            style={styles.cta}
+          />
 
           <View style={{ flex: 1 }} />
 
@@ -127,69 +114,35 @@ export default function PhoneScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   title: {
-    marginTop: 16,
-    fontSize: 28,
-    fontWeight: "700",
+    marginTop: spacing[4],
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.3,
-    color: colors.foreground,
+    color: colors.text.primary,
   },
   subtitle: {
-    marginTop: 8,
-    fontSize: 15,
+    marginTop: spacing[2],
+    fontSize: fontSize.bodyLarge,
     lineHeight: 21,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
-  row: { marginTop: 24, flexDirection: "row", gap: 8, alignItems: "stretch" },
-  input: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    minWidth: 0,
-    height: 52,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: colors.foreground,
-  },
-  errorText: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.destructive,
-  },
+  row: { marginTop: spacing[6], flexDirection: "row", gap: spacing[2], alignItems: "flex-start" },
+  inputWrap: { flex: 1, minWidth: 0 },
   hint: {
-    marginTop: 14,
-    fontSize: 12.5,
+    marginTop: spacing[3.5],
+    fontSize: fontSize.caption,
     lineHeight: 18,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   hintStrong: {
-    color: colors.foreground,
-    fontWeight: "700",
+    color: colors.text.primary,
+    fontWeight: fontWeight.bold,
   },
-  cta: {
-    marginTop: 18,
-    height: 52,
-    borderRadius: radii.lg,
-    backgroundColor: colors.primary,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  ctaDisabled: { backgroundColor: "#D6CFE0" },
-  ctaText: {
-    color: colors.primaryForeground,
-    fontSize: 15,
-    fontWeight: "700",
-  },
+  cta: { marginTop: spacing[4.5] },
   legal: {
     textAlign: "center",
-    fontSize: 12,
-    color: colors.mutedForeground,
-    marginBottom: 12,
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
+    marginBottom: spacing[3],
   },
 });

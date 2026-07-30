@@ -10,18 +10,12 @@ import {
   Crown,
   Sparkles,
 } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useRequestsStore } from "@/src/stores/requests-store";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
-const GOLD = "#F59E0B";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const BENEFITS = [
   "Unlock all premium filters (Height, Income, Family, Education, more)",
@@ -39,31 +33,31 @@ export default function PremiumScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.header}>
-        <Pressable
+        <Touchable
           testID="premium-back"
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.headerBtn]}
           hitSlop={8}
         >
-          <ArrowLeft size={22} color={TEXT} strokeWidth={2} />
-        </Pressable>
+          <ArrowLeft size={22} color={colors.text.primary} strokeWidth={2} />
+        </Touchable>
         <Text style={styles.headerTitle}>Premium</Text>
         <View style={styles.headerBtn} />
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[10] }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroCard}>
           <LinearGradient
-            colors={[PURPLE, PURPLE_DEEP]}
+            colors={colors.gradient.brand}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroGradient}
           >
             <View style={styles.crownBadge}>
-              <Crown size={20} color={GOLD} strokeWidth={2} fill={GOLD} />
+              <Crown size={20} color={colors.premium.onDark} strokeWidth={2} fill={colors.premium.onDark} />
             </View>
             <Text style={styles.heroTitle}>Zomyra Premium</Text>
             <Text style={styles.heroSubtitle}>
@@ -81,7 +75,7 @@ export default function PremiumScreen() {
               style={[styles.benefit, i < BENEFITS.length - 1 && styles.benefitDivider]}
             >
               <View style={styles.benefitIcon}>
-                <Check size={14} color="#FFF" strokeWidth={3} />
+                <Check size={14} color={colors.text.onBrand} strokeWidth={3} />
               </View>
               <Text style={styles.benefitText}>{b}</Text>
             </View>
@@ -99,26 +93,24 @@ export default function PremiumScreen() {
           </View>
         </View>
 
-        <Pressable
+        <Touchable
+          feedback="scale"
           testID="premium-purchase"
           onPress={() => setPremium(!premium)}
-          style={({ pressed }) => [
-            styles.cta,
-            pressed && { transform: [{ scale: 0.985 }] },
-          ]}
+          style={[styles.cta]}
         >
           <LinearGradient
-            colors={[PURPLE, PURPLE_DEEP]}
+            colors={colors.gradient.brand}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.ctaGradient}
           >
-            <Sparkles size={18} color="#FFF" strokeWidth={2.4} />
+            <Sparkles size={18} color={colors.text.onBrand} strokeWidth={2.4} />
             <Text style={styles.ctaText}>
               {premium ? "You're Premium" : "Upgrade to Premium"}
             </Text>
           </LinearGradient>
-        </Pressable>
+        </Touchable>
 
         <Text style={styles.fine}>
           Subscription auto-renews. Cancel anytime in your account settings.
@@ -129,107 +121,107 @@ export default function PremiumScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  root: { flex: 1, backgroundColor: colors.surface.default },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[1],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   headerBtn: { minWidth: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: TEXT, letterSpacing: -0.2 },
+  headerTitle: { fontSize: fontSize.heading, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.2 },
 
   heroCard: {
-    borderRadius: 24,
+    borderRadius: radii["4xl"],
     overflow: "hidden",
-    shadowColor: PURPLE,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 12 },
     shadowRadius: 20,
     elevation: 8,
   },
-  heroGradient: { padding: 24, alignItems: "flex-start" },
+  heroGradient: { padding: spacing[6], alignItems: "flex-start" },
   crownBadge: {
     width: 44,
     height: 44,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: radii.lg,
+    backgroundColor: alpha(colors.text.onBrand, 0.18),
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 14,
+    marginBottom: spacing[3.5],
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
+    borderColor: alpha(colors.text.onBrand, 0.25),
   },
   heroTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#FFF",
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    marginTop: 6,
-    fontSize: 14,
-    color: "rgba(255,255,255,0.85)",
+    marginTop: spacing[1.5],
+    fontSize: fontSize.body,
+    color: alpha(colors.text.onBrand, 0.85),
     lineHeight: 21,
   },
 
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1,
-    color: PURPLE,
+    color: colors.brand.default,
     textTransform: "uppercase",
-    marginTop: 24,
-    marginBottom: 10,
+    marginTop: spacing[6],
+    marginBottom: spacing[2.5],
   },
   benefitsCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 24,
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     overflow: "hidden",
   },
   benefit: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
   },
-  benefitDivider: { borderBottomWidth: 1, borderBottomColor: BORDER },
+  benefitDivider: { borderBottomWidth: 1, borderBottomColor: colors.border.default },
   benefitIcon: {
     width: 24,
     height: 24,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  benefitText: { flex: 1, fontSize: 14, color: TEXT, fontWeight: "500", lineHeight: 20 },
+  benefitText: { flex: 1, fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.medium, lineHeight: 20 },
 
   pricingCard: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 18,
-    borderRadius: 24,
-    backgroundColor: LIGHT_PURPLE,
+    gap: spacing[3],
+    padding: spacing[4.5],
+    borderRadius: radii["4xl"],
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  pricingTitle: { fontSize: 16, fontWeight: "700", color: TEXT },
-  pricingSubtitle: { marginTop: 2, fontSize: 12, color: MUTED },
-  priceBig: { fontSize: 22, fontWeight: "800", color: PURPLE, letterSpacing: -0.3 },
-  priceCaption: { fontSize: 11, color: MUTED },
+  pricingTitle: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
+  pricingSubtitle: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
+  priceBig: { fontSize: fontSize.h2, fontWeight: fontWeight.extrabold, color: colors.brand.default, letterSpacing: -0.3 },
+  priceCaption: { fontSize: fontSize.micro, color: colors.text.muted },
 
   cta: {
-    marginTop: 18,
-    borderRadius: 18,
+    marginTop: spacing[4.5],
+    borderRadius: radii["2xl"],
     overflow: "hidden",
-    shadowColor: PURPLE,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
@@ -240,14 +232,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
-  ctaText: { color: "#FFF", fontSize: 18, fontWeight: "700", letterSpacing: -0.2 },
+  ctaText: { color: colors.text.onBrand, fontSize: fontSize.heading, fontWeight: fontWeight.bold, letterSpacing: -0.2 },
 
   fine: {
-    marginTop: 14,
-    fontSize: 12,
-    color: MUTED,
+    marginTop: spacing[3.5],
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
     textAlign: "center",
   },
 });

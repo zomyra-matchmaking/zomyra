@@ -3,14 +3,16 @@
  */
 import { Crown, Search } from "lucide-react-native";
 import { useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useChatStore } from "@/src/stores/chat-store";
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
+import { NAV_CLEARANCE } from "@/src/constants";
 
 export default function ChatsList() {
   const router = useRouter();
@@ -25,12 +27,12 @@ export default function ChatsList() {
           <Text style={styles.title}>Chats</Text>
           <Text style={styles.subtitle}>Your conversations</Text>
         </View>
-        <Pressable
+        <Touchable
           testID="chats-search"
-          style={({ pressed }) => [styles.searchBtn, pressed && { opacity: 0.85 }]}
+          style={[styles.searchBtn]}
         >
-          <Search size={16} color={colors.mutedForeground} />
-        </Pressable>
+          <Search size={16} color={colors.text.muted} />
+        </Touchable>
       </View>
 
       {conversations.length === 0 ? (
@@ -44,14 +46,15 @@ export default function ChatsList() {
         <FlatList
           data={conversations}
           keyExtractor={(c) => c.id}
-          contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 120 }}
+          contentContainerStyle={{ paddingHorizontal: spacing[2], paddingBottom: NAV_CLEARANCE }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <Pressable
+            <Touchable
+              feedback="highlight"
               testID={`chat-row-${item.id}`}
               onPress={() => router.push(`/chats/${item.id}` as never)}
               onLongPress={() => setPendingUnmatch(item.id)}
-              style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.secondary }]}
+              style={[styles.row]}
             >
               <Image source={{ uri: item.avatar }} style={styles.avatar} />
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -62,14 +65,14 @@ export default function ChatsList() {
                     </Text>
                     {item.premium ? (
                       <View testID={`chat-premium-${item.id}`} style={styles.premiumDot}>
-                        <Crown size={9} color="#FFF" strokeWidth={2.4} fill="#FFF" />
+                        <Crown size={9} color={colors.text.onBrand} strokeWidth={2.4} fill={colors.text.onBrand} />
                       </View>
                     ) : null}
                   </View>
                   <Text
                     style={[
                       styles.time,
-                      item.unread > 0 && { color: colors.primary, fontWeight: "700" },
+                      item.unread > 0 && { color: colors.brand.default, fontWeight: fontWeight.bold },
                     ]}
                   >
                     {item.time}
@@ -79,7 +82,7 @@ export default function ChatsList() {
                   <Text
                     style={[
                       styles.preview,
-                      item.unread > 0 && { color: colors.foreground },
+                      item.unread > 0 && { color: colors.text.primary },
                     ]}
                     numberOfLines={1}
                   >
@@ -92,7 +95,7 @@ export default function ChatsList() {
                   ) : null}
                 </View>
               </View>
-            </Pressable>
+            </Touchable>
           )}
         />
       )}
@@ -118,66 +121,66 @@ export default function ChatsList() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
-  title: { fontSize: 22, fontWeight: "700", color: colors.foreground, letterSpacing: -0.3 },
-  subtitle: { marginTop: 2, fontSize: 12, color: colors.mutedForeground },
+  title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
+  subtitle: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
   searchBtn: {
     width: 38,
     height: 38,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: "rgba(232,225,239,0.6)",
-    backgroundColor: colors.card,
+    borderColor: alpha(colors.border.default, 0.6),
+    backgroundColor: colors.surface.default,
     alignItems: "center",
     justifyContent: "center",
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
+    gap: spacing[3],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2.5],
+    borderRadius: radii.md,
   },
-  avatar: { width: 48, height: 48, borderRadius: 999, backgroundColor: colors.secondary },
+  avatar: { width: 48, height: 48, borderRadius: radii.full, backgroundColor: colors.surface.brand },
   rowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1, marginRight: 6 },
-  name: { fontSize: 14.5, fontWeight: "700", color: colors.foreground, flexShrink: 1 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: spacing[1.5], flex: 1, marginRight: spacing[1.5] },
+  name: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, flexShrink: 1 },
   premiumDot: {
     width: 18,
     height: 18,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  time: { fontSize: 11, color: colors.mutedForeground },
-  rowBottom: { marginTop: 2, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  preview: { flex: 1, fontSize: 13, color: colors.mutedForeground, marginRight: 6 },
+  time: { fontSize: fontSize.micro, color: colors.text.muted },
+  rowBottom: { marginTop: spacing[0.5], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  preview: { flex: 1, fontSize: fontSize.label, color: colors.text.muted, marginRight: spacing[1.5] },
   badge: {
     minWidth: 18,
     height: 18,
-    paddingHorizontal: 5,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    paddingHorizontal: spacing[1],
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  badgeText: { color: "#fff", fontSize: 10.5, fontWeight: "700" },
-  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
-  emptyTitle: { fontSize: 17, fontWeight: "700", color: colors.foreground },
+  badgeText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold },
+  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[8] },
+  emptyTitle: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
   emptySubtitle: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     maxWidth: 260,
     textAlign: "center",
-    fontSize: 13.5,
+    fontSize: fontSize.label,
     lineHeight: 19,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
 });

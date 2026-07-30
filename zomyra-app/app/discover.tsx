@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ChevronDown, Crown, Send, SlidersHorizontal, Sparkles, X } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   Easing,
@@ -31,12 +31,9 @@ import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { discoverService } from "@/src/services/discover";
 import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
-
-const PURPLE = "#5B2C6F";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
+import { NAV_CLEARANCE } from "@/src/constants";
 
 type QuickKey = "height" | "build" | "income" | "education";
 const QUICK_CHIPS: { key: QuickKey; label: string }[] = [
@@ -178,7 +175,7 @@ export default function Discover() {
       {/* Scrollable profile content — headers overlay on top */}
       <Animated.ScrollView
         contentContainerStyle={{
-          paddingBottom: 120,
+          paddingBottom: NAV_CLEARANCE,
           // filterHeaderH already includes insets.top (the overlay applies it
           // as internal padding to sit below the notch). The ScrollView
           // itself starts inside the SafeAreaView's insets.top padding, so
@@ -214,35 +211,29 @@ export default function Discover() {
           pointerEvents="box-none"
           style={[styles.actionFloat, { bottom: insets.bottom + 72 }]}
         >
-          <Pressable
+          <Touchable
+            feedback="scale"
             testID="discover-action-decline"
             onPress={advance}
             hitSlop={8}
-            style={({ pressed }) => [
-              styles.actionFloatBtn,
-              styles.actionFloatDecline,
-              pressed && { transform: [{ scale: 0.94 }] },
-            ]}
+            style={[styles.actionFloatBtn, styles.actionFloatDecline]}
           >
-            <X size={22} color={TEXT} strokeWidth={2.4} />
-          </Pressable>
-          <Pressable
+            <X size={22} color={colors.text.primary} strokeWidth={2.4} />
+          </Touchable>
+          <Touchable
+            feedback="scale"
             testID="discover-action-interest"
             onPress={handleLike}
             hitSlop={8}
-            style={({ pressed }) => [
-              styles.actionFloatBtn,
-              styles.actionFloatInterest,
-              pressed && { transform: [{ scale: 0.94 }] },
-            ]}
+            style={[styles.actionFloatBtn, styles.actionFloatInterest]}
           >
             <Send
               size={22}
-              color="#FFFFFF"
+              color={colors.text.onBrand}
               strokeWidth={2.2}
               style={{ transform: [{ translateX: -1 }] }}
             />
-          </Pressable>
+          </Touchable>
         </View>
       ) : null}
 
@@ -258,33 +249,27 @@ export default function Discover() {
             <Logo size={22} />
           </View>
 
-          <Pressable
+          <Touchable
             testID="filter-chip-compatibility"
             onPress={() => setSheetOpen(true)}
-            style={({ pressed }) => [
-              styles.statusPill,
-              pressed && { opacity: 0.85 },
-            ]}
+            style={[styles.statusPill]}
           >
-            <Sparkles size={12} color={PURPLE} strokeWidth={2} />
+            <Sparkles size={12} color={colors.brand.default} strokeWidth={2} />
             <Text style={styles.statusPillText} numberOfLines={1}>
               Showing your best{" "}
               <Text style={styles.statusPillHi}>{dimLabel}</Text> matches
             </Text>
-            <ChevronDown size={12} color={PURPLE} strokeWidth={2} />
-          </Pressable>
+            <ChevronDown size={12} color={colors.brand.default} strokeWidth={2} />
+          </Touchable>
 
-          <Pressable
+          <Touchable
             testID="filter-icon"
             onPress={() => router.push("/filters" as never)}
-            style={({ pressed }) => [
-              styles.settingsBtn,
-              pressed && { opacity: 0.85 },
-            ]}
+            style={[styles.settingsBtn]}
             hitSlop={8}
           >
-            <SlidersHorizontal size={16} color={PURPLE} strokeWidth={2} />
-          </Pressable>
+            <SlidersHorizontal size={16} color={colors.brand.default} strokeWidth={2} />
+          </Touchable>
         </View>
 
         {/* Filter chip row */}
@@ -294,16 +279,16 @@ export default function Discover() {
           contentContainerStyle={styles.chipsRow}
         >
           {QUICK_CHIPS.map((c) => (
-            <Pressable
+            <Touchable
               key={c.key}
               testID={`filter-chip-${c.key}`}
               onPress={() => setQuickKey(c.key)}
               style={styles.chip}
             >
               <Text style={styles.chipLabel}>{c.label}</Text>
-              <Crown size={11} color="#F59E0B" strokeWidth={2} fill="#F59E0B" />
-              <ChevronDown size={12} color={MUTED} strokeWidth={2} />
-            </Pressable>
+              <Crown size={11} color={colors.premium.icon} strokeWidth={2} fill={colors.premium.icon} />
+              <ChevronDown size={12} color={colors.text.muted} strokeWidth={2} />
+            </Touchable>
           ))}
         </ScrollView>
       </Animated.View>
@@ -424,7 +409,7 @@ function ChipPicker({
       {options.map((opt) => {
         const active = value === opt;
         return (
-          <Pressable
+          <Touchable
             key={opt}
             testID={`dialog-chip-${opt}`}
             onPress={() => onChange(opt)}
@@ -435,7 +420,7 @@ function ChipPicker({
             >
               {opt}
             </Text>
-          </Pressable>
+          </Touchable>
         );
       })}
     </View>
@@ -452,11 +437,11 @@ function OptionList({
   onChange: (v: string) => void;
 }) {
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: spacing[2] }}>
       {options.map((opt) => {
         const active = value === opt;
         return (
-          <Pressable
+          <Touchable
             key={opt}
             testID={`dialog-option-${opt}`}
             onPress={() => onChange(opt)}
@@ -470,7 +455,7 @@ function OptionList({
             <View style={[styles.radio, active && styles.radioActive]}>
               {active ? <View style={styles.radioDot} /> : null}
             </View>
-          </Pressable>
+          </Touchable>
         );
       })}
     </View>
@@ -478,7 +463,7 @@ function OptionList({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  root: { flex: 1, backgroundColor: colors.surface.default },
 
   // Header overlay (position:absolute so it can fade out over content)
   headerOverlay: {
@@ -486,18 +471,18 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.default,
     zIndex: 5,
   },
 
   // header
   header: {
-    paddingHorizontal: 14,
-    paddingTop: 6,
-    paddingBottom: 6,
+    paddingHorizontal: spacing[3.5],
+    paddingTop: spacing[1.5],
+    paddingBottom: spacing[1.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing[2],
     zIndex: 10,
   },
   // Combined "Showing your best XXX matches" pill (was 2 rows — now 1)
@@ -505,13 +490,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
     height: 32,
-    paddingHorizontal: 12,
-    borderRadius: 999,
+    paddingHorizontal: spacing[3],
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: LIGHT_PURPLE,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.brand,
   },
   brandDot: {
     width: 28,
@@ -521,86 +506,86 @@ const styles = StyleSheet.create({
   },
   statusPillText: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: "600",
-    color: TEXT,
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
-  statusPillHi: { color: PURPLE, fontWeight: "800" },
+  statusPillHi: { color: colors.brand.default, fontWeight: fontWeight.extrabold },
   kicker: {
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 2,
-    color: PURPLE,
+    color: colors.brand.default,
   },
   titleH1: {
-    marginTop: 2,
-    fontSize: 26,
-    fontWeight: "800",
-    color: TEXT,
+    marginTop: spacing[0.5],
+    fontSize: fontSize.h1,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.5,
   },
   settingsBtn: {
     width: 32,
     height: 32,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     alignItems: "center",
     justifyContent: "center",
   },
   subHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[1],
     flexDirection: "row",
     alignItems: "center",
   },
   headerPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     minWidth: 110,
   },
   headerPillText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: PURPLE,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
+    color: colors.brand.default,
     letterSpacing: -0.1,
   },
 
   // chip row (slim)
   chipsRow: {
-    paddingHorizontal: 14,
-    paddingTop: 2,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[3.5],
+    paddingTop: spacing[0.5],
+    paddingBottom: spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
   chip: {
     flexShrink: 0,
     height: 28,
-    paddingHorizontal: 10,
-    borderRadius: 999,
+    paddingHorizontal: spacing[2.5],
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: spacing[1],
   },
   chipLabel: {
-    fontSize: 11.5,
-    fontWeight: "600",
-    color: TEXT,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -608,73 +593,73 @@ const styles = StyleSheet.create({
   chipPickerWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing[2],
   },
   pickerChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  pickerChipActive: { borderColor: PURPLE, backgroundColor: LIGHT_PURPLE },
-  pickerChipText: { fontSize: 14, fontWeight: "600", color: TEXT },
-  pickerChipTextActive: { color: PURPLE, fontWeight: "700" },
+  pickerChipActive: { borderColor: colors.brand.default, backgroundColor: colors.surface.brand },
+  pickerChipText: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  pickerChipTextActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 14,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[3],
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  optionRowActive: { borderColor: PURPLE, backgroundColor: LIGHT_PURPLE },
-  optionRowText: { fontSize: 15, fontWeight: "600", color: TEXT },
-  optionRowTextActive: { color: PURPLE, fontWeight: "700" },
+  optionRowActive: { borderColor: colors.brand.default, backgroundColor: colors.surface.brand },
+  optionRowText: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  optionRowTextActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
   radio: {
     width: 20,
     height: 20,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
+    borderColor: colors.border.neutralStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: PURPLE },
-  radioDot: { width: 10, height: 10, borderRadius: 999, backgroundColor: PURPLE },
+  radioActive: { borderColor: colors.brand.default },
+  radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
 
   // banner
   banner: {
-    marginHorizontal: 16,
-    marginTop: 2,
-    marginBottom: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[0.5],
+    marginBottom: spacing[2],
+    paddingVertical: spacing[1.5],
+    paddingHorizontal: spacing[3],
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    gap: spacing[1],
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  bannerText: { fontSize: 11, fontWeight: "500", color: TEXT },
-  bannerHi: { color: PURPLE, fontWeight: "700" },
+  bannerText: { fontSize: fontSize.micro, fontWeight: fontWeight.medium, color: colors.text.primary },
+  bannerHi: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
-  empty: { padding: 32, textAlign: "center", color: MUTED },
+  empty: { padding: spacing[8], textAlign: "center", color: colors.text.muted },
 
   // Floating action pill — sits above the FloatingNav.
   actionFloat: {
     position: "absolute",
     left: 0,
     right: 0,
-    paddingHorizontal: 28,
+    paddingHorizontal: spacing[7],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -683,23 +668,23 @@ const styles = StyleSheet.create({
   actionFloatBtn: {
     width: 52,
     height: 52,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
   },
   actionFloatDecline: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.default,
     borderWidth: 1.5,
-    borderColor: BORDER,
-    shadowColor: "#000",
+    borderColor: colors.border.default,
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.08,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
   actionFloatInterest: {
-    backgroundColor: PURPLE,
-    shadowColor: PURPLE,
+    backgroundColor: colors.brand.default,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.35,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },

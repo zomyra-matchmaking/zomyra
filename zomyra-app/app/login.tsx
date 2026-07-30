@@ -1,10 +1,15 @@
 import { Phone } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { toast } from "@/src/components/ui/Toast";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Button, Touchable } from "@/src/components/ui";
+
+function GoogleG() {
+  return <Text style={styles.googleG}>G</Text>;
+}
 
 export default function Login() {
   const router = useRouter();
@@ -27,23 +32,24 @@ export default function Login() {
 
         {/* Bottom — anchored auth CTAs */}
         <View style={styles.bottom}>
-          <Pressable
+          <Button
             testID="login-continue-google"
+            label="Continue with Google"
+            variant="ghost"
+            icon={GoogleG}
             onPress={() => toast.show("Google sign-in coming soon")}
-            style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.92 }]}
-          >
-            <Text style={styles.googleG}>G</Text>
-            <Text style={styles.secondaryBtnText}>Continue with Google</Text>
-          </Pressable>
+            fullWidth
+            style={styles.authBtn}
+          />
 
-          <Pressable
+          <Button
             testID="login-continue-phone"
+            label="Continue with Phone"
+            icon={Phone}
             onPress={() => router.push("/phone")}
-            style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.92 }]}
-          >
-            <Phone size={20} color={colors.primaryForeground} strokeWidth={2.4} />
-            <Text style={styles.primaryBtnText}>Continue with Phone</Text>
-          </Pressable>
+            fullWidth
+            style={styles.authBtn}
+          />
 
           <Text style={styles.legal}>
             By continuing, you agree to our{" "}
@@ -69,13 +75,13 @@ export default function Login() {
           {/* TEMPORARY: dev skip — jumps straight to Discover, bypassing  */}
           {/* phone/otp/onboarding/verify/matching. REMOVE before launch.  */}
           {/* ────────────────────────────────────────────────────────────── */}
-          <Pressable
+          <Touchable
             testID="login-dev-skip"
             onPress={() => router.replace("/discover")}
-            style={({ pressed }) => [styles.devSkipBtn, pressed && { opacity: 0.7 }]}
+            style={styles.devSkipBtn}
           >
             <Text style={styles.devSkipText}>[DEV] Skip to Discover →</Text>
-          </Pressable>
+          </Touchable>
         </View>
       </View>
     </SafeAreaView>
@@ -86,9 +92,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[3],
   },
   // Middle absorbs all the spare vertical space so the CTAs stay anchored.
   middle: {
@@ -98,67 +104,42 @@ const styles = StyleSheet.create({
   },
   // Lockup aspect is 795x1024 (mark over wordmark) — height/width kept in that
   // ratio so `contain` leaves no dead space around it.
-  lockup: { width: 202, height: 260, marginBottom: 28 },
+  lockup: { width: 202, height: 260, marginBottom: spacing[7] },
   title: {
-    fontSize: 26,
+    fontSize: fontSize.h1,
     lineHeight: 32,
-    fontWeight: "800",
-    color: colors.foreground,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.4,
     textAlign: "center",
   },
   subtitle: {
-    marginTop: 8,
-    fontSize: 14,
-    color: colors.mutedForeground,
+    marginTop: spacing[2],
+    fontSize: fontSize.body,
+    color: colors.text.muted,
     textAlign: "center",
   },
   // Bottom — anchored auth CTAs.
   bottom: {
-    gap: 12,
+    gap: spacing[3],
   },
-  primaryBtn: {
+  // Both auth CTAs are Buttons; this only makes them taller than the default
+  // `lg` and gives the primary its brand lift, since they are the hero of the
+  // screen rather than an inline action.
+  authBtn: {
     height: 56,
-    borderRadius: radii.lg,
-    backgroundColor: colors.primary,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 18,
-    elevation: 4,
   },
-  primaryBtnText: {
-    color: colors.primaryForeground,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  secondaryBtn: {
-    height: 56,
-    borderRadius: radii.lg,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  secondaryBtnText: { fontSize: 16, fontWeight: "700", color: colors.foreground },
   googleG: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: "#EA4335",
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.extrabold,
+    color: colors.external.google,
     fontStyle: "italic",
   },
   legal: {
-    marginTop: 14,
-    fontSize: 12,
+    marginTop: spacing[3.5],
+    fontSize: fontSize.caption,
     lineHeight: 18,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     textAlign: "center",
   },
   // Modern mobile pattern: bold colored link text instead of underline
@@ -167,8 +148,8 @@ const styles = StyleSheet.create({
   // On web we also suppress the default tap-highlight + selection box so
   // tapping the link doesn't paint a gray rectangle around the text.
   legalLink: {
-    color: colors.primary,
-    fontWeight: "700",
+    color: colors.brand.default,
+    fontWeight: fontWeight.bold,
     ...Platform.select({
       web: {
         cursor: "pointer",
@@ -181,20 +162,20 @@ const styles = StyleSheet.create({
   } as const,
   // TEMPORARY dev-only skip — remove with the button above.
   devSkipBtn: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     alignSelf: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: "#F59E0B",
+    borderColor: colors.premium.icon,
     borderStyle: "dashed",
-    backgroundColor: "#FEF3C7",
+    backgroundColor: colors.premium.surface,
   },
   devSkipText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#92400E",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
+    color: colors.premium.textStrong,
     letterSpacing: 0.3,
   },
 });

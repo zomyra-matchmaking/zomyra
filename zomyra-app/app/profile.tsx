@@ -12,7 +12,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
-  CheckCircle2,
+  CheckCircle2 as CheckCircleIcon,
   ChevronRight,
   Crown,
   Eye,
@@ -23,41 +23,21 @@ import {
   Pencil,
   ShieldAlert,
   Sparkles,
-  Trash2,
+  Trash2 as TrashIcon,
   X,
   type LucideIcon,
 } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import {
-  Animated,
-  Easing,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Animated, Easing, Image, KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
 import { useRequestsStore } from "@/src/stores/requests-store";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F4EAFB";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
-const DANGER = "#DC2626";
-const DANGER_BG = "#FEE2E2";
-const DANGER_BG_SOFT = "#FEF2F2";
-const GOLD = "#F59E0B";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
+import { NAV_CLEARANCE } from "@/src/constants";
+import { isIOS } from "@/src/utils/platform";
 
 const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80&auto=format&fit=crop";
@@ -114,12 +94,12 @@ export default function ProfileScreen() {
             </Text>
             {isPremium ? (
               <View testID="profile-premium-badge" style={styles.premiumDot}>
-                <Crown size={11} color="#FFF" strokeWidth={2.4} fill="#FFF" />
+                <Crown size={11} color={colors.text.onBrand} strokeWidth={2.4} fill={colors.text.onBrand} />
               </View>
             ) : null}
           </View>
           <View style={styles.locRow}>
-            <MapPin size={14} color={MUTED} strokeWidth={2} />
+            <MapPin size={14} color={colors.text.muted} strokeWidth={2} />
             <Text style={styles.locText}>{city}</Text>
           </View>
         </View>
@@ -129,8 +109,8 @@ export default function ProfileScreen() {
           <ActionRow
             testID="profile-action-edit"
             Icon={Pencil}
-            iconBg={LIGHT_PURPLE}
-            iconColor={PURPLE}
+            iconBg={colors.surface.brand}
+            iconColor={colors.brand.default}
             title="Edit profile"
             subtitle="Update your photos, details & preferences"
             onPress={() => router.push("/edit-profile" as never)}
@@ -139,8 +119,8 @@ export default function ProfileScreen() {
           <ActionRow
             testID="profile-action-personality"
             Icon={Heart}
-            iconBg={LIGHT_PURPLE}
-            iconColor={PURPLE}
+            iconBg={colors.surface.brand}
+            iconColor={colors.brand.default}
             title="Personality test"
             subtitle="Retake the conversational test to refresh your matches"
             onPress={() => router.push("/personality-test" as never)}
@@ -151,8 +131,8 @@ export default function ProfileScreen() {
               <ActionRow
                 testID="profile-action-premium"
                 Icon={Crown}
-                iconBg={LIGHT_PURPLE}
-                iconColor={PURPLE}
+                iconBg={colors.surface.brand}
+                iconColor={colors.brand.default}
                 title="Zomyra Premium"
                 subtitle="Unlock advanced features"
                 rightBadgeText="Best value"
@@ -164,8 +144,8 @@ export default function ProfileScreen() {
           <ActionRow
             testID="profile-action-logout"
             Icon={LogOut}
-            iconBg={DANGER_BG_SOFT}
-            iconColor={DANGER}
+            iconBg={colors.danger.surface}
+            iconColor={colors.danger.default}
             title="Log out"
             subtitle="Sign out from your account"
             onPress={() => setShowLogout(true)}
@@ -173,9 +153,9 @@ export default function ProfileScreen() {
           <Divider />
           <ActionRow
             testID="profile-action-delete"
-            Icon={Trash2}
-            iconBg={DANGER_BG_SOFT}
-            iconColor={DANGER}
+            Icon={TrashIcon}
+            iconBg={colors.danger.surface}
+            iconColor={colors.danger.default}
             title="Delete account"
             subtitle="Permanently delete your account"
             onPress={() => setShowDelete(true)}
@@ -187,26 +167,26 @@ export default function ProfileScreen() {
         {!isPremium ? (
         <View style={styles.premiumCard}>
           <LinearGradient
-            colors={[PURPLE, PURPLE_DEEP]}
+            colors={colors.gradient.brand}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.premiumArt}
           >
             <View style={styles.premiumGlow} />
-            <Crown size={64} color="#FFF" strokeWidth={1.2} fill="#E9D5FF" />
+            <Crown size={64} color={colors.text.onBrand} strokeWidth={1.2} fill={colors.surface.brandStrong} />
             <Sparkles
               size={14}
-              color="#FFF"
+              color={colors.text.onBrand}
               style={{ position: "absolute", top: 16, left: 16 }}
             />
             <Sparkles
               size={10}
-              color="#FFF"
+              color={colors.text.onBrand}
               style={{ position: "absolute", bottom: 18, right: 16, opacity: 0.7 }}
             />
             <Sparkles
               size={10}
-              color="#FFF"
+              color={colors.text.onBrand}
               style={{ position: "absolute", top: 36, right: 24, opacity: 0.6 }}
             />
           </LinearGradient>
@@ -216,7 +196,7 @@ export default function ProfileScreen() {
             <Text style={styles.premiumSub}>
               Serious matches. Better connections.
             </Text>
-            <View style={{ marginTop: 10, gap: 8 }}>
+            <View style={{ marginTop: spacing[2.5], gap: spacing[2] }}>
               <Benefit label="Unlimited connect requests" />
               <Benefit label="Advanced filters (Height, Income & more)" />
               <Benefit label="Better visibility in Discover" />
@@ -225,24 +205,22 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <Pressable
+          <Touchable
+            feedback="scale"
             testID="profile-see-plans"
             onPress={() => router.push("/premium" as never)}
-            style={({ pressed }) => [
-              styles.premiumCta,
-              pressed && { transform: [{ scale: 0.985 }] },
-            ]}
+            style={[styles.premiumCta]}
           >
             <LinearGradient
-              colors={[PURPLE, PURPLE_DEEP]}
+              colors={colors.gradient.brand}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.premiumCtaGradient}
             >
-              <Crown size={16} color={GOLD} strokeWidth={2} fill={GOLD} />
+              <Crown size={16} color={colors.premium.onDark} strokeWidth={2} fill={colors.premium.onDark} />
               <Text style={styles.premiumCtaText}>See Premium Plans</Text>
             </LinearGradient>
-          </Pressable>
+          </Touchable>
         </View>
         ) : null}
       </ScrollView>
@@ -287,14 +265,10 @@ function ActionRow({
   last?: boolean;
 }) {
   return (
-    <Pressable
+    <Touchable
       testID={testID}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.row,
-        last && { paddingBottom: 16 },
-        pressed && { opacity: 0.85 },
-      ]}
+      style={[styles.row, last && { paddingBottom: spacing[4] }]}
     >
       <View style={[styles.rowIcon, { backgroundColor: iconBg }]}>
         <Icon size={20} color={iconColor} strokeWidth={2} />
@@ -310,8 +284,8 @@ function ActionRow({
           <Text style={styles.bestValueText}>{rightBadgeText}</Text>
         </View>
       ) : null}
-      <ChevronRight size={18} color={MUTED} strokeWidth={2} />
-    </Pressable>
+      <ChevronRight size={18} color={colors.text.muted} strokeWidth={2} />
+    </Touchable>
   );
 }
 
@@ -320,7 +294,7 @@ function Divider() {
 }
 
 function Benefit({
-  Icon = CheckCircle2,
+  Icon = CheckCircleIcon,
   label,
   comingSoon,
 }: {
@@ -331,7 +305,7 @@ function Benefit({
   return (
     <View style={styles.benefitRow}>
       <View style={styles.benefitIcon}>
-        <Icon size={12} color="#FFF" strokeWidth={3} />
+        <Icon size={12} color={colors.text.onBrand} strokeWidth={3} />
       </View>
       <Text style={styles.benefitText}>{label}</Text>
       {comingSoon ? (
@@ -359,10 +333,10 @@ function LogoutDialog({
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      <Pressable style={styles.dialogBackdrop} onPress={onCancel}>
-        <Pressable style={styles.dialogCard} onPress={() => {}}>
+      <Touchable style={styles.dialogBackdrop} onPress={onCancel}>
+        <Touchable style={styles.dialogCard} onPress={() => {}}>
           <View style={styles.dialogIconCircleDanger}>
-            <LogOut size={22} color={DANGER} strokeWidth={2} />
+            <LogOut size={22} color={colors.danger.default} strokeWidth={2} />
           </View>
           <Text style={styles.dialogTitle}>Log out?</Text>
           <Text style={styles.dialogBody}>
@@ -370,29 +344,24 @@ function LogoutDialog({
             sign back in anytime.
           </Text>
           <View style={styles.dialogActions}>
-            <Pressable
+            <Touchable
               testID="logout-cancel"
               onPress={onCancel}
-              style={({ pressed }) => [
-                styles.dialogCancel,
-                pressed && { opacity: 0.85 },
-              ]}
+              style={[styles.dialogCancel]}
             >
               <Text style={styles.dialogCancelText}>Cancel</Text>
-            </Pressable>
-            <Pressable
+            </Touchable>
+            <Touchable
+              feedback="scale"
               testID="logout-confirm"
               onPress={onConfirm}
-              style={({ pressed }) => [
-                styles.dialogDanger,
-                pressed && { transform: [{ scale: 0.985 }] },
-              ]}
+              style={[styles.dialogDanger]}
             >
               <Text style={styles.dialogDangerText}>Log out</Text>
-            </Pressable>
+            </Touchable>
           </View>
-        </Pressable>
-      </Pressable>
+        </Touchable>
+      </Touchable>
     </Modal>
   );
 }
@@ -464,10 +433,10 @@ function DeleteAccountDialog({
       statusBarTranslucent
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={isIOS ? "padding" : undefined}
         style={styles.dialogBackdrop}
       >
-        <Pressable
+        <Touchable
           style={StyleSheet.absoluteFill}
           onPress={close}
           testID="delete-backdrop"
@@ -480,24 +449,21 @@ function DeleteAccountDialog({
             <Text style={styles.deleteHeaderTitle}>
               {step === 1 ? "Delete account" : "Confirm account deletion"}
             </Text>
-            <Pressable
+            <Touchable
               testID="delete-close"
               onPress={close}
               hitSlop={10}
-              style={({ pressed }) => [
-                styles.deleteCloseBtn,
-                pressed && { opacity: 0.7 },
-              ]}
+              style={[styles.deleteCloseBtn]}
             >
-              <X size={18} color={TEXT} strokeWidth={2.2} />
-            </Pressable>
+              <X size={18} color={colors.text.primary} strokeWidth={2.2} />
+            </Touchable>
           </View>
 
           {step === 1 ? (
             <View>
               <View style={styles.warnBanner}>
                 <View style={styles.warnIcon}>
-                  <ShieldAlert size={16} color={DANGER} strokeWidth={2} />
+                  <ShieldAlert size={16} color={colors.danger.default} strokeWidth={2} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.warnTitle}>This action cannot be undone</Text>
@@ -511,11 +477,11 @@ function DeleteAccountDialog({
               <Text style={styles.askTitle}>Why are you leaving Zomyra?</Text>
               <Text style={styles.askSub}>Your feedback helps us improve.</Text>
 
-              <View style={{ marginTop: 10, gap: 8 }}>
+              <View style={{ marginTop: spacing[2.5], gap: spacing[2] }}>
                 {REASONS.map((r) => {
                   const active = reason === r;
                   return (
-                    <Pressable
+                    <Touchable
                       key={r}
                       testID={`delete-reason-${r}`}
                       onPress={() => setReason(r)}
@@ -529,7 +495,7 @@ function DeleteAccountDialog({
                       >
                         {r}
                       </Text>
-                    </Pressable>
+                    </Touchable>
                   );
                 })}
               </View>
@@ -540,22 +506,19 @@ function DeleteAccountDialog({
                   value={feedback}
                   onChangeText={(t) => setFeedback(t.slice(0, 200))}
                   placeholder="Tell us more (optional)"
-                  placeholderTextColor={MUTED}
+                  placeholderTextColor={colors.text.muted}
                   multiline
                   style={styles.feedbackInput}
                 />
                 <Text style={styles.feedbackCount}>{feedback.length}/200</Text>
               </View>
 
-              <Pressable
+              <Touchable
+                feedback="scale"
                 testID="delete-continue"
                 disabled={!canContinue}
                 onPress={() => animateTo(2)}
-                style={({ pressed }) => [
-                  styles.continueBtn,
-                  canContinue ? styles.continueBtnActive : styles.continueBtnDisabled,
-                  pressed && canContinue && { transform: [{ scale: 0.985 }] },
-                ]}
+                style={[styles.continueBtn, canContinue ? styles.continueBtnActive : styles.continueBtnDisabled]}
               >
                 <Text
                   style={[
@@ -567,7 +530,7 @@ function DeleteAccountDialog({
                 >
                   Continue
                 </Text>
-              </Pressable>
+              </Touchable>
               <Text style={styles.continueHelper}>
                 This helps us prevent accidental deletions.
               </Text>
@@ -575,10 +538,10 @@ function DeleteAccountDialog({
           ) : (
             <View>
               <View style={styles.trashIconCircle}>
-                <Trash2 size={28} color={DANGER} strokeWidth={2} />
+                <TrashIcon size={28} color={colors.danger.default} strokeWidth={2} />
               </View>
               <Text style={styles.confirmTitle}>
-                Type <Text style={{ color: DANGER, fontWeight: "800" }}>DELETE</Text>{" "}
+                Type <Text style={{ color: colors.danger.default, fontWeight: fontWeight.extrabold }}>DELETE</Text>{" "}
                 to permanently delete your account
               </Text>
               <View style={styles.deleteInputWrap}>
@@ -587,40 +550,34 @@ function DeleteAccountDialog({
                   value={confirmText}
                   onChangeText={setConfirmText}
                   placeholder="Type DELETE here"
-                  placeholderTextColor={MUTED}
+                  placeholderTextColor={colors.text.muted}
                   autoCapitalize="characters"
                   style={styles.deleteInput}
                 />
               </View>
-              <Pressable
+              <Touchable
+                feedback="scale"
                 testID="delete-confirm"
                 disabled={!canDelete}
                 onPress={onConfirm}
-                style={({ pressed }) => [
-                  styles.deleteCta,
-                  canDelete ? styles.deleteCtaActive : styles.deleteCtaDisabled,
-                  pressed && canDelete && { transform: [{ scale: 0.985 }] },
-                ]}
+                style={[styles.deleteCta, canDelete ? styles.deleteCtaActive : styles.deleteCtaDisabled]}
               >
-                <Trash2 size={18} color="#FFF" strokeWidth={2.4} />
+                <TrashIcon size={18} color={colors.text.onBrand} strokeWidth={2.4} />
                 <Text style={styles.deleteCtaText}>Delete my account</Text>
-              </Pressable>
+              </Touchable>
               <View style={styles.lockNoteRow}>
                 <View style={styles.lockNoteDot} />
                 <Text style={styles.lockNote}>
                   Your account and all data will be permanently deleted.
                 </Text>
               </View>
-              <Pressable
+              <Touchable
                 testID="delete-back"
                 onPress={() => animateTo(1)}
-                style={({ pressed }) => [
-                  styles.backLink,
-                  pressed && { opacity: 0.7 },
-                ]}
+                style={[styles.backLink]}
               >
                 <Text style={styles.backLinkText}>← Back</Text>
-              </Pressable>
+              </Touchable>
             </View>
           )}
         </Animated.View>
@@ -631,85 +588,89 @@ function DeleteAccountDialog({
 
 // ───────────────────────── styles ─────────────────────────
 
+// Row dividers start past the leading icon tile so they align with the text
+// column rather than spanning the full card. Icon (44) + its gutter (24).
+const ROW_ICON_INSET = 68;
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
-  scroll: { paddingBottom: 110 },
+  root: { flex: 1, backgroundColor: colors.surface.default },
+  scroll: { paddingBottom: NAV_CLEARANCE },
 
   // header
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[1],
   },
   kicker: {
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 2,
-    color: PURPLE,
+    color: colors.brand.default,
   },
   title: {
-    marginTop: 2,
-    fontSize: 26,
-    fontWeight: "800",
-    color: TEXT,
+    marginTop: spacing[0.5],
+    fontSize: fontSize.h1,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.5,
   },
 
   // summary — compact
   summary: {
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[2],
   },
   avatarRing: {
     width: 80,
     height: 80,
-    borderRadius: 999,
-    padding: 3,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    padding: spacing[1],
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  avatar: { width: "100%", height: "100%", borderRadius: 999 },
+  avatar: { width: "100%", height: "100%", borderRadius: radii.full },
   nameRow: {
-    marginTop: 10,
+    marginTop: spacing[2.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
   name: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: TEXT,
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.4,
   },
   premiumDot: {
     width: 22,
     height: 22,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: PURPLE,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  locRow: { marginTop: 2, flexDirection: "row", alignItems: "center", gap: 4 },
-  locText: { fontSize: 13, color: MUTED, fontWeight: "500" },
+  locRow: { marginTop: spacing[0.5], flexDirection: "row", alignItems: "center", gap: spacing[1] },
+  locText: { fontSize: fontSize.label, color: colors.text.muted, fontWeight: fontWeight.medium },
 
   // action card
   actionCard: {
-    marginHorizontal: 16,
-    marginTop: 4,
-    backgroundColor: "#FFF",
-    borderRadius: 24,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[1],
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     overflow: "hidden",
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 16,
@@ -718,57 +679,57 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
   },
   rowIcon: {
     width: 40,
     height: 40,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     alignItems: "center",
     justifyContent: "center",
   },
-  rowTitle: { fontSize: 15.5, fontWeight: "700", color: TEXT, letterSpacing: -0.2 },
-  rowSubtitle: { marginTop: 2, fontSize: 12.5, color: MUTED, fontWeight: "500" },
+  rowTitle: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.2 },
+  rowSubtitle: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.medium },
   divider: {
     height: 1,
-    backgroundColor: BORDER,
-    marginLeft: 68,
+    backgroundColor: colors.border.default,
+    marginLeft: ROW_ICON_INSET,
   },
   bestValueBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1],
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  bestValueText: { fontSize: 11, fontWeight: "800", color: PURPLE },
+  bestValueText: { fontSize: fontSize.micro, fontWeight: fontWeight.extrabold, color: colors.brand.default },
 
   // premium card
   premiumCard: {
-    marginHorizontal: 16,
-    marginTop: 14,
-    backgroundColor: "#FFF",
-    borderRadius: 24,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[3.5],
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     overflow: "hidden",
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
     elevation: 3,
     flexDirection: "row",
     flexWrap: "wrap",
-    padding: 14,
-    gap: 12,
+    padding: spacing[3.5],
+    gap: spacing[3],
   },
   premiumArt: {
     width: 110,
     height: 170,
-    borderRadius: 18,
+    borderRadius: radii["2xl"],
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -779,41 +740,41 @@ const styles = StyleSheet.create({
     left: -20,
     right: -20,
     bottom: -20,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: alpha(colors.text.onBrand, 0.05),
   },
   premiumBody: { flex: 1, minWidth: 0 },
   premiumTitle: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: TEXT,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.3,
   },
-  premiumSub: { marginTop: 2, fontSize: 12, color: MUTED },
-  benefitRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  premiumSub: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
+  benefitRow: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
   benefitIcon: {
     width: 18,
     height: 18,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  benefitText: { flex: 1, fontSize: 12.5, color: TEXT, fontWeight: "500", flexShrink: 1 },
+  benefitText: { flex: 1, fontSize: fontSize.caption, color: colors.text.primary, fontWeight: fontWeight.medium, flexShrink: 1 },
   benefitCs: {
-    fontSize: 10,
-    color: MUTED,
-    fontWeight: "700",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: "#F3F4F6",
+    fontSize: fontSize.nano,
+    color: colors.text.muted,
+    fontWeight: fontWeight.bold,
+    paddingHorizontal: spacing[1.5],
+    paddingVertical: spacing[0.5],
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.subtle,
   },
   premiumCta: {
     width: "100%",
-    borderRadius: 16,
+    borderRadius: radii.xl,
     overflow: "hidden",
-    marginTop: 2,
-    shadowColor: PURPLE,
+    marginTop: spacing[0.5],
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
@@ -824,26 +785,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
-  premiumCtaText: { color: "#FFF", fontSize: 16, fontWeight: "800", letterSpacing: -0.2 },
+  premiumCtaText: { color: colors.text.onBrand, fontSize: fontSize.title, fontWeight: fontWeight.extrabold, letterSpacing: -0.2 },
 
   // shared dialog
   dialogBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
   },
   dialogCard: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: "#FFF",
-    borderRadius: 24,
-    padding: 22,
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
+    padding: spacing[6],
     alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.2,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 14 },
@@ -852,55 +813,55 @@ const styles = StyleSheet.create({
   dialogIconCircleDanger: {
     width: 48,
     height: 48,
-    borderRadius: 999,
-    backgroundColor: DANGER_BG,
+    borderRadius: radii.full,
+    backgroundColor: colors.danger.surfaceStrong,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
-  dialogTitle: { fontSize: 18, fontWeight: "800", color: TEXT, letterSpacing: -0.3 },
+  dialogTitle: { fontSize: fontSize.heading, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.3 },
   dialogBody: {
-    marginTop: 6,
-    fontSize: 13.5,
-    color: MUTED,
+    marginTop: spacing[1.5],
+    fontSize: fontSize.label,
+    color: colors.text.muted,
     textAlign: "center",
     lineHeight: 20,
   },
-  dialogActions: { marginTop: 18, flexDirection: "row", gap: 10, width: "100%" },
+  dialogActions: { marginTop: spacing[4.5], flexDirection: "row", gap: spacing[2.5], width: "100%" },
   dialogCancel: {
     flex: 1,
     height: 48,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFF",
+    backgroundColor: colors.surface.default,
   },
-  dialogCancelText: { fontSize: 14, fontWeight: "700", color: TEXT },
+  dialogCancelText: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary },
   dialogDanger: {
     flex: 1.3,
     height: 48,
-    borderRadius: 14,
-    backgroundColor: DANGER,
+    borderRadius: radii.lg,
+    backgroundColor: colors.danger.default,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: DANGER,
+    shadowColor: colors.danger.default,
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
     elevation: 4,
   },
-  dialogDangerText: { color: "#FFF", fontSize: 14, fontWeight: "800" },
+  dialogDangerText: { color: colors.text.onBrand, fontSize: fontSize.body, fontWeight: fontWeight.extrabold },
 
   // delete account
   deleteCard: {
     width: "100%",
     maxWidth: 380,
-    backgroundColor: "#FFF",
-    borderRadius: 24,
-    padding: 18,
-    shadowColor: "#000",
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
+    padding: spacing[4.5],
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.2,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 14 },
@@ -910,104 +871,104 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
-  deleteHeaderTitle: { fontSize: 17, fontWeight: "800", color: TEXT, letterSpacing: -0.3 },
+  deleteHeaderTitle: { fontSize: fontSize.title, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.3 },
   deleteCloseBtn: {
     width: 30,
     height: 30,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
 
   warnBanner: {
     flexDirection: "row",
-    gap: 10,
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: DANGER_BG_SOFT,
+    gap: spacing[2.5],
+    padding: spacing[3],
+    borderRadius: radii.xl,
+    backgroundColor: colors.danger.surface,
     borderWidth: 1,
-    borderColor: DANGER_BG,
+    borderColor: colors.danger.surfaceStrong,
   },
   warnIcon: {
     width: 32,
     height: 32,
-    borderRadius: 999,
-    backgroundColor: DANGER_BG,
+    borderRadius: radii.full,
+    backgroundColor: colors.danger.surfaceStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  warnTitle: { fontSize: 13, fontWeight: "800", color: DANGER },
-  warnBody: { marginTop: 2, fontSize: 12, color: "#7F1D1D", lineHeight: 17 },
+  warnTitle: { fontSize: fontSize.label, fontWeight: fontWeight.extrabold, color: colors.danger.default },
+  warnBody: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.danger.textStrong, lineHeight: 17 },
 
-  askTitle: { marginTop: 16, fontSize: 14.5, fontWeight: "800", color: TEXT },
-  askSub: { marginTop: 2, fontSize: 12, color: MUTED },
+  askTitle: { marginTop: spacing[4], fontSize: fontSize.body, fontWeight: fontWeight.extrabold, color: colors.text.primary },
+  askSub: { marginTop: spacing[0.5], fontSize: fontSize.caption, color: colors.text.muted },
 
   reasonRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 14,
+    gap: spacing[2.5],
+    paddingVertical: spacing[2.5],
+    paddingHorizontal: spacing[3],
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  reasonRowActive: { borderColor: PURPLE, backgroundColor: LIGHT_PURPLE },
+  reasonRowActive: { borderColor: colors.brand.default, backgroundColor: colors.surface.brand },
   radio: {
     width: 20,
     height: 20,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
+    borderColor: colors.border.neutralStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: PURPLE },
-  radioDot: { width: 10, height: 10, borderRadius: 999, backgroundColor: PURPLE },
-  reasonText: { fontSize: 13.5, fontWeight: "600", color: TEXT, flex: 1 },
-  reasonTextActive: { color: PURPLE, fontWeight: "700" },
+  radioActive: { borderColor: colors.brand.default },
+  radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
+  reasonText: { fontSize: fontSize.label, fontWeight: fontWeight.semibold, color: colors.text.primary, flex: 1 },
+  reasonTextActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
 
   feedbackWrap: {
-    marginTop: 12,
-    borderRadius: 14,
+    marginTop: spacing[3],
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
-    padding: 12,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
+    padding: spacing[3],
   },
   feedbackInput: {
     minHeight: 64,
-    fontSize: 13.5,
-    color: TEXT,
+    fontSize: fontSize.label,
+    color: colors.text.primary,
     textAlignVertical: "top",
   },
   feedbackCount: {
     alignSelf: "flex-end",
-    fontSize: 11,
-    color: MUTED,
-    fontWeight: "600",
+    fontSize: fontSize.micro,
+    color: colors.text.muted,
+    fontWeight: fontWeight.semibold,
   },
 
   continueBtn: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     height: 48,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     alignItems: "center",
     justifyContent: "center",
   },
-  continueBtnActive: { backgroundColor: DANGER },
-  continueBtnDisabled: { backgroundColor: DANGER_BG_SOFT },
-  continueBtnText: { fontSize: 14, fontWeight: "800" },
-  continueBtnTextActive: { color: "#FFF" },
-  continueBtnTextDisabled: { color: DANGER, opacity: 0.7 },
+  continueBtnActive: { backgroundColor: colors.danger.default },
+  continueBtnDisabled: { backgroundColor: colors.danger.surface },
+  continueBtnText: { fontSize: fontSize.body, fontWeight: fontWeight.extrabold },
+  continueBtnTextActive: { color: colors.text.onBrand },
+  continueBtnTextDisabled: { color: colors.danger.default, opacity: 0.7 },
   continueHelper: {
-    marginTop: 8,
-    fontSize: 12,
-    color: MUTED,
+    marginTop: spacing[2],
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
     textAlign: "center",
   },
 
@@ -1016,53 +977,53 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 64,
     height: 64,
-    borderRadius: 999,
-    backgroundColor: DANGER_BG,
+    borderRadius: radii.full,
+    backgroundColor: colors.danger.surfaceStrong,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 6,
+    marginTop: spacing[1.5],
   },
   confirmTitle: {
-    marginTop: 14,
-    fontSize: 16,
-    fontWeight: "800",
-    color: TEXT,
+    marginTop: spacing[3.5],
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     textAlign: "center",
     lineHeight: 22,
   },
   deleteInputWrap: {
-    marginTop: 14,
-    borderRadius: 14,
+    marginTop: spacing[3.5],
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
-    paddingHorizontal: 14,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
+    paddingHorizontal: spacing[3.5],
   },
-  deleteInput: { height: 48, fontSize: 14, color: TEXT, fontWeight: "700" },
+  deleteInput: { height: 48, fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.bold },
 
   deleteCta: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     height: 50,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
-  deleteCtaActive: { backgroundColor: "#EF4444" },
-  deleteCtaDisabled: { backgroundColor: "#FCA5A5" },
-  deleteCtaText: { color: "#FFF", fontSize: 15, fontWeight: "800", letterSpacing: -0.2 },
+  deleteCtaActive: { backgroundColor: colors.danger.default },
+  deleteCtaDisabled: { backgroundColor: colors.danger.border },
+  deleteCtaText: { color: colors.text.onBrand, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.extrabold, letterSpacing: -0.2 },
 
   lockNoteRow: {
-    marginTop: 12,
+    marginTop: spacing[3],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
-  lockNoteDot: { width: 6, height: 6, borderRadius: 999, backgroundColor: MUTED },
-  lockNote: { fontSize: 11.5, color: MUTED, fontWeight: "500" },
+  lockNoteDot: { width: 6, height: 6, borderRadius: radii.full, backgroundColor: colors.text.muted },
+  lockNote: { fontSize: fontSize.micro, color: colors.text.muted, fontWeight: fontWeight.medium },
 
-  backLink: { marginTop: 10, alignSelf: "center", paddingVertical: 6, paddingHorizontal: 12 },
-  backLinkText: { fontSize: 12.5, color: MUTED, fontWeight: "700" },
+  backLink: { marginTop: spacing[2.5], alignSelf: "center", paddingVertical: spacing[1.5], paddingHorizontal: spacing[3] },
+  backLinkText: { fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.bold },
 });

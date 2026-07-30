@@ -18,8 +18,8 @@
  *  10. Fourth Image
  *  11. Fifth Image
  *
- * Tokens: PURPLE #5B2C6F · LIGHT_PURPLE #F5F3FF · BORDER #ECEAF7 ·
- *         TEXT #111827 · MUTED #6B7280 · HAIRLINE #EEEBF3.
+ * Colours come from the semantic tokens in `@/src/theme` — see that module for
+ * the values and their measured contrast.
  */
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -40,22 +40,15 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  Dimensions,
-  Image,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Dimensions, Image, Modal, StyleSheet, Text, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
 } from "react-native-reanimated";
 
 import type { CompatibilityDimension, DiscoverProfile } from "@/src/lib/discover/mock";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const SCREEN = Dimensions.get("window");
 const SCREEN_W = Math.min(SCREEN.width, 430);
@@ -65,12 +58,6 @@ const SCREEN_H_FULL = SCREEN.height;
 const PAD_X = 24;
 
 // ───── Design tokens ─────
-const PURPLE = "#5B2C6F";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const HAIRLINE = "#EEEBF3";
-const TEXT = "#111827";
-const SOFT = "#9CA3AF";
 
 // Lifestyle label → icon. Spec-mandated pairings first.
 const LIFESTYLE_ICONS: Record<string, LucideIcon> = {
@@ -198,19 +185,16 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         />
 
         {/* Compatibility chip — floats top-right; auto-collapses to icon-only. */}
-        <Pressable
+        <Touchable
           testID="discover-tier-chip"
           onPress={() => {
             setTierExpanded(true);
             setShowReason(true);
           }}
           hitSlop={8}
-          style={({ pressed }) => [
-            styles.heroTierChip,
-            pressed && { opacity: 0.9 },
-          ]}
+          style={[styles.heroTierChip]}
         >
-          <Sparkles size={12} color="#FFF" strokeWidth={2.4} />
+          <Sparkles size={12} color={colors.text.onBrand} strokeWidth={2.4} />
           {tierExpanded ? (
             <Animated.View
               entering={FadeIn.duration(240)}
@@ -222,11 +206,10 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
               </Text>
             </Animated.View>
           ) : null}
-        </Pressable>
+        </Touchable>
 
         {/* Tap hero to open the full-screen viewer */}
-        <TouchableOpacity
-          activeOpacity={0.95}
+        <Touchable
           onPress={() => setViewerPhoto(photos[0])}
           style={StyleSheet.absoluteFill as never}
           testID="discover-photo-0"
@@ -235,7 +218,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         {/* Scrim + identity overlay */}
         <LinearGradient
           pointerEvents="none"
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.82)"]}
+          colors={["transparent", alpha(colors.overlay.base, 0.55), alpha(colors.overlay.base, 0.82)]}
           locations={[0, 0.55, 1]}
           style={styles.heroScrim}
         />
@@ -247,13 +230,13 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             </Text>
             {profile.premium ? (
               <View testID="discover-premium-badge" style={styles.heroPremiumBadge}>
-                <Crown size={11} color="#F59E0B" strokeWidth={2.4} fill="#F59E0B" />
+                <Crown size={11} color={colors.premium.onDark} strokeWidth={2.4} fill={colors.premium.onDark} />
                 <Text style={styles.heroPremiumText}>Premium</Text>
               </View>
             ) : null}
           </View>
           <View style={styles.heroLocRow}>
-            <MapPin size={13} color="rgba(255,255,255,0.9)" strokeWidth={2} />
+            <MapPin size={13} color={alpha(colors.text.onBrand, 0.9)} strokeWidth={2} />
             <Text style={styles.heroLoc} numberOfLines={1}>
               {profile.location}
             </Text>
@@ -275,7 +258,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
             const I = LIFESTYLE_ICONS[label] ?? Sparkles;
             return (
               <View key={label} style={styles.factGridItem}>
-                <I size={16} color={PURPLE} strokeWidth={1.8} />
+                <I size={16} color={colors.brand.default} strokeWidth={1.8} />
                 <Text style={styles.factGridLabel} numberOfLines={1}>
                   {label}
                 </Text>
@@ -293,13 +276,13 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         testID="discover-profession-income"
       >
         <View style={styles.professionRow}>
-          <BriefcaseBusiness size={16} color={PURPLE} strokeWidth={1.8} />
+          <BriefcaseBusiness size={16} color={colors.brand.default} strokeWidth={1.8} />
           <Text style={styles.professionText} numberOfLines={2}>
             {profession}
           </Text>
         </View>
         <View style={styles.professionRow}>
-          <IndianRupee size={16} color={PURPLE} strokeWidth={1.8} />
+          <IndianRupee size={16} color={colors.brand.default} strokeWidth={1.8} />
           <Text style={styles.professionText} numberOfLines={2}>
             {income}
           </Text>
@@ -346,7 +329,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
                 testID={`discover-align-chip-${s.label}`}
                 style={styles.alignChip}
               >
-                <HeartHandshake size={13} color={PURPLE} strokeWidth={1.8} />
+                <HeartHandshake size={13} color={colors.brand.default} strokeWidth={1.8} />
                 <Text style={styles.alignChipText} numberOfLines={2}>
                   {s.label}
                 </Text>
@@ -402,30 +385,27 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         onRequestClose={() => setShowReason(false)}
         statusBarTranslucent
       >
-        <Pressable
+        <Touchable
           style={styles.reasonBackdrop}
           onPress={() => setShowReason(false)}
         >
-          <Pressable style={styles.reasonCard} onPress={() => {}}>
+          <Touchable style={styles.reasonCard} onPress={() => {}}>
             <View style={styles.reasonChip}>
-              <Sparkles size={12} color="#FFF" strokeWidth={2.6} />
+              <Sparkles size={12} color={colors.text.onBrand} strokeWidth={2.6} />
               <Text style={styles.reasonChipText}>
                 {dimScore?.tier ?? profile.compatibility}
               </Text>
             </View>
             <Text style={styles.reasonTitle}>{reasonTitle}</Text>
             <Text style={styles.reasonBody}>{reason}</Text>
-            <Pressable
+            <Touchable
               onPress={() => setShowReason(false)}
-              style={({ pressed }) => [
-                styles.reasonCloseBtn,
-                pressed && { opacity: 0.9 },
-              ]}
+              style={[styles.reasonCloseBtn]}
             >
               <Text style={styles.reasonCloseText}>Got it</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
+            </Touchable>
+          </Touchable>
+        </Touchable>
       </Modal>
 
       {/* Full-screen photo viewer */}
@@ -437,16 +417,14 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
         statusBarTranslucent
       >
         <View style={styles.viewerRoot}>
-          <TouchableOpacity
+          <Touchable
             testID="photo-viewer-close"
             onPress={() => setViewerPhoto(null)}
             style={styles.viewerClose}
-            activeOpacity={0.8}
           >
-            <X size={22} color="#FFF" strokeWidth={2} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={1}
+            <X size={22} color={colors.text.onBrand} strokeWidth={2} />
+          </Touchable>
+          <Touchable
             onPress={() => setViewerPhoto(null)}
             style={styles.viewerBackdrop}
           >
@@ -457,7 +435,7 @@ export function ProfileView({ profile, dimension = "all", footer }: Props) {
                 resizeMode="contain"
               />
             ) : null}
-          </TouchableOpacity>
+          </Touchable>
         </View>
       </Modal>
 
@@ -482,7 +460,7 @@ function Section({
   return (
     <View style={styles.section} testID={testID}>
       <View style={styles.sectionHeader}>
-        {Icon ? <Icon size={12} color={PURPLE} strokeWidth={2} /> : null}
+        {Icon ? <Icon size={12} color={colors.brand.default} strokeWidth={2} /> : null}
         <Text style={styles.kicker}>{kicker}</Text>
       </View>
       <View style={styles.sectionBody}>{children}</View>
@@ -509,19 +487,16 @@ function ExpandableText({ text }: { text: string }) {
         {text}
       </Text>
       {isTruncatable ? (
-        <Pressable
+        <Touchable
           testID="about-toggle"
           onPress={() => setExpanded((v) => !v)}
           hitSlop={8}
-          style={({ pressed }) => [
-            styles.expandToggle,
-            pressed && { opacity: 0.7 },
-          ]}
+          style={[styles.expandToggle]}
         >
           <Text style={styles.expandToggleText}>
             {expanded ? "See less" : "See more"}
           </Text>
-        </Pressable>
+        </Touchable>
       ) : null}
     </View>
   );
@@ -541,9 +516,8 @@ function EditorialPhoto({
   last?: boolean;
 }) {
   return (
-    <View style={[styles.editorialPhotoWrap, last && { marginBottom: 8 }]}>
-      <TouchableOpacity
-        activeOpacity={0.95}
+    <View style={[styles.editorialPhotoWrap, last && { marginBottom: spacing[2] }]}>
+      <Touchable
         onPress={onOpen}
         style={styles.editorialPhoto}
         testID={testID}
@@ -557,7 +531,7 @@ function EditorialPhoto({
           <>
             <LinearGradient
               pointerEvents="none"
-              colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.62)"]}
+              colors={["transparent", alpha(colors.overlay.base, 0.62)]}
               locations={[0, 1]}
               style={styles.photoCaptionScrim}
             />
@@ -568,7 +542,7 @@ function EditorialPhoto({
             </View>
           </>
         ) : null}
-      </TouchableOpacity>
+      </Touchable>
     </View>
   );
 }
@@ -583,7 +557,7 @@ function QuickFact({
   last?: boolean;
 }) {
   return (
-    <View style={[styles.quickFact, last && { marginBottom: 0 }]}>
+    <View style={[styles.quickFact, last && { marginBottom: spacing[0] }]}>
       <Text style={styles.quickFactLabel}>{label}</Text>
       <Text style={styles.quickFactValue} numberOfLines={2}>
         {value}
@@ -594,14 +568,14 @@ function QuickFact({
 
 const styles = StyleSheet.create({
   root: {
-    backgroundColor: "#FFFFFF",
-    paddingBottom: 24,
+    backgroundColor: colors.surface.default,
+    paddingBottom: spacing[6],
   },
 
   // ─── Hero ───
   hero: {
     width: SCREEN_W,
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     overflow: "hidden",
     position: "relative",
   },
@@ -622,49 +596,49 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: 10,
+    gap: spacing[2.5],
   },
   heroName: {
-    fontSize: 34,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: fontSize.displayLarge,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     letterSpacing: -0.9,
     lineHeight: 40,
   },
   heroAge: {
-    fontSize: 34,
-    fontWeight: "300",
-    color: "#FFFFFF",
+    fontSize: fontSize.displayLarge,
+    fontWeight: fontWeight.regular,
+    color: colors.text.onBrand,
     letterSpacing: -0.9,
   },
   heroPremiumBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
+    borderColor: alpha(colors.text.onBrand, 0.35),
   },
   heroPremiumText: {
-    fontSize: 9.5,
-    fontWeight: "800",
-    color: "#FFF",
+    fontSize: fontSize.nano,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.onBrand,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   heroLocRow: {
-    marginTop: 8,
+    marginTop: spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: spacing[1],
   },
   heroLoc: {
-    fontSize: 13.5,
-    color: "rgba(255,255,255,0.92)",
-    fontWeight: "500",
+    fontSize: fontSize.label,
+    color: alpha(colors.text.onBrand, 0.92),
+    fontWeight: fontWeight.medium,
     letterSpacing: 0.1,
   },
   heroTierChip: {
@@ -673,98 +647,98 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.overlay.base, 0.4),
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderColor: alpha(colors.text.onBrand, 0.2),
     zIndex: 2,
     overflow: "hidden",
   },
   heroTierLabelWrap: {
-    marginLeft: 5,
+    marginLeft: spacing[1],
   },
   heroTierText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#FFF",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
+    color: colors.text.onBrand,
     letterSpacing: 0.2,
   },
 
   // Languages & Faith — icon-less rows (label above value).
   langRow: {
-    paddingVertical: 12,
+    paddingVertical: spacing[3],
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: HAIRLINE,
+    borderBottomColor: colors.border.subtle,
   },
   langRowLast: {
     borderBottomWidth: 0,
   },
   langLabel: {
-    fontSize: 11.5,
-    fontWeight: "500",
-    color: SOFT,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   langValue: {
-    marginTop: 4,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    marginTop: spacing[1],
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
   // ─── Section (whitespace-driven, no cards) ───
   section: {
     paddingHorizontal: PAD_X,
-    paddingTop: 32,
-    paddingBottom: 12,
+    paddingTop: spacing[8],
+    paddingBottom: spacing[3],
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
   kicker: {
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 1.6,
-    color: PURPLE,
+    color: colors.brand.default,
     textTransform: "uppercase",
   },
   sectionTitle: {
-    marginTop: 6,
-    fontSize: 22,
-    fontWeight: "700",
-    color: TEXT,
+    marginTop: spacing[1.5],
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     letterSpacing: -0.5,
   },
   sectionBody: {
-    marginTop: 16,
+    marginTop: spacing[4],
   },
 
   hairline: {
-    marginTop: 24,
+    marginTop: spacing[6],
     marginHorizontal: PAD_X,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: HAIRLINE,
+    backgroundColor: colors.border.subtle,
   },
 
   // ─── About body ───
   bodyText: {
-    fontSize: 14.5,
+    fontSize: fontSize.body,
     lineHeight: 22,
-    color: TEXT,
-    fontWeight: "500",
+    color: colors.text.primary,
+    fontWeight: fontWeight.medium,
     letterSpacing: -0.1,
   },
-  expandToggle: { marginTop: 10, alignSelf: "flex-start" },
+  expandToggle: { marginTop: spacing[2.5], alignSelf: "flex-start" },
   expandToggleText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: PURPLE,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.bold,
+    color: colors.brand.default,
     letterSpacing: 0.2,
   },
 
@@ -776,17 +750,17 @@ const styles = StyleSheet.create({
   },
   factGridItem: {
     width: "50%",
-    paddingHorizontal: 6,
-    paddingVertical: 10,
+    paddingHorizontal: spacing[1.5],
+    paddingVertical: spacing[2.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing[2.5],
   },
   factGridLabel: {
     flex: 1,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -794,14 +768,14 @@ const styles = StyleSheet.create({
   professionRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 8,
+    gap: spacing[2.5],
+    paddingVertical: spacing[2],
   },
   professionText: {
     flex: 1,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -809,10 +783,10 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
+    gap: spacing[3],
+    paddingVertical: spacing[3],
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: HAIRLINE,
+    borderBottomColor: colors.border.subtle,
   },
   detailIcon: {
     width: 24,
@@ -821,17 +795,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   detailLabel: {
-    fontSize: 11.5,
-    fontWeight: "500",
-    color: SOFT,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   detailValue: {
-    marginTop: 2,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    marginTop: spacing[0.5],
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
@@ -842,33 +816,33 @@ const styles = StyleSheet.create({
   },
   quickFact: {
     width: "50%",
-    marginBottom: 18,
-    paddingRight: 12,
+    marginBottom: spacing[4.5],
+    paddingRight: spacing[3],
   },
   quickFactLabel: {
-    fontSize: 11.5,
-    fontWeight: "500",
-    color: SOFT,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   quickFactValue: {
-    marginTop: 4,
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    marginTop: spacing[1],
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
   },
 
   // ─── Editorial photos (edge-to-edge, no radius) ───
   editorialPhotoWrap: {
-    marginTop: 24,
+    marginTop: spacing[6],
   },
   editorialPhoto: {
     width: SCREEN_W,
     height: Math.round(SCREEN_W * 1.15),
     overflow: "hidden",
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     position: "relative",
   },
   photoCaptionScrim: {
@@ -885,12 +859,12 @@ const styles = StyleSheet.create({
     bottom: 20,
   },
   photoCaptionText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    fontSize: fontSize.heading,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.onBrand,
     letterSpacing: -0.2,
     lineHeight: 24,
-    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowColor: alpha(colors.overlay.base, 0.4),
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 8,
   },
@@ -899,45 +873,45 @@ const styles = StyleSheet.create({
   alignChipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing[2],
   },
   alignChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
+    gap: spacing[2],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   alignChipText: {
-    fontSize: 14.5,
-    fontWeight: "500",
-    color: TEXT,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
     letterSpacing: -0.1,
     maxWidth: SCREEN_W - PAD_X * 2 - 60,
   },
 
-  footerSlot: { paddingHorizontal: PAD_X, paddingTop: 12 },
+  footerSlot: { paddingHorizontal: PAD_X, paddingTop: spacing[3] },
 
   // ─── Reason modal ───
   reasonBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
   },
   reasonCard: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: "#FFF",
-    borderRadius: 24,
-    padding: 24,
-    gap: 12,
-    shadowColor: "#000",
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
+    padding: spacing[6],
+    gap: spacing[3],
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.18,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 12 },
@@ -947,32 +921,32 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    gap: spacing[1.5],
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1],
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
-  reasonChipText: { color: "#FFF", fontSize: 11, fontWeight: "700" },
+  reasonChipText: { color: colors.text.onBrand, fontSize: fontSize.micro, fontWeight: fontWeight.bold },
   reasonTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: TEXT,
+    fontSize: fontSize.subtitle,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     letterSpacing: -0.3,
   },
-  reasonBody: { fontSize: 16, lineHeight: 24, color: TEXT, fontWeight: "400" },
+  reasonBody: { fontSize: fontSize.title, lineHeight: 24, color: colors.text.primary, fontWeight: fontWeight.regular },
   reasonCloseBtn: {
-    marginTop: 8,
+    marginTop: spacing[2],
     alignSelf: "flex-end",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 18,
-    backgroundColor: PURPLE,
+    paddingHorizontal: spacing[4.5],
+    paddingVertical: spacing[3],
+    borderRadius: radii["2xl"],
+    backgroundColor: colors.brand.default,
   },
-  reasonCloseText: { color: "#FFF", fontSize: 14, fontWeight: "600" },
+  reasonCloseText: { color: colors.text.onBrand, fontSize: fontSize.body, fontWeight: fontWeight.semibold },
 
   // ─── Photo viewer ───
-  viewerRoot: { flex: 1, backgroundColor: "#000" },
+  viewerRoot: { flex: 1, backgroundColor: colors.surface.media },
   viewerBackdrop: { flex: 1, alignItems: "center", justifyContent: "center" },
   viewerImage: { width: SCREEN_W, height: SCREEN_H_FULL * 0.85 },
   viewerClose: {
@@ -982,8 +956,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
     width: 40,
     height: 40,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.onBrand, 0.18),
     alignItems: "center",
     justifyContent: "center",
   },

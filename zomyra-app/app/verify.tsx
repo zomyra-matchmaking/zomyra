@@ -4,15 +4,16 @@
  */
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Camera, Check, Clock, ImagePlus, ShieldCheck, Sun, UserCircle2, X } from "lucide-react-native";
+import { Camera, Check, Clock, ImagePlus, ShieldCheck, Sun, UserCircle2 as UserCircleIcon, X } from "lucide-react-native";
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingShell } from "@/src/components/onboarding/OnboardingShell";
 import { PhotoUploadGrid } from "@/src/components/verification/PhotoUploadGrid";
 import { MIN_PHOTOS } from "@/src/lib/verification/types";
 import { useVerificationStore } from "@/src/stores/verification-store";
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const TOTAL = 6;
 
@@ -85,17 +86,17 @@ export default function VerifyScreen() {
       >
         <View style={styles.shieldWrap}>
           <View style={styles.shieldCircle}>
-            <ShieldCheck size={28} color="#fff" />
+            <ShieldCheck size={28} color={colors.text.onBrand} />
           </View>
         </View>
-        <View style={{ marginTop: 24, gap: 8 }}>
+        <View style={{ marginTop: spacing[6], gap: spacing[2] }}>
           {[
             "Better visibility in search",
             "A safer community for everyone",
           ].map((t) => (
             <View key={t} style={styles.benefitRow}>
               <View style={styles.benefitCheck}>
-                <Check size={12} color={colors.primary} strokeWidth={3} />
+                <Check size={12} color={colors.brand.default} strokeWidth={3} />
               </View>
               <Text style={styles.benefitText}>{t}</Text>
             </View>
@@ -131,13 +132,13 @@ export default function VerifyScreen() {
         <View style={styles.tipsGrid}>
           {[
             { Icon: Sun, t: "Good lighting" },
-            { Icon: UserCircle2, t: "Full face visible" },
+            { Icon: UserCircleIcon, t: "Full face visible" },
             { Icon: X, t: "No sunglasses" },
             { Icon: X, t: "No hats or filters" },
           ].map((x) => (
             <View key={x.t} style={styles.tipCard}>
               <View style={styles.tipIcon}>
-                <x.Icon size={14} color={colors.primary} />
+                <x.Icon size={14} color={colors.brand.default} />
               </View>
               <Text style={styles.tipText}>{x.t}</Text>
             </View>
@@ -171,21 +172,21 @@ export default function VerifyScreen() {
             {state.selfieUri ? (
               <Image source={{ uri: state.selfieUri }} style={{ width: "100%", height: "100%" }} />
             ) : (
-              <ImagePlus size={28} color={colors.mutedForeground} />
+              <ImagePlus size={28} color={colors.text.muted} />
             )}
           </View>
-          <Pressable
+          <Touchable
             testID="retake-selfie"
             onPress={() => {
               setSelfie(null);
               setStep(2);
               captureSelfie();
             }}
-            style={({ pressed }) => [styles.retakeBtn, pressed && { opacity: 0.9 }]}
+            style={[styles.retakeBtn]}
           >
-            <Camera size={16} color={colors.foreground} />
+            <Camera size={16} color={colors.text.primary} />
             <Text style={styles.retakeText}>Retake Selfie</Text>
-          </Pressable>
+          </Touchable>
         </View>
       </OnboardingShell>
     );
@@ -205,7 +206,7 @@ export default function VerifyScreen() {
     >
       <View style={styles.shieldWrap}>
         <View style={styles.successCircle}>
-          <Check size={28} color="#fff" strokeWidth={2.5} />
+          <Check size={28} color={colors.text.onBrand} strokeWidth={2.5} />
         </View>
       </View>
       <View style={styles.statusList}>
@@ -214,8 +215,8 @@ export default function VerifyScreen() {
         <StatusRow pending label="Identity verification in progress" />
       </View>
       <View style={styles.calloutBox}>
-        <Clock size={14} color={colors.mutedForeground} />
-        <Text style={[styles.calloutText, { flex: 1, marginLeft: 6 }]}>
+        <Clock size={14} color={colors.text.muted} />
+        <Text style={[styles.calloutText, { flex: 1, marginLeft: spacing[1.5] }]}>
           Verification is usually completed within a few hours and always within 24 hours.
         </Text>
       </View>
@@ -229,14 +230,14 @@ function StatusRow({ label, done, pending }: { label: string; done?: boolean; pe
       <View
         style={[
           styles.statusDot,
-          done && { backgroundColor: colors.primary },
-          pending && { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
+          done && { backgroundColor: colors.brand.default },
+          pending && { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border.default },
         ]}
       >
         {done ? (
-          <Check size={12} color="#fff" strokeWidth={3.5} />
+          <Check size={12} color={colors.text.onBrand} strokeWidth={3.5} />
         ) : (
-          <Clock size={10} color={colors.mutedForeground} />
+          <Clock size={10} color={colors.text.muted} />
         )}
       </View>
       <Text style={styles.statusLabel}>{label}</Text>
@@ -246,16 +247,16 @@ function StatusRow({ label, done, pending }: { label: string; done?: boolean; pe
 }
 
 const styles = StyleSheet.create({
-  helperText: { marginTop: 12, fontSize: 13, fontWeight: "600", color: colors.mutedForeground },
+  helperText: { marginTop: spacing[3], fontSize: fontSize.label, fontWeight: fontWeight.semibold, color: colors.text.muted },
   shieldWrap: { alignItems: "center" },
   shieldCircle: {
     width: 80,
     height: 80,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: colors.primary,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.3,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
@@ -264,49 +265,49 @@ const styles = StyleSheet.create({
   successCircle: {
     width: 72,
     height: 72,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
   benefitRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    gap: spacing[3],
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2.5],
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   benefitCheck: {
     width: 28,
     height: 28,
-    borderRadius: 10,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  benefitText: { fontSize: 14, fontWeight: "600", color: colors.foreground, flex: 1 },
+  benefitText: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary, flex: 1 },
   calloutBox: {
-    marginTop: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: "rgba(244,234,251,0.6)",
+    marginTop: spacing[3.5],
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2.5],
+    borderRadius: radii.md,
+    backgroundColor: alpha(colors.surface.brand, 0.6),
     flexDirection: "row",
     alignItems: "flex-start",
   },
-  calloutText: { fontSize: 13, lineHeight: 19, color: colors.mutedForeground },
+  calloutText: { fontSize: fontSize.label, lineHeight: 19, color: colors.text.muted },
   poseWrap: { alignItems: "center" },
   poseFrame: {
     width: 128,
     height: 168,
-    borderRadius: 18,
+    borderRadius: radii["2xl"],
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.secondary,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.brand,
     overflow: "hidden",
   },
   poseHead: {
@@ -316,10 +317,10 @@ const styles = StyleSheet.create({
     marginLeft: -28,
     width: 56,
     height: 56,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "rgba(91,44,111,0.7)",
-    backgroundColor: colors.card,
+    borderColor: alpha(colors.brand.default, 0.7),
+    backgroundColor: colors.surface.default,
   },
   poseShoulders: {
     position: "absolute",
@@ -331,85 +332,85 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 56,
     borderTopRightRadius: 56,
     borderWidth: 2,
-    borderColor: "rgba(91,44,111,0.6)",
-    backgroundColor: colors.card,
+    borderColor: alpha(colors.brand.default, 0.6),
+    backgroundColor: colors.surface.default,
   },
   tipsGrid: {
-    marginTop: 24,
+    marginTop: spacing[6],
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing[2],
   },
   tipCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderRadius: 12,
+    gap: spacing[2],
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[2.5],
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     width: "48.5%",
   },
   tipIcon: {
     width: 28,
     height: 28,
-    borderRadius: 10,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  tipText: { fontSize: 13, fontWeight: "600", color: colors.foreground },
+  tipText: { fontSize: fontSize.label, fontWeight: fontWeight.semibold, color: colors.text.primary },
   selfiePreview: {
     width: 180,
     height: 240,
-    borderRadius: 20,
-    backgroundColor: colors.secondary,
+    borderRadius: radii["3xl"],
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.border.default,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
   },
   retakeBtn: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
+    gap: spacing[2],
+    paddingHorizontal: spacing[4],
     height: 44,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  retakeText: { fontSize: 14, fontWeight: "700", color: colors.foreground },
+  retakeText: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary },
   statusList: {
-    marginTop: 20,
-    borderRadius: 14,
+    marginTop: spacing[5],
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     overflow: "hidden",
   },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.border.default,
   },
   statusDot: {
     width: 24,
     height: 24,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.background,
   },
-  statusLabel: { fontSize: 14, fontWeight: "600", color: colors.foreground, flex: 1 },
-  statusValue: { fontSize: 12, fontWeight: "600", color: colors.mutedForeground },
+  statusLabel: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary, flex: 1 },
+  statusValue: { fontSize: fontSize.caption, fontWeight: fontWeight.semibold, color: colors.text.muted },
 });

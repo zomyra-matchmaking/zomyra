@@ -12,21 +12,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { X } from "lucide-react-native";
 import { useEffect, useRef, type ReactNode } from "react";
-import {
-  Animated,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { Animated, Modal, StyleSheet, Text, View } from "react-native";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 type Props = {
   visible: boolean;
@@ -80,7 +68,7 @@ export function PremiumFilterDialog({
       statusBarTranslucent
     >
       <Animated.View style={[styles.backdrop, { opacity }]}>
-        <Pressable
+        <Touchable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           testID="premium-dialog-backdrop"
@@ -94,49 +82,41 @@ export function PremiumFilterDialog({
               <Text style={styles.title}>{title}</Text>
               {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
             </View>
-            <Pressable
+            <Touchable
               testID="premium-dialog-close"
               onPress={onClose}
               hitSlop={10}
-              style={({ pressed }) => [
-                styles.closeBtn,
-                pressed && { opacity: 0.7 },
-              ]}
+              style={[styles.closeBtn]}
             >
-              <X size={18} color={TEXT} strokeWidth={2.2} />
-            </Pressable>
+              <X size={18} color={colors.text.primary} strokeWidth={2.2} />
+            </Touchable>
           </View>
 
-          <View style={{ marginTop: 18 }}>{children}</View>
+          <View style={{ marginTop: spacing[4.5] }}>{children}</View>
 
           <View style={styles.footer}>
-            <Pressable
+            <Touchable
               testID="premium-dialog-cancel"
               onPress={onClose}
-              style={({ pressed }) => [
-                styles.cancelBtn,
-                pressed && { opacity: 0.85 },
-              ]}
+              style={[styles.cancelBtn]}
             >
               <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-            <Pressable
+            </Touchable>
+            <Touchable
+              feedback="scale"
               testID="premium-dialog-apply"
               onPress={onApply}
-              style={({ pressed }) => [
-                styles.applyBtn,
-                pressed && { transform: [{ scale: 0.985 }] },
-              ]}
+              style={[styles.applyBtn]}
             >
               <LinearGradient
-                colors={[PURPLE, PURPLE_DEEP]}
+                colors={colors.gradient.brand}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.applyGradient}
               >
                 <Text style={styles.applyText}>{applyLabel}</Text>
               </LinearGradient>
-            </Pressable>
+            </Touchable>
           </View>
         </Animated.View>
       </Animated.View>
@@ -147,18 +127,18 @@ export function PremiumFilterDialog({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
   },
   card: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: "#FFF",
-    borderRadius: 24,
-    padding: 22,
-    shadowColor: "#000",
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
+    padding: spacing[6],
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.2,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 16 },
@@ -167,41 +147,41 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: spacing[3],
   },
-  title: { fontSize: 20, fontWeight: "700", color: TEXT, letterSpacing: -0.3 },
-  subtitle: { marginTop: 4, fontSize: 13, color: MUTED, lineHeight: 18 },
+  title: { fontSize: fontSize.subtitle, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
+  subtitle: { marginTop: spacing[1], fontSize: fontSize.label, color: colors.text.muted, lineHeight: 18 },
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
     marginTop: -2,
   },
 
   footer: {
-    marginTop: 20,
+    marginTop: spacing[5],
     flexDirection: "row",
-    gap: 10,
+    gap: spacing[2.5],
   },
   cancelBtn: {
     flex: 1,
     height: 50,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFF",
+    backgroundColor: colors.surface.default,
   },
-  cancelText: { fontSize: 15, fontWeight: "700", color: TEXT },
+  cancelText: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold, color: colors.text.primary },
   applyBtn: {
     flex: 1.4,
-    borderRadius: 16,
+    borderRadius: radii.xl,
     overflow: "hidden",
-    shadowColor: PURPLE,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
@@ -212,5 +192,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  applyText: { color: "#FFF", fontSize: 15, fontWeight: "700", letterSpacing: -0.1 },
+  applyText: { color: colors.text.onBrand, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.bold, letterSpacing: -0.1 },
 });

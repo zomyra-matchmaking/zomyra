@@ -1,20 +1,11 @@
 import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useRef, type ReactNode } from "react";
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Animated, Easing, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 type Props = {
   step: number;
@@ -128,20 +119,20 @@ export function OnboardingShell({
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        keyboardVerticalOffset={0}
       >
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <Pressable
+            <Touchable
               testID="onboarding-back"
               onPress={onBack}
-              style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+              style={[styles.backBtn]}
               hitSlop={8}
             >
-              <ArrowLeft size={20} color={colors.foreground} strokeWidth={2.2} />
-            </Pressable>
+              <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
+            </Touchable>
             {!hideStepLabel ? (
               <Text style={styles.stepLabel}>
                 Step {step + 1} of {total}
@@ -177,19 +168,15 @@ export function OnboardingShell({
 
         {!hideNext ? (
           <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-            <Pressable
+            <Touchable
               testID="onboarding-next"
               disabled={!canNext || loading}
               onPress={onNext}
-              style={({ pressed }) => [
-                styles.nextBtn,
-                (!canNext || loading) && styles.nextBtnDisabled,
-                pressed && canNext && { opacity: 0.92 },
-              ]}
+              style={[styles.nextBtn, (!canNext || loading) && styles.nextBtnDisabled]}
             >
-              {loading ? <ActivityIndicator color={colors.primaryForeground} /> : null}
+              {loading ? <ActivityIndicator color={colors.brand.onBrand} /> : null}
               <Text style={styles.nextLabel}>{nextLabel}</Text>
-            </Pressable>
+            </Touchable>
           </View>
         ) : (
           <View style={{ paddingBottom: Math.max(insets.bottom, 12) }} />
@@ -205,9 +192,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[1.5],
+    paddingBottom: spacing[2.5],
     backgroundColor: colors.background,
   },
   headerRow: {
@@ -218,38 +205,38 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: -8,
   },
   stepLabel: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
     letterSpacing: 1.4,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     textTransform: "uppercase",
   },
   progressTrack: {
-    marginTop: 12,
+    marginTop: spacing[3],
     height: 5,
-    borderRadius: 999,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
   },
   progressBar: {
     height: 5,
-    backgroundColor: colors.primary,
-    borderRadius: 999,
+    backgroundColor: colors.brand.default,
+    borderRadius: radii.full,
     justifyContent: "center",
     alignItems: "flex-end",
   },
   progressPulse: {
     width: 10,
     height: 10,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     marginRight: -2,
-    shadowColor: colors.primary,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.55,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 5,
@@ -258,8 +245,8 @@ const styles = StyleSheet.create({
   // Question container is centered vertically and horizontally.
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[6],
     justifyContent: "center",
   },
   questionWrap: {
@@ -267,47 +254,47 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.bold,
     lineHeight: 30,
     letterSpacing: -0.3,
-    color: colors.foreground,
+    color: colors.text.primary,
     textAlign: "center",
   },
   subtitle: {
-    marginTop: 8,
-    fontSize: 15,
+    marginTop: spacing[2],
+    fontSize: fontSize.bodyLarge,
     lineHeight: 22,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     textAlign: "center",
   },
   bodyWrap: {
-    marginTop: 28,
+    marginTop: spacing[7],
     width: "100%",
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2.5],
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.border.default,
     backgroundColor: colors.background,
   },
   nextBtn: {
     height: 52,
     borderRadius: radii.md + 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 8,
+    gap: spacing[2],
   },
   nextBtnDisabled: {
-    backgroundColor: "#D6CFE0",
+    backgroundColor: colors.surface.disabled,
   },
   nextLabel: {
-    color: colors.primaryForeground,
-    fontSize: 15,
-    fontWeight: "700",
+    color: colors.brand.onBrand,
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.1,
   },
 });

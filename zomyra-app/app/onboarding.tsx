@@ -28,8 +28,9 @@ import {
   PROFESSIONS,
 } from "@/src/lib/onboarding/data";
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
-import { colors } from "@/src/theme/colors";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
+import { Input } from "@/src/components/ui";
 
 type Section = 1 | 2 | 3;
 type IntroScreen = { kind: "intro"; section: Section };
@@ -87,7 +88,7 @@ const Q1: QuestionScreen[] = [
       subtitle: "How you'd like to appear to your matches.",
       canNext: !!s.firstName.trim() && !!s.lastName.trim(),
       body: (
-        <View style={{ gap: 12 }}>
+        <View style={{ gap: spacing[3] }}>
           <NameField label="First name" value={s.firstName} onChange={(v) => set("firstName", v)} />
           <NameField label="Last name" value={s.lastName} onChange={(v) => set("lastName", v)} />
         </View>
@@ -103,9 +104,9 @@ const Q1: QuestionScreen[] = [
         subtitle: "Spin the wheels to set your date of birth.",
         canNext: !!s.dob && (age ?? 0) >= 18,
         body: (
-          <View style={{ alignItems: "center", gap: 16 }}>
+          <View style={{ alignItems: "center", gap: spacing[4] }}>
             <DateWheel value={s.dob} onChange={(v) => set("dob", v)} />
-            <Text style={{ fontSize: 13, color: colors.mutedForeground }}>
+            <Text style={{ fontSize: fontSize.label, color: colors.text.muted }}>
               {age == null
                 ? "Set your date of birth"
                 : age < 18
@@ -164,7 +165,7 @@ const Q1: QuestionScreen[] = [
         canNext: !!s.heightCm,
         body: (
           <View>
-            <View style={{ alignItems: "center", marginBottom: 20 }}>
+            <View style={{ alignItems: "center", marginBottom: spacing[5] }}>
               <Text style={styles.bigValue}>{cmToImperial(cm)}</Text>
               <Text style={styles.smallValue}>{cm} cm</Text>
             </View>
@@ -373,16 +374,16 @@ const Q1: QuestionScreen[] = [
       canNext: true,
       body: (
         <View>
-          <TextInput
+          <Input
             testID="onboarding-bio"
             value={s.bio}
-            onChangeText={(t) => set("bio", t.slice(0, 500))}
+            onChangeText={(t) => set("bio", t)}
             placeholder="I love long walks, weekend hikes, and honest conversations over coffee…"
-            placeholderTextColor={colors.mutedForeground}
             multiline
-            style={styles.bioInput}
+            rows={6}
+            maxLength={500}
+            showCount
           />
-          <Text style={styles.bioCount}>{s.bio.length}/500</Text>
         </View>
       ),
     }),
@@ -514,7 +515,7 @@ export default function OnboardingScreen() {
   // Wait for the persisted state to rehydrate before rendering so the
   // user always resumes on the correct step.
   if (!hasHydrated) {
-    return <View style={{ flex: 1, backgroundColor: "#fff" }} />;
+    return <View style={{ flex: 1, backgroundColor: colors.surface.default }} />;
   }
 
   if (screen.kind === "intro") {
@@ -576,7 +577,7 @@ function NameField({
         onChangeText={onChange}
         maxLength={40}
         style={styles.fieldInput}
-        placeholderTextColor={colors.mutedForeground}
+        placeholderTextColor={colors.text.muted}
       />
     </View>
   );
@@ -584,44 +585,24 @@ function NameField({
 
 const styles = StyleSheet.create({
   fieldLabel: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
     letterSpacing: 1.4,
-    color: colors.mutedForeground,
-    marginBottom: 6,
+    color: colors.text.muted,
+    marginBottom: spacing[1.5],
   },
   fieldInput: {
     height: 48,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingHorizontal: spacing[4],
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    fontSize: 15,
-    color: colors.foreground,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
+    fontSize: fontSize.bodyLarge,
+    color: colors.text.primary,
   },
-  bigValue: { fontSize: 36, fontWeight: "700", color: colors.foreground, letterSpacing: -0.6 },
-  smallValue: { marginTop: 4, fontSize: 12, color: colors.mutedForeground },
-  rangeLabels: { marginTop: 8, flexDirection: "row", justifyContent: "space-between" },
-  rangeLabel: { fontSize: 11, color: colors.mutedForeground },
-  bioInput: {
-    minHeight: 140,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.foreground,
-    textAlignVertical: "top",
-  },
-  bioCount: {
-    marginTop: 6,
-    alignSelf: "flex-end",
-    fontSize: 11,
-    fontWeight: "600",
-    color: colors.mutedForeground,
-  },
+  bigValue: { fontSize: fontSize.displayXl, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.6 },
+  smallValue: { marginTop: spacing[1], fontSize: fontSize.caption, color: colors.text.muted },
+  rangeLabels: { marginTop: spacing[2], flexDirection: "row", justifyContent: "space-between" },
+  rangeLabel: { fontSize: fontSize.micro, color: colors.text.muted },
 });

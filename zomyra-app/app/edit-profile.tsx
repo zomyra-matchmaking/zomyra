@@ -19,7 +19,7 @@ import {
   ArrowLeft,
   Briefcase,
   Camera,
-  CheckCircle2,
+  CheckCircle2 as CheckCircleIcon,
   Cigarette,
   Dumbbell,
   GraduationCap,
@@ -31,26 +31,14 @@ import {
   Pencil,
   Plus,
   Sparkles,
-  Trash2,
+  Trash2 as TrashIcon,
   UserRound,
   Wine,
   X,
   type LucideIcon,
 } from "lucide-react-native";
 import { useMemo, useState, type ReactNode } from "react";
-import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, Image, KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useOnboardingStore } from "@/src/stores/onboarding-store";
@@ -63,13 +51,11 @@ import type {
   IncomeRange,
   Smoking,
 } from "@/src/lib/onboarding/types";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 // Design tokens — match Discover so the screens feel related.
-const PURPLE = "#5B2C6F";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
 
 // Option lists (mirror onboarding types.ts)
 const BUILD_OPTS: BodyType[] = ["Slim", "Average", "Athletic", "Curvy", "Plus Size", "Prefer Not To Say"];
@@ -152,28 +138,28 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={isIOS ? "padding" : undefined}
         style={{ flex: 1 }}
       >
         {/* ── Sticky header ── */}
         <View style={styles.header}>
-          <Pressable
+          <Touchable
             testID="edit-back"
             onPress={() => router.back()}
             hitSlop={10}
-            style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
+            style={[styles.iconBtn]}
           >
-            <ArrowLeft size={20} color={TEXT} strokeWidth={2.2} />
-          </Pressable>
+            <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
+          </Touchable>
           <Text style={styles.headerTitle}>Edit Profile</Text>
-          <Pressable
+          <Touchable
             testID="edit-done"
             onPress={() => router.back()}
             hitSlop={10}
-            style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.85 }]}
+            style={[styles.doneBtn]}
           >
             <Text style={styles.doneText}>Done</Text>
-          </Pressable>
+          </Touchable>
         </View>
 
         <ScrollView
@@ -191,7 +177,7 @@ export default function EditProfileScreen() {
                   value={state.firstName}
                   onChangeText={(t) => set("firstName", t)}
                   placeholder="First name"
-                  placeholderTextColor={MUTED}
+                  placeholderTextColor={colors.text.muted}
                   style={[
                     styles.identityNameInput,
                     // Size the input to its content so ", age" sits inline.
@@ -207,13 +193,13 @@ export default function EditProfileScreen() {
                 {age != null ? <Text style={styles.identityName}>, {age}</Text> : null}
               </View>
               <View style={styles.identityLocRow}>
-                <MapPin size={14} color={MUTED} strokeWidth={2} />
+                <MapPin size={14} color={colors.text.muted} strokeWidth={2} />
                 <TextInput
                   testID="edit-city"
                   value={state.city}
                   onChangeText={(t) => set("city", t)}
                   placeholder="Add your city"
-                  placeholderTextColor={MUTED}
+                  placeholderTextColor={colors.text.muted}
                   style={styles.identityLocInput}
                 />
               </View>
@@ -222,17 +208,17 @@ export default function EditProfileScreen() {
 
           {/* ── Primary photo card (hero) ── */}
           <SectionCard kicker="PRIMARY PHOTO" Icon={Camera} testID="card-primary-photo">
-            <Pressable
+            <Touchable
               testID="edit-primary-photo"
               onPress={() => pickPhoto(state.photos.length > 0 ? 0 : null)}
-              style={({ pressed }) => [styles.heroPhotoWrap, pressed && { opacity: 0.95 }]}
+              style={[styles.heroPhotoWrap]}
             >
               <Image source={{ uri: photos[0] }} style={styles.heroPhoto} />
               <View style={styles.heroEditChip}>
-                <Pencil size={14} color="#FFF" strokeWidth={2.4} />
+                <Pencil size={14} color={colors.text.onBrand} strokeWidth={2.4} />
                 <Text style={styles.heroEditText}>Change photo</Text>
               </View>
-            </Pressable>
+            </Touchable>
             <Text style={styles.helper}>
               This is the first photo people see in Discover. Make it count.
             </Text>
@@ -246,30 +232,25 @@ export default function EditProfileScreen() {
                 return (
                   <View key={`${realIdx}-${src.slice(-12)}`} style={styles.photoTile}>
                     <Image source={{ uri: src }} style={styles.photoTileImage} />
-                    <Pressable
+                    <Touchable
                       onPress={() => removePhoto(realIdx)}
-                      style={({ pressed }) => [
-                        styles.photoTileDelete,
-                        pressed && { opacity: 0.85 },
-                      ]}
+                      style={[styles.photoTileDelete]}
                       hitSlop={6}
                     >
-                      <Trash2 size={13} color="#FFF" strokeWidth={2.4} />
-                    </Pressable>
+                      <TrashIcon size={13} color={colors.text.onBrand} strokeWidth={2.4} />
+                    </Touchable>
                   </View>
                 );
               })}
-              <Pressable
+              <Touchable
+                feedback="scale"
                 testID="edit-add-photo"
                 onPress={() => pickPhoto(null)}
-                style={({ pressed }) => [
-                  styles.photoAdd,
-                  pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
-                ]}
+                style={[styles.photoAdd]}
               >
-                <Plus size={22} color={PURPLE} strokeWidth={2.4} />
+                <Plus size={22} color={colors.brand.default} strokeWidth={2.4} />
                 <Text style={styles.photoAddText}>Add photo</Text>
-              </Pressable>
+              </Touchable>
             </View>
           </SectionCard>
 
@@ -281,7 +262,7 @@ export default function EditProfileScreen() {
                 value={state.profession}
                 onChangeText={(t) => set("profession", t)}
                 placeholder="What you do"
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.text.muted}
                 style={styles.fieldInput}
               />
             </FieldRow>
@@ -416,7 +397,7 @@ export default function EditProfileScreen() {
                   )
                 }
                 placeholder="English, Hindi…"
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.text.muted}
                 style={styles.fieldInput}
               />
             </FieldRow>
@@ -449,11 +430,11 @@ function SectionCard({
     <View style={styles.card} testID={testID}>
       <View style={styles.kickerRow}>
         <View style={styles.kickerIcon}>
-          <Icon size={13} color={PURPLE} strokeWidth={2.4} />
+          <Icon size={13} color={colors.brand.default} strokeWidth={2.4} />
         </View>
         <Text style={styles.kickerText}>{kicker}</Text>
       </View>
-      <View style={{ marginTop: 12 }}>{children}</View>
+      <View style={{ marginTop: spacing[3] }}>{children}</View>
     </View>
   );
 }
@@ -470,11 +451,11 @@ function FieldRow({
   return (
     <View style={styles.fieldRow}>
       <View style={styles.fieldIcon}>
-        <Icon size={16} color={PURPLE} strokeWidth={2.2} />
+        <Icon size={16} color={colors.brand.default} strokeWidth={2.2} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.fieldLabel}>{label}</Text>
-        <View style={{ marginTop: 2 }}>{children}</View>
+        <View style={{ marginTop: spacing[0.5] }}>{children}</View>
       </View>
     </View>
   );
@@ -496,28 +477,28 @@ function PickField({
   testID?: string;
 }) {
   return (
-    <Pressable
+    <Touchable
       testID={testID}
       onPress={onPress}
-      style={({ pressed }) => [styles.fieldRow, pressed && { opacity: 0.85 }]}
+      style={[styles.fieldRow]}
     >
       <View style={styles.fieldIcon}>
-        <Icon size={16} color={PURPLE} strokeWidth={2.2} />
+        <Icon size={16} color={colors.brand.default} strokeWidth={2.2} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.fieldLabel}>{label}</Text>
         <Text
           style={[
             styles.fieldStatic,
-            !value && { color: MUTED, fontWeight: "500" },
+            !value && { color: colors.text.muted, fontWeight: fontWeight.medium },
           ]}
           numberOfLines={1}
         >
           {value || placeholder}
         </Text>
       </View>
-      <Pencil size={15} color={MUTED} strokeWidth={2} />
-    </Pressable>
+      <Pencil size={15} color={colors.text.muted} strokeWidth={2} />
+    </Touchable>
   );
 }
 
@@ -540,47 +521,44 @@ function PickerSheet({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <Pressable style={styles.sheetBackdrop} onPress={onClose} testID="picker-backdrop">
-        <Pressable style={styles.sheet} onPress={() => {}}>
+      <Touchable style={styles.sheetBackdrop} onPress={onClose} testID="picker-backdrop">
+        <Touchable style={styles.sheet} onPress={() => {}}>
           <View style={styles.sheetGrabber} />
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>{picker?.title ?? ""}</Text>
-            <Pressable onPress={onClose} hitSlop={8} style={styles.sheetClose}>
-              <X size={18} color={TEXT} strokeWidth={2.2} />
-            </Pressable>
+            <Touchable onPress={onClose} hitSlop={8} style={styles.sheetClose}>
+              <X size={18} color={colors.text.primary} strokeWidth={2.2} />
+            </Touchable>
           </View>
           <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
             {picker?.options.map((opt) => {
               const active = picker.current === opt;
               return (
-                <Pressable
+                <Touchable
+                  feedback="highlight"
                   key={opt}
                   testID={`picker-opt-${opt}`}
                   onPress={() => {
                     picker.onPick(opt);
                     onClose();
                   }}
-                  style={({ pressed }) => [
-                    styles.sheetItem,
-                    active && styles.sheetItemActive,
-                    pressed && !active && { backgroundColor: "#FAF8FE" },
-                  ]}
+                  style={[styles.sheetItem, active && styles.sheetItemActive]}
                 >
                   <Text
                     style={[
                       styles.sheetItemText,
-                      active && { color: PURPLE, fontWeight: "700" },
+                      active && { color: colors.brand.default, fontWeight: fontWeight.bold },
                     ]}
                   >
                     {opt}
                   </Text>
-                  {active ? <CheckCircle2 size={18} color={PURPLE} strokeWidth={2.2} /> : null}
-                </Pressable>
+                  {active ? <CheckCircleIcon size={18} color={colors.brand.default} strokeWidth={2.2} /> : null}
+                </Touchable>
               );
             })}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </Touchable>
+      </Touchable>
     </Modal>
   );
 }
@@ -588,123 +566,123 @@ function PickerSheet({
 /* ════════════ styles ════════════ */
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
-  scroll: { paddingBottom: 32 },
+  root: { flex: 1, backgroundColor: colors.surface.default },
+  scroll: { paddingBottom: spacing[8] },
 
   // Header
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[1.5],
+    paddingBottom: spacing[2.5],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   iconBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  headerTitle: { fontSize: 17, fontWeight: "800", color: TEXT, letterSpacing: -0.3 },
+  headerTitle: { fontSize: fontSize.title, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.3 },
   doneBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: PURPLE,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
-  doneText: { color: "#FFF", fontSize: 14, fontWeight: "800" },
+  doneText: { color: colors.text.onBrand, fontSize: fontSize.body, fontWeight: fontWeight.extrabold },
 
   // Identity
   identityRow: {
-    marginHorizontal: 16,
-    marginTop: 14,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[3.5],
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing[2.5],
   },
   editableNameRow: { flexDirection: "row", alignItems: "baseline" },
   identityNameInput: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: TEXT,
+    fontSize: fontSize.h1,
+    fontWeight: fontWeight.extrabold,
+    color: colors.text.primary,
     letterSpacing: -0.5,
-    padding: 0,
+    padding: spacing[0],
     minWidth: 60,
   },
-  identityName: { fontSize: 26, fontWeight: "800", color: TEXT, letterSpacing: -0.5 },
-  identityLocRow: { marginTop: 2, flexDirection: "row", alignItems: "center", gap: 4 },
+  identityName: { fontSize: fontSize.h1, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.5 },
+  identityLocRow: { marginTop: spacing[0.5], flexDirection: "row", alignItems: "center", gap: spacing[1] },
   identityLocInput: {
     flex: 1,
-    fontSize: 13.5,
-    color: TEXT,
-    fontWeight: "500",
-    padding: 0,
+    fontSize: fontSize.label,
+    color: colors.text.primary,
+    fontWeight: fontWeight.medium,
+    padding: spacing[0],
   },
   identityChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
   },
-  identityChipText: { fontSize: 11, fontWeight: "700", color: PURPLE },
+  identityChipText: { fontSize: fontSize.micro, fontWeight: fontWeight.bold, color: colors.brand.default },
 
   // Section card
   card: {
-    marginHorizontal: 16,
-    marginTop: 14,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
+    marginHorizontal: spacing[4],
+    marginTop: spacing[3.5],
+    backgroundColor: colors.surface.default,
+    borderRadius: radii["4xl"],
     borderWidth: 1,
-    borderColor: BORDER,
-    padding: 16,
-    shadowColor: "#000",
+    borderColor: colors.border.default,
+    padding: spacing[4],
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
     elevation: 2,
   },
-  kickerRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  kickerRow: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
   kickerIcon: {
     width: 24,
     height: 24,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
   kickerText: {
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.extrabold,
     letterSpacing: 1.5,
-    color: PURPLE,
+    color: colors.brand.default,
   },
-  helper: { marginTop: 10, fontSize: 12, color: MUTED, fontWeight: "500" },
+  helper: { marginTop: spacing[2.5], fontSize: fontSize.caption, color: colors.text.muted, fontWeight: fontWeight.medium },
   helperRight: {
-    marginTop: 6,
+    marginTop: spacing[1.5],
     alignSelf: "flex-end",
-    fontSize: 11,
-    color: MUTED,
-    fontWeight: "600",
+    fontSize: fontSize.micro,
+    color: colors.text.muted,
+    fontWeight: fontWeight.semibold,
   },
 
   // Primary photo
   heroPhotoWrap: {
     width: "100%",
     aspectRatio: 4 / 5,
-    borderRadius: 18,
+    borderRadius: radii["2xl"],
     overflow: "hidden",
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     position: "relative",
   },
   heroPhoto: { width: "100%", height: "100%" },
@@ -714,22 +692,22 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "rgba(17,24,39,0.85)",
+    gap: spacing[1.5],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.primary, 0.85),
   },
-  heroEditText: { color: "#FFF", fontSize: 12.5, fontWeight: "700" },
+  heroEditText: { color: colors.text.onBrand, fontSize: fontSize.caption, fontWeight: fontWeight.bold },
 
   // Photo grid
-  photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2.5] },
   photoTile: {
     width: "48%",
     aspectRatio: 4 / 5,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     overflow: "hidden",
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     position: "relative",
   },
   photoTileImage: { width: "100%", height: "100%" },
@@ -739,101 +717,101 @@ const styles = StyleSheet.create({
     right: 8,
     width: 26,
     height: 26,
-    borderRadius: 999,
-    backgroundColor: "rgba(17,24,39,0.85)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.primary, 0.85),
     alignItems: "center",
     justifyContent: "center",
   },
   photoAdd: {
     width: "48%",
     aspectRatio: 4 / 5,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 2,
-    borderColor: BORDER,
+    borderColor: colors.border.default,
     borderStyle: "dashed",
-    backgroundColor: LIGHT_PURPLE,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: spacing[1.5],
   },
-  photoAddText: { fontSize: 12.5, fontWeight: "700", color: PURPLE },
+  photoAddText: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.brand.default },
 
   // Bio
   bioInput: {
     minHeight: 92,
-    fontSize: 14,
-    color: TEXT,
+    fontSize: fontSize.body,
+    color: colors.text.primary,
     lineHeight: 21,
     textAlignVertical: "top",
-    padding: 0,
+    padding: spacing[0],
   },
 
   // Field rows
   fieldRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 10,
+    gap: spacing[3],
+    paddingVertical: spacing[2.5],
   },
   fieldIcon: {
     width: 32,
     height: 32,
-    borderRadius: 10,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
   fieldLabel: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
     letterSpacing: 0.8,
-    color: MUTED,
+    color: colors.text.muted,
     textTransform: "uppercase",
   },
   fieldInput: {
-    fontSize: 14.5,
-    fontWeight: "600",
-    color: TEXT,
-    padding: 0,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
+    padding: spacing[0],
   },
-  fieldStatic: { fontSize: 14.5, fontWeight: "600", color: TEXT },
-  divider: { height: 1, backgroundColor: BORDER, marginVertical: 4 },
+  fieldStatic: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  divider: { height: 1, backgroundColor: colors.border.default, marginVertical: spacing[1] },
 
   // Picker sheet
   sheetBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.default,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 32,
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[8],
   },
   sheetGrabber: {
     width: 36,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: BORDER,
+    borderRadius: radii.full,
+    backgroundColor: colors.border.default,
     alignSelf: "center",
-    marginBottom: 10,
+    marginBottom: spacing[2.5],
   },
   sheetHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 4,
-    paddingBottom: 6,
+    paddingHorizontal: spacing[1],
+    paddingBottom: spacing[1.5],
   },
-  sheetTitle: { fontSize: 16, fontWeight: "800", color: TEXT, letterSpacing: -0.2 },
+  sheetTitle: { fontSize: fontSize.title, fontWeight: fontWeight.extrabold, color: colors.text.primary, letterSpacing: -0.2 },
   sheetClose: {
     width: 28,
     height: 28,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -841,10 +819,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 13,
-    borderRadius: 14,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+    borderRadius: radii.lg,
   },
-  sheetItemActive: { backgroundColor: LIGHT_PURPLE },
-  sheetItemText: { fontSize: 14.5, fontWeight: "600", color: TEXT },
+  sheetItemActive: { backgroundColor: colors.surface.brand },
+  sheetItemText: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary },
 });

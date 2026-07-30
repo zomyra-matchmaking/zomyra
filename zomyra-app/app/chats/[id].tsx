@@ -4,18 +4,7 @@
 import { ArrowLeft, BadgeCheck, MoreVertical, Send, Smile } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  FlatList,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { FlatList, Image, KeyboardAvoidingView, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScrollView } from "react-native";
 
@@ -25,7 +14,9 @@ import { ProfileView } from "@/src/components/discover/ProfileView";
 import { toast } from "@/src/components/ui/Toast";
 import { chatToDiscoverProfile, type ChatMessage } from "@/src/lib/chats/mock";
 import { useChatStore, useConversation } from "@/src/stores/chat-store";
-import { colors } from "@/src/theme/colors";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 const REPORT_REASONS = ["Fake profile", "Inappropriate behavior", "Harassment", "Spam", "Other"];
 
@@ -93,48 +84,48 @@ export default function Conversation() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <View style={styles.header}>
-        <Pressable
+        <Touchable
           testID="conversation-back"
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.headerBtn]}
           hitSlop={8}
         >
-          <ArrowLeft size={20} color={colors.foreground} />
-        </Pressable>
-        <Pressable
+          <ArrowLeft size={20} color={colors.text.primary} />
+        </Touchable>
+        <Touchable
           onPress={() => setProfileOpen(true)}
-          style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}
+          style={{ flexDirection: "row", alignItems: "center", gap: spacing[2.5], flex: 1 }}
         >
           <Image source={{ uri: conversation.avatar }} style={styles.headerAvatar} />
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[1] }}>
               <Text style={styles.headerName} numberOfLines={1}>
                 {conversation.name}
               </Text>
-              {conversation.verified ? <BadgeCheck size={13} color={colors.primary} fill={colors.primary} /> : null}
+              {conversation.verified ? <BadgeCheck size={13} color={colors.brand.default} fill={colors.brand.default} /> : null}
             </View>
             <Text style={styles.headerSubtitle}>Active recently</Text>
           </View>
-        </Pressable>
-        <Pressable
+        </Touchable>
+        <Touchable
           testID="conversation-more"
           onPress={() => setMenuOpen(true)}
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.headerBtn]}
         >
-          <MoreVertical size={18} color={colors.mutedForeground} />
-        </Pressable>
+          <MoreVertical size={18} color={colors.text.muted} />
+        </Touchable>
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={isIOS ? "padding" : undefined}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        keyboardVerticalOffset={0}
       >
         <FlatList
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
-          contentContainerStyle={{ padding: 16, gap: 4 }}
+          contentContainerStyle={{ padding: spacing[4], gap: spacing[1] }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => {
             const mine = item.from === "me";
@@ -151,14 +142,14 @@ export default function Conversation() {
                   style={[
                     styles.bubble,
                     mine
-                      ? { backgroundColor: colors.chatMine, borderBottomRightRadius: 4 }
-                      : { backgroundColor: colors.chatTheir, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.chatTheirBorder },
+                      ? { backgroundColor: colors.chat.mineSurface, borderBottomRightRadius: 4 }
+                      : { backgroundColor: colors.chat.theirSurface, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.chat.theirBorder },
                   ]}
                 >
-                  <Text style={[styles.bubbleText, { color: mine ? colors.chatMineText : colors.chatTheirText }]}>
+                  <Text style={[styles.bubbleText, { color: mine ? colors.chat.mineText : colors.chat.theirText }]}>
                     {item.text}
                   </Text>
-                  <Text style={[styles.bubbleTime, { color: mine ? "#6B4A8A" : "#8A8A8A" }]}>{item.time}</Text>
+                  <Text style={[styles.bubbleTime, { color: mine ? colors.brand.muted : colors.text.muted }]}>{item.time}</Text>
                 </View>
               </View>
             );
@@ -168,66 +159,68 @@ export default function Conversation() {
 
         <View style={styles.composer}>
           <View style={styles.inputWrap}>
-            <Smile size={16} color={colors.mutedForeground} />
+            <Smile size={16} color={colors.text.muted} />
             <TextInput
               testID="message-input"
               value={draft}
               onChangeText={setDraft}
               placeholder="Message"
-              placeholderTextColor={colors.mutedForeground}
+              placeholderTextColor={colors.text.muted}
               style={styles.input}
               onSubmitEditing={send}
               returnKeyType="send"
             />
           </View>
-          <Pressable
+          <Touchable
+            feedback="scale"
             testID="message-send"
             onPress={send}
             disabled={!draft.trim()}
-            style={({ pressed }) => [styles.sendBtn, !draft.trim() && { opacity: 0.4 }, pressed && draft.trim() && { transform: [{ scale: 0.96 }] }]}
+            style={[styles.sendBtn, !draft.trim() && { opacity: 0.4 }]}
           >
-            <Send size={16} color="#fff" />
-          </Pressable>
+            <Send size={16} color={colors.text.onBrand} />
+          </Touchable>
         </View>
       </KeyboardAvoidingView>
 
       {/* Profile bottom sheet */}
       <BottomSheet open={profileOpen} onClose={() => setProfileOpen(false)}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: spacing[6] }}>
           <ProfileView profile={profile} />
         </ScrollView>
       </BottomSheet>
 
       {/* More menu */}
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
-        <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
+        <Touchable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
           <View style={styles.menu}>
             <MenuItem label="View profile" onPress={() => { setMenuOpen(false); setProfileOpen(true); }} />
             <MenuItem label="Unmatch" destructive onPress={() => { setMenuOpen(false); setDialog("unmatch"); }} />
             <MenuItem label="Block" destructive onPress={() => { setMenuOpen(false); setDialog("block"); }} />
             <MenuItem label="Report" onPress={() => { setMenuOpen(false); setReportOpen(true); }} />
           </View>
-        </Pressable>
+        </Touchable>
       </Modal>
 
       {/* Report sheet */}
       <BottomSheet open={reportOpen} onClose={() => setReportOpen(false)} heightFraction={0.55}>
-        <View style={{ paddingHorizontal: 16 }}>
+        <View style={{ paddingHorizontal: spacing[4] }}>
           <Text style={styles.reportTitle}>Report this person</Text>
           <Text style={styles.reportSubtitle}>Choose a reason. Our team reviews every report.</Text>
-          <View style={{ marginTop: 12 }}>
+          <View style={{ marginTop: spacing[3] }}>
             {REPORT_REASONS.map((r) => (
-              <Pressable
+              <Touchable
+                feedback="highlight"
                 key={r}
                 testID={`report-${r}`}
                 onPress={() => {
                   setReportOpen(false);
                   toast.success(`Reported: ${r}. Our team will review.`);
                 }}
-                style={({ pressed }) => [styles.reportItem, pressed && { backgroundColor: colors.secondary }]}
+                style={[styles.reportItem]}
               >
                 <Text style={styles.reportItemText}>{r}</Text>
-              </Pressable>
+              </Touchable>
             ))}
           </View>
         </View>
@@ -265,98 +258,103 @@ function MenuItem({
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <Touchable
+      feedback="highlight"
       onPress={onPress}
-      style={({ pressed }) => [styles.menuItem, pressed && { backgroundColor: colors.secondary }]}
+      style={[styles.menuItem]}
     >
       <Text
         style={[
           styles.menuItemText,
-          destructive && { color: colors.destructive },
+          destructive && { color: colors.danger.default },
         ]}
       >
         {label}
       </Text>
-    </Pressable>
+    </Touchable>
   );
 }
+
+// The overflow menu hangs below the header rather than centring on screen, so
+// its backdrop pads down past the header before laying the menu out.
+const MENU_TOP_OFFSET = 60;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    gap: spacing[2],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[2.5],
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
+    borderBottomColor: colors.border.subtle,
   },
   headerBtn: {
     width: 36,
     height: 36,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
   },
-  headerAvatar: { width: 36, height: 36, borderRadius: 999, backgroundColor: colors.secondary },
-  headerName: { fontSize: 14.5, fontWeight: "700", color: colors.foreground, flex: 1 },
-  headerSubtitle: { fontSize: 11, color: colors.mutedForeground },
+  headerAvatar: { width: 36, height: 36, borderRadius: radii.full, backgroundColor: colors.surface.brand },
+  headerName: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.text.primary, flex: 1 },
+  headerSubtitle: { fontSize: fontSize.micro, color: colors.text.muted },
   bubble: {
     maxWidth: "78%",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
+    borderRadius: radii.xl,
   },
-  bubbleText: { fontSize: 14, lineHeight: 20 },
-  bubbleTime: { marginTop: 2, fontSize: 10, textAlign: "right" },
+  bubbleText: { fontSize: fontSize.body, lineHeight: 20 },
+  bubbleTime: { marginTop: spacing[0.5], fontSize: fontSize.nano, textAlign: "right" },
   composer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: spacing[2],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
     borderTopWidth: 1,
-    borderTopColor: colors.borderSubtle,
-    backgroundColor: colors.card,
+    borderTopColor: colors.border.subtle,
+    backgroundColor: colors.surface.default,
   },
   inputWrap: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing[2],
     height: 44,
-    paddingHorizontal: 12,
-    borderRadius: 999,
+    paddingHorizontal: spacing[3],
+    borderRadius: radii.full,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border.subtle,
     backgroundColor: colors.background,
   },
-  input: { flex: 1, fontSize: 14, color: colors.foreground },
+  input: { flex: 1, fontSize: fontSize.body, color: colors.text.primary },
   sendBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
-  menuBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)", justifyContent: "flex-start", paddingTop: 60, alignItems: "flex-end", paddingRight: 8 },
+  menuBackdrop: { flex: 1, backgroundColor: alpha(colors.overlay.base, 0.3), justifyContent: "flex-start", paddingTop: MENU_TOP_OFFSET, alignItems: "flex-end", paddingRight: spacing[2] },
   menu: {
     minWidth: 180,
-    borderRadius: 14,
-    backgroundColor: colors.card,
-    paddingVertical: 6,
-    shadowColor: "#000",
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface.default,
+    paddingVertical: spacing[1.5],
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.14,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
-  menuItem: { paddingHorizontal: 14, paddingVertical: 11 },
-  menuItemText: { fontSize: 14, color: colors.foreground, fontWeight: "600" },
-  reportTitle: { fontSize: 16, fontWeight: "700", color: colors.foreground },
-  reportSubtitle: { marginTop: 4, fontSize: 12.5, color: colors.mutedForeground },
-  reportItem: { paddingHorizontal: 12, paddingVertical: 12, borderRadius: 12 },
-  reportItemText: { fontSize: 14, color: colors.foreground, fontWeight: "600" },
+  menuItem: { paddingHorizontal: spacing[3.5], paddingVertical: spacing[3] },
+  menuItemText: { fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.semibold },
+  reportTitle: { fontSize: fontSize.title, fontWeight: fontWeight.bold, color: colors.text.primary },
+  reportSubtitle: { marginTop: spacing[1], fontSize: fontSize.caption, color: colors.text.muted },
+  reportItem: { paddingHorizontal: spacing[3], paddingVertical: spacing[3], borderRadius: radii.md },
+  reportItemText: { fontSize: fontSize.body, color: colors.text.primary, fontWeight: fontWeight.semibold },
 });

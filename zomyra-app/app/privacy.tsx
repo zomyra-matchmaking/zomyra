@@ -4,10 +4,11 @@
  */
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors } from "@/src/theme/colors";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
@@ -42,14 +43,14 @@ export default function PrivacyScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.header}>
-        <Pressable
+        <Touchable
           testID="privacy-back"
           onPress={() => router.back()}
           hitSlop={10}
-          style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+          style={[styles.backBtn]}
         >
-          <ArrowLeft size={20} color={colors.foreground} strokeWidth={2.2} />
-        </Pressable>
+          <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
+        </Touchable>
         <Text style={styles.headerTitle}>Privacy Policy</Text>
         <View style={{ width: 40 }} />
       </View>
@@ -81,57 +82,57 @@ export default function PrivacyScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.border.default,
   },
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: -8,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.foreground,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
   },
-  content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
+  content: { paddingHorizontal: spacing[6], paddingTop: spacing[4], paddingBottom: spacing[10] },
   kicker: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1.4,
-    color: colors.mutedForeground,
-    marginBottom: 8,
+    color: colors.text.muted,
+    marginBottom: spacing[2],
   },
   intro: {
-    fontSize: 15,
+    fontSize: fontSize.bodyLarge,
     lineHeight: 23,
-    color: colors.foreground,
-    marginBottom: 8,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
-  section: { marginTop: 22 },
+  section: { marginTop: spacing[6] },
   sectionHeading: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.foreground,
-    marginBottom: 8,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
   sectionBody: {
-    fontSize: 14.5,
+    fontSize: fontSize.body,
     lineHeight: 22,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   footnote: {
-    marginTop: 28,
-    fontSize: 12,
+    marginTop: spacing[7],
+    fontSize: fontSize.caption,
     fontStyle: "italic",
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
 });

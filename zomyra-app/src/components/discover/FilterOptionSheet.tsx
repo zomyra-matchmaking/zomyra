@@ -12,19 +12,13 @@ import {
   Dimensions,
   Easing,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-
-const PURPLE = "#5B2C6F";
-const PURPLE_DEEP = "#3D1A4A";
-const LIGHT_PURPLE = "#F5F3FF";
-const BORDER = "#ECEAF7";
-const TEXT = "#111827";
-const MUTED = "#6B7280";
+import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 const SCREEN_H = Dimensions.get("window").height;
 
@@ -101,7 +95,7 @@ export function FilterOptionSheet({
     >
       <View style={styles.root}>
         <Animated.View style={[styles.backdrop, { opacity: backdrop }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          <Touchable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
 
         <Animated.View
@@ -111,40 +105,34 @@ export function FilterOptionSheet({
           <View style={styles.grabber} />
           <View style={styles.headerRow}>
             <Text style={styles.title}>{title}</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
               {draft !== null ? (
-                <Pressable
+                <Touchable
                   onPress={clear}
                   testID="filter-sheet-clear"
                   hitSlop={6}
-                  style={({ pressed }) => [
-                    styles.clearBtn,
-                    pressed && { opacity: 0.7 },
-                  ]}
+                  style={[styles.clearBtn]}
                 >
                   <Text style={styles.clearText}>Clear</Text>
-                </Pressable>
+                </Touchable>
               ) : null}
-              <Pressable
+              <Touchable
                 testID="filter-sheet-close"
                 onPress={onClose}
                 hitSlop={10}
-                style={({ pressed }) => [
-                  styles.closeBtn,
-                  pressed && { opacity: 0.7 },
-                ]}
+                style={[styles.closeBtn]}
               >
-                <X size={18} color={TEXT} strokeWidth={2.2} />
-              </Pressable>
+                <X size={18} color={colors.text.primary} strokeWidth={2.2} />
+              </Touchable>
             </View>
           </View>
           <Text style={styles.subtitle}>Pick one option below.</Text>
 
-          <ScrollView style={{ maxHeight: SCREEN_H * 0.5 }} contentContainerStyle={{ gap: 10, paddingVertical: 12 }}>
+          <ScrollView style={{ maxHeight: SCREEN_H * 0.5 }} contentContainerStyle={{ gap: spacing[2.5], paddingVertical: spacing[3] }}>
             {options.map((opt) => {
               const active = draft === opt;
               return (
-                <Pressable
+                <Touchable
                   key={opt}
                   testID={`filter-option-${opt}`}
                   onPress={() => setDraft(opt)}
@@ -156,28 +144,26 @@ export function FilterOptionSheet({
                   <View style={[styles.radio, active && styles.radioActive]}>
                     {active ? <View style={styles.radioDot} /> : null}
                   </View>
-                </Pressable>
+                </Touchable>
               );
             })}
           </ScrollView>
 
-          <Pressable
+          <Touchable
+            feedback="scale"
             testID="filter-sheet-apply"
             onPress={apply}
-            style={({ pressed }) => [
-              styles.cta,
-              pressed && { transform: [{ scale: 0.985 }] },
-            ]}
+            style={[styles.cta]}
           >
             <LinearGradient
-              colors={[PURPLE, PURPLE_DEEP]}
+              colors={colors.gradient.brand}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.ctaGradient}
             >
               <Text style={styles.ctaText}>Apply</Text>
             </LinearGradient>
-          </Pressable>
+          </Touchable>
         </Animated.View>
       </View>
     </Modal>
@@ -188,38 +174,38 @@ const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(17,24,39,0.45)",
+    backgroundColor: alpha(colors.text.primary, 0.45),
   },
   sheet: {
-    backgroundColor: "#FFF",
+    backgroundColor: colors.surface.default,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[3],
+    paddingBottom: spacing[8],
   },
   grabber: {
     alignSelf: "center",
     width: 40,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: "#E5E7EB",
-    marginBottom: 12,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.muted,
+    marginBottom: spacing[3],
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  title: { fontSize: 22, fontWeight: "700", color: TEXT, letterSpacing: -0.3 },
-  subtitle: { marginTop: 4, fontSize: 13, color: MUTED },
-  clearBtn: { paddingHorizontal: 4, paddingVertical: 4 },
-  clearText: { color: PURPLE, fontWeight: "700", fontSize: 13 },
+  title: { fontSize: fontSize.h2, fontWeight: fontWeight.bold, color: colors.text.primary, letterSpacing: -0.3 },
+  subtitle: { marginTop: spacing[1], fontSize: fontSize.label, color: colors.text.muted },
+  clearBtn: { paddingHorizontal: spacing[1], paddingVertical: spacing[1] },
+  clearText: { color: colors.brand.default, fontWeight: fontWeight.bold, fontSize: fontSize.label },
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: 999,
-    backgroundColor: LIGHT_PURPLE,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -228,37 +214,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 14,
-    borderRadius: 16,
+    padding: spacing[3.5],
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "#FFF",
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  optionActive: { borderColor: PURPLE, backgroundColor: LIGHT_PURPLE },
-  optionTitle: { fontSize: 16, fontWeight: "600", color: TEXT, letterSpacing: -0.2 },
-  optionTitleActive: { color: PURPLE, fontWeight: "700" },
+  optionActive: { borderColor: colors.brand.default, backgroundColor: colors.surface.brand },
+  optionTitle: { fontSize: fontSize.title, fontWeight: fontWeight.semibold, color: colors.text.primary, letterSpacing: -0.2 },
+  optionTitleActive: { color: colors.brand.default, fontWeight: fontWeight.bold },
   radio: {
     width: 22,
     height: 22,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
+    borderColor: colors.border.neutralStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: PURPLE },
-  radioDot: { width: 10, height: 10, borderRadius: 999, backgroundColor: PURPLE },
+  radioActive: { borderColor: colors.brand.default },
+  radioDot: { width: 10, height: 10, borderRadius: radii.full, backgroundColor: colors.brand.default },
 
   cta: {
-    marginTop: 12,
-    borderRadius: 18,
+    marginTop: spacing[3],
+    borderRadius: radii["2xl"],
     overflow: "hidden",
-    shadowColor: PURPLE,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
     elevation: 6,
   },
   ctaGradient: { height: 58, alignItems: "center", justifyContent: "center" },
-  ctaText: { color: "#FFF", fontSize: 18, fontWeight: "700", letterSpacing: -0.2 },
+  ctaText: { color: colors.text.onBrand, fontSize: fontSize.heading, fontWeight: fontWeight.bold, letterSpacing: -0.2 },
 });

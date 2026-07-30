@@ -3,15 +3,9 @@
  * thumb so taps and drags both work correctly.
  */
 import { useRef, useState } from "react";
-import {
-  LayoutChangeEvent,
-  PanResponder,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "@/src/theme/colors";
+import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 
 type Props = {
   min: number;
@@ -96,7 +90,7 @@ export default function RangeSlider({ min, max, step = 1, value, onChange, forma
       <View style={styles.headerRow}>
         <Text style={styles.label}>Range</Text>
         <Text style={styles.value}>
-          {fmt(lo)} <Text style={{ color: colors.mutedForeground }}>—</Text> {fmt(hi)}
+          {fmt(lo)} <Text style={{ color: colors.text.muted }}>—</Text> {fmt(hi)}
         </Text>
       </View>
       <View
@@ -120,49 +114,49 @@ export default function RangeSlider({ min, max, step = 1, value, onChange, forma
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingVertical: 8 },
+  wrap: { paddingVertical: spacing[2] },
   headerRow: {
     flexDirection: "row",
     alignItems: "baseline",
     justifyContent: "space-between",
   },
   label: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
     letterSpacing: 1.2,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     textTransform: "uppercase",
   },
   value: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.foreground,
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
   },
   trackWrap: {
-    marginTop: 18,
+    marginTop: spacing[4.5],
     height: 40,
     justifyContent: "center",
   },
   track: {
     height: 6,
-    borderRadius: 999,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
   },
   activeTrack: {
     position: "absolute",
     height: 6,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
   thumb: {
     position: "absolute",
     width: THUMB,
     height: THUMB,
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.default,
     borderWidth: 2,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
+    borderColor: colors.brand.default,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,

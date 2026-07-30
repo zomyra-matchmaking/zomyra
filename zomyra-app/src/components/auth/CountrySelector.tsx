@@ -3,19 +3,12 @@
  */
 import { Check, ChevronDown, Search } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import {
-  FlatList,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { FlatList, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { COUNTRIES, type Country } from "@/src/lib/countries";
+import { Touchable } from "@/src/components/ui";
 
 type Props = {
   value: Country;
@@ -37,31 +30,31 @@ export function CountrySelector({ value, onChange }: Props) {
 
   return (
     <>
-      <Pressable
+      <Touchable
         testID="country-selector"
         onPress={() => setOpen(true)}
-        style={({ pressed }) => [styles.trigger, pressed && { opacity: 0.9 }]}
+        style={[styles.trigger]}
       >
         <Text style={styles.flag}>{value.flag}</Text>
         <Text style={styles.dial}>{value.dial}</Text>
-        <ChevronDown size={14} color={colors.mutedForeground} strokeWidth={2.4} />
-      </Pressable>
+        <ChevronDown size={14} color={colors.text.muted} strokeWidth={2.4} />
+      </Touchable>
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <Pressable
+        <Touchable style={styles.backdrop} onPress={() => setOpen(false)}>
+          <Touchable
             style={[styles.sheet, { paddingBottom: insets.bottom + 8 }]}
             onPress={(e) => e.stopPropagation()}
           >
             <View style={styles.grabber} />
             <Text style={styles.title}>Select country</Text>
             <View style={styles.searchBox}>
-              <Search size={16} color={colors.mutedForeground} />
+              <Search size={16} color={colors.text.muted} />
               <TextInput
                 value={q}
                 onChangeText={setQ}
                 placeholder="Search country or code"
-                placeholderTextColor={colors.mutedForeground}
+                placeholderTextColor={colors.text.muted}
                 style={styles.searchInput}
                 autoFocus
               />
@@ -74,28 +67,26 @@ export function CountrySelector({ value, onChange }: Props) {
               renderItem={({ item }) => {
                 const selected = item.code === value.code && item.dial === value.dial;
                 return (
-                  <Pressable
+                  <Touchable
+                    feedback="highlight"
                     testID={`country-${item.code}`}
                     onPress={() => {
                       onChange(item);
                       setOpen(false);
                       setQ("");
                     }}
-                    style={({ pressed }) => [
-                      styles.row,
-                      pressed && { backgroundColor: colors.secondary },
-                    ]}
+                    style={[styles.row]}
                   >
                     <Text style={styles.rowFlag}>{item.flag}</Text>
                     <Text style={styles.rowName}>{item.name}</Text>
                     <Text style={styles.rowDial}>{item.dial}</Text>
-                    {selected ? <Check size={16} color={colors.primary} /> : null}
-                  </Pressable>
+                    {selected ? <Check size={16} color={colors.brand.default} /> : null}
+                  </Touchable>
                 );
               }}
             />
-          </Pressable>
-        </Pressable>
+          </Touchable>
+        </Touchable>
       </Modal>
     </>
   );
@@ -104,69 +95,69 @@ export function CountrySelector({ value, onChange }: Props) {
 const styles = StyleSheet.create({
   trigger: {
     height: 52,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    borderRadius: 14,
+    gap: spacing[1.5],
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
-  flag: { fontSize: 20 },
-  dial: { fontSize: 15, fontWeight: "600", color: colors.foreground },
+  flag: { fontSize: fontSize.subtitle },
+  dial: { fontSize: fontSize.bodyLarge, fontWeight: fontWeight.semibold, color: colors.text.primary },
   backdrop: {
     flex: 1,
-    backgroundColor: colors.overlay,
+    backgroundColor: colors.overlay.scrim,
     justifyContent: "flex-end",
   },
   sheet: {
     backgroundColor: colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingTop: 8,
-    paddingHorizontal: 16,
+    paddingTop: spacing[2],
+    paddingHorizontal: spacing[4],
     maxHeight: "80%",
   },
   grabber: {
     alignSelf: "center",
     width: 40,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: colors.border,
-    marginBottom: 4,
+    borderRadius: radii.full,
+    backgroundColor: colors.border.default,
+    marginBottom: spacing[1],
   },
   title: {
-    paddingHorizontal: 4,
-    paddingTop: 8,
-    paddingBottom: 8,
-    fontSize: 17,
-    fontWeight: "700",
-    color: colors.foreground,
+    paddingHorizontal: spacing[1],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[2],
+    fontSize: fontSize.title,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
   },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing[2],
     height: 46,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 12,
-    backgroundColor: colors.card,
-    marginBottom: 8,
+    borderColor: colors.border.default,
+    paddingHorizontal: spacing[3],
+    backgroundColor: colors.surface.default,
+    marginBottom: spacing[2],
   },
-  searchInput: { flex: 1, fontSize: 15, color: colors.foreground },
+  searchInput: { flex: 1, fontSize: fontSize.bodyLarge, color: colors.text.primary },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 14,
+    gap: spacing[3],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[3.5],
   },
-  rowFlag: { fontSize: 22 },
-  rowName: { flex: 1, fontSize: 15, fontWeight: "600", color: colors.foreground },
-  rowDial: { fontSize: 14, color: colors.mutedForeground },
+  rowFlag: { fontSize: fontSize.h2 },
+  rowName: { flex: 1, fontSize: fontSize.bodyLarge, fontWeight: fontWeight.semibold, color: colors.text.primary },
+  rowDial: { fontSize: fontSize.body, color: colors.text.muted },
 });
 
 void radii;

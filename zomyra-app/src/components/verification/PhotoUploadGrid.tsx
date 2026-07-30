@@ -4,16 +4,17 @@
  * if the user wants a different cover they can delete and re-upload in the
  * desired order.
  */
-import { GripVertical, ImagePlus, Star, Trash2 } from "lucide-react-native";
+import { GripVertical, ImagePlus, Star, Trash2 as TrashIcon } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Linking, StyleSheet, Text, View } from "react-native";
 
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { toast } from "@/src/components/ui/Toast";
 import { MAX_PHOTOS, type UploadedPhoto } from "@/src/lib/verification/types";
 import { uploadService } from "@/src/services/upload";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, alpha, fontSize, fontWeight, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 // Short, warm, matrimony-appropriate prompts shown on the empty upload
 // slots. Each hints at what kind of photo would work well for that slot.
@@ -83,33 +84,33 @@ export function PhotoUploadGrid({ photos, onChange }: Props) {
                   <Image source={{ uri: slot.uri }} style={StyleSheet.absoluteFillObject} />
                   {isCover ? (
                     <View style={styles.coverChip}>
-                      <Star size={10} color="#fff" strokeWidth={3} />
+                      <Star size={10} color={colors.text.onBrand} strokeWidth={3} />
                       <Text style={styles.coverText}>COVER</Text>
                     </View>
                   ) : null}
                   <View style={styles.gripBadge}>
-                    <GripVertical size={12} color={colors.mutedForeground} />
+                    <GripVertical size={12} color={colors.text.muted} />
                   </View>
-                  <Pressable
+                  <Touchable
                     testID={`delete-photo-${i}`}
                     onPress={() => setPendingDelete(slot.id)}
                     style={styles.removeBtn}
                   >
-                    <Trash2 size={14} color={colors.destructive} />
-                  </Pressable>
+                    <TrashIcon size={14} color={colors.danger.default} />
+                  </Touchable>
                 </View>
               ) : (
-                <Pressable
+                <Touchable
                   testID={`upload-slot-${i}`}
                   onPress={pick}
                   style={[styles.tile, styles.placeholder]}
                 >
-                  <ImagePlus size={20} color={colors.mutedForeground} />
+                  <ImagePlus size={20} color={colors.text.muted} />
                   <Text style={styles.placeholderLabel} numberOfLines={2}>
                     {prompt}
                   </Text>
                   <Text style={styles.placeholderHint}>{isRequired ? "REQUIRED" : "OPTIONAL"}</Text>
-                </Pressable>
+                </Touchable>
               )}
             </View>
           );
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    rowGap: 10,
+    rowGap: spacing[2.5],
   },
   cell: {
     width: "32%",
@@ -146,34 +147,34 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     overflow: "hidden",
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.border.default,
     position: "relative",
   },
   placeholder: {
     borderStyle: "dashed",
-    backgroundColor: "rgba(244,234,251,0.5)",
+    backgroundColor: alpha(colors.surface.brand, 0.5),
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: spacing[1],
   },
   placeholderLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: colors.mutedForeground,
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.muted,
     textAlign: "center",
     lineHeight: 14,
-    marginTop: 4,
-    paddingHorizontal: 4,
+    marginTop: spacing[1],
+    paddingHorizontal: spacing[1],
   },
   placeholderHint: {
-    fontSize: 9.5,
+    fontSize: fontSize.nano,
     letterSpacing: 1,
-    color: colors.mutedForeground,
-    marginTop: 2,
+    color: colors.text.muted,
+    marginTop: spacing[0.5],
   },
   coverChip: {
     position: "absolute",
@@ -181,21 +182,21 @@ const styles = StyleSheet.create({
     left: 6,
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
   },
-  coverText: { color: "#fff", fontSize: 9, fontWeight: "700", letterSpacing: 0.8 },
+  coverText: { color: colors.text.onBrand, fontSize: fontSize.nano, fontWeight: fontWeight.bold, letterSpacing: 0.8 },
   gripBadge: {
     position: "absolute",
     top: 6,
     right: 6,
     width: 22,
     height: 22,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.onBrand, 0.85),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -205,15 +206,15 @@ const styles = StyleSheet.create({
     right: 6,
     width: 28,
     height: 28,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.95)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.text.onBrand, 0.95),
     alignItems: "center",
     justifyContent: "center",
   },
   help: {
-    marginTop: 12,
-    fontSize: 12,
-    color: colors.mutedForeground,
+    marginTop: spacing[3],
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
   },
 });
 

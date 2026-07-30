@@ -5,11 +5,12 @@
  */
 import { ArrowLeft, ArrowRight, Anchor, Compass, Heart } from "lucide-react-native";
 import { useEffect, useRef, type ComponentType } from "react";
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, alpha, fontSize, fontWeight, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
 
 export type TreasureStepInfo = {
   step: 1 | 2 | 3;
@@ -162,13 +163,13 @@ export function TreasureMap({
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <View style={styles.header}>
         {onBack ? (
-          <Pressable
+          <Touchable
             onPress={onBack}
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+            style={[styles.backBtn]}
             hitSlop={8}
           >
-            <ArrowLeft size={20} color={colors.foreground} strokeWidth={2.2} />
-          </Pressable>
+            <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
+          </Touchable>
         ) : null}
       </View>
 
@@ -183,7 +184,7 @@ export function TreasureMap({
             <Path
               d={full}
               fill="none"
-              stroke="rgba(31,18,53,0.25)"
+              stroke={alpha(colors.brand.strong, 0.25)}
               strokeWidth={2}
               strokeDasharray="2 14"
               strokeLinecap="round"
@@ -193,7 +194,7 @@ export function TreasureMap({
               <AnimatedPath
                 d={seg1}
                 fill="none"
-                stroke={colors.primary}
+                stroke={colors.brand.default}
                 strokeWidth={2.5}
                 strokeLinecap="round"
                 strokeDasharray={`${SEG1_LENGTH} ${SEG1_LENGTH}`}
@@ -204,7 +205,7 @@ export function TreasureMap({
               <AnimatedPath
                 d={seg2}
                 fill="none"
-                stroke={colors.primary}
+                stroke={colors.brand.default}
                 strokeWidth={2.5}
                 strokeLinecap="round"
                 strokeDasharray={`${SEG2_LENGTH} ${SEG2_LENGTH}`}
@@ -244,30 +245,30 @@ export function TreasureMap({
                   style={[
                     styles.nodeDot,
                     state === "active" && {
-                      backgroundColor: colors.primary,
-                      borderColor: colors.primary,
+                      backgroundColor: colors.brand.default,
+                      borderColor: colors.brand.default,
                       transform: [{ scale: activeNodeScale }],
                     },
                     state === "done" && {
-                      backgroundColor: "rgba(91,44,111,0.15)",
-                      borderColor: colors.primary,
+                      backgroundColor: alpha(colors.brand.default, 0.15),
+                      borderColor: colors.brand.default,
                     },
                     state === "locked" && {
                       backgroundColor: colors.background,
-                      borderColor: "rgba(31,18,53,0.20)",
+                      borderColor: alpha(colors.brand.strong, 0.20),
                     },
                   ]}
                 >
                   <n.Icon
                     size={18}
-                    color={state === "active" ? "#fff" : state === "done" ? colors.primary : "rgba(31,18,53,0.4)"}
+                    color={state === "active" ? colors.text.onBrand : state === "done" ? colors.brand.default : alpha(colors.brand.strong, 0.4)}
                     strokeWidth={2.2}
                   />
                 </Animated.View>
                 <Text
                   style={[
                     styles.nodeLabel,
-                    state === "locked" && { color: "rgba(31,18,53,0.35)" },
+                    state === "locked" && { color: alpha(colors.brand.strong, 0.35) },
                   ]}
                 >
                   {n.label}
@@ -277,7 +278,7 @@ export function TreasureMap({
           })}
         </View>
 
-        <View style={{ marginTop: 36, alignItems: "center", maxWidth: 340 }}>
+        <View style={{ marginTop: spacing[8], alignItems: "center", maxWidth: 340 }}>
           <Text style={styles.stepLabel}>STEP {info.step} OF 3</Text>
           <Text style={styles.title}>{info.title}</Text>
           <Text style={styles.body}>{info.body}</Text>
@@ -285,14 +286,14 @@ export function TreasureMap({
       </View>
 
       <View style={styles.footer}>
-        <Pressable
+        <Touchable
           testID="treasure-continue"
           onPress={onContinue}
-          style={({ pressed }) => [styles.cta, pressed && { opacity: 0.92 }]}
+          style={[styles.cta]}
         >
           <Text style={styles.ctaText}>{info.cta}</Text>
-          <ArrowRight size={16} color={colors.primaryForeground} strokeWidth={2.4} />
-        </Pressable>
+          <ArrowRight size={16} color={colors.brand.onBrand} strokeWidth={2.4} />
+        </Touchable>
       </View>
     </SafeAreaView>
   );
@@ -300,18 +301,18 @@ export function TreasureMap({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: 16, paddingTop: 8 },
+  header: { paddingHorizontal: spacing[4], paddingTop: spacing[2] },
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: -8,
   },
   main: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing[6],
     alignItems: "center",
     justifyContent: "center",
   },
@@ -328,7 +329,7 @@ const styles = StyleSheet.create({
     left: -4,
     width: 48,
     height: 48,
-    borderRadius: 999,
+    borderRadius: radii.full,
     backgroundColor: colors.background,
   },
   // Outer breathing ring used only on the active marker.
@@ -338,58 +339,58 @@ const styles = StyleSheet.create({
     left: -4,
     width: 48,
     height: 48,
-    borderRadius: 999,
-    backgroundColor: "rgba(91,44,111,0.18)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.brand.default, 0.18),
   },
   nodeDot: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
   nodeLabel: {
-    marginTop: 6,
-    fontSize: 10,
-    fontWeight: "600",
+    marginTop: spacing[1.5],
+    fontSize: fontSize.nano,
+    fontWeight: fontWeight.semibold,
     letterSpacing: 1.4,
-    color: "rgba(31,18,53,0.75)",
+    color: alpha(colors.brand.strong, 0.75),
   },
   stepLabel: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: fontSize.micro,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1.8,
-    color: colors.primary,
+    color: colors.brand.default,
   },
   title: {
-    marginTop: 8,
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.foreground,
+    marginTop: spacing[2],
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
     textAlign: "center",
     letterSpacing: -0.3,
   },
   body: {
-    marginTop: 10,
-    fontSize: 14,
+    marginTop: spacing[2.5],
+    fontSize: fontSize.body,
     lineHeight: 22,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
     textAlign: "center",
   },
-  footer: { paddingHorizontal: 24, paddingBottom: 24 },
+  footer: { paddingHorizontal: spacing[6], paddingBottom: spacing[6] },
   cta: {
     height: 52,
     borderRadius: radii.md + 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing[2],
   },
   ctaText: {
-    color: colors.primaryForeground,
-    fontSize: 15,
-    fontWeight: "700",
+    color: colors.brand.onBrand,
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.bold,
   },
 });

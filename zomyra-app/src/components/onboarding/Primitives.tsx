@@ -4,19 +4,11 @@
  */
 import { Check, Search, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import {
-  Dimensions,
-  Keyboard,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Dimensions, Keyboard, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
+import { Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 /* ============ OptionCard ============ */
 type OptionCardProps = {
@@ -29,26 +21,22 @@ type OptionCardProps = {
 
 export function OptionCard({ selected, onSelect, title, description, compact }: OptionCardProps) {
   return (
-    <Pressable
+    <Touchable
+      feedback="scale"
       testID={`option-${title}`}
       onPress={onSelect}
-      style={({ pressed }) => [
-        styles.optCard,
-        compact ? styles.optCardCompact : null,
-        selected ? styles.optCardSelected : null,
-        pressed && { transform: [{ scale: 0.99 }] },
-      ]}
+      style={[styles.optCard, compact ? styles.optCardCompact : null, selected ? styles.optCardSelected : null]}
     >
       <View style={{ flex: 1 }}>
-        <Text style={[styles.optTitle, compact && { fontSize: 14 }]}>{title}</Text>
+        <Text style={[styles.optTitle, compact && { fontSize: fontSize.body }]}>{title}</Text>
         {description ? <Text style={styles.optDesc}>{description}</Text> : null}
       </View>
       {selected ? (
         <View style={styles.optCheck}>
-          <Check size={12} color={colors.primaryForeground} strokeWidth={3.5} />
+          <Check size={12} color={colors.brand.onBrand} strokeWidth={3.5} />
         </View>
       ) : null}
-    </Pressable>
+    </Touchable>
   );
 }
 
@@ -73,15 +61,12 @@ export function OptionGrid<T extends string>({
       {options.map((opt) => {
         const selected = value === opt;
         return (
-          <Pressable
+          <Touchable
+            feedback="scale"
             key={opt}
             testID={`option-${opt}`}
             onPress={() => onChange(opt)}
-            style={({ pressed }) => [
-              styles.chipCard,
-              selected && styles.chipCardSelected,
-              pressed && { transform: [{ scale: 0.97 }] },
-            ]}
+            style={[styles.chipCard, selected && styles.chipCardSelected]}
           >
             <Text
               numberOfLines={1}
@@ -91,10 +76,10 @@ export function OptionGrid<T extends string>({
             </Text>
             {selected ? (
               <View style={styles.chipCheck}>
-                <Check size={10} color={colors.primaryForeground} strokeWidth={3.5} />
+                <Check size={10} color={colors.brand.onBrand} strokeWidth={3.5} />
               </View>
             ) : null}
-          </Pressable>
+          </Touchable>
         );
       })}
     </View>
@@ -119,18 +104,14 @@ export function ChipGroup({
       {options.map((opt) => {
         const selected = value.includes(opt);
         return (
-          <Pressable
+          <Touchable
             key={opt}
             testID={`chip-${opt}`}
             onPress={() => toggle(opt)}
-            style={({ pressed }) => [
-              styles.chip,
-              selected && styles.chipSelected,
-              pressed && { opacity: 0.9 },
-            ]}
+            style={[styles.chip, selected && styles.chipSelected]}
           >
             <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{opt}</Text>
-          </Pressable>
+          </Touchable>
         );
       })}
     </View>
@@ -186,8 +167,8 @@ export function SearchableSelect({
   const screenH = Dimensions.get("window").height;
 
   useEffect(() => {
-    const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showEvt = isIOS ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvt = isIOS ? "keyboardWillHide" : "keyboardDidHide";
     const showSub = Keyboard.addListener(showEvt, (e) => {
       setKbHeight(e.endCoordinates?.height ?? 0);
     });
@@ -305,8 +286,8 @@ export function SearchableSelect({
           style={[
             styles.suggestPanel,
             placeAbove
-              ? { bottom: "100%", marginBottom: 8 }
-              : { top: "100%", marginTop: 8 },
+              ? { bottom: "100%", marginBottom: spacing[2] }
+              : { top: "100%", marginTop: spacing[2] },
             { maxHeight: panelMaxHeight },
           ]}
         >
@@ -331,14 +312,14 @@ export function SearchableSelect({
               {filtered.map((item) => {
                 const selected = item === value;
                 return (
-                  <Pressable
+                  <Touchable
                     key={item}
                     testID={`suggestion-${item}`}
                     onPress={() => commit(item)}
-                    style={({ pressed }) => [
+                    feedback="highlight"
+                    style={[
                       styles.suggestItem,
                       selected && styles.suggestItemSelected,
-                      pressed && styles.suggestItemPressed,
                     ]}
                   >
                     <Text
@@ -350,9 +331,9 @@ export function SearchableSelect({
                       {item}
                     </Text>
                     {selected ? (
-                      <Check size={16} color={colors.primary} />
+                      <Check size={16} color={colors.brand.default} />
                     ) : null}
-                  </Pressable>
+                  </Touchable>
                 );
               })}
             </ScrollView>
@@ -376,7 +357,7 @@ export function SearchableSelect({
           focused && styles.searchableInputWrapFocused,
         ]}
       >
-        <Search size={16} color={colors.mutedForeground} />
+        <Search size={16} color={colors.text.muted} />
         <TextInput
           testID="searchable-select-input"
           value={q}
@@ -384,20 +365,20 @@ export function SearchableSelect({
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
-          placeholderTextColor={colors.mutedForeground}
+          placeholderTextColor={colors.text.muted}
           style={styles.searchableInput}
           autoCorrect={false}
           autoCapitalize="words"
           returnKeyType="done"
         />
         {q.length > 0 ? (
-          <Pressable
+          <Touchable
             testID="searchable-select-clear"
             onPress={clear}
             hitSlop={8}
           >
-            <X size={16} color={colors.mutedForeground} />
-          </Pressable>
+            <X size={16} color={colors.text.muted} />
+          </Touchable>
         ) : null}
       </View>
 
@@ -420,126 +401,126 @@ const styles = StyleSheet.create({
   optCard: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   optCardCompact: {
-    paddingVertical: 11,
+    paddingVertical: spacing[3],
   },
   optCardSelected: {
-    borderColor: colors.primary,
+    borderColor: colors.brand.default,
     borderWidth: 2,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   optTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: colors.foreground,
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
   },
   optDesc: {
-    marginTop: 2,
-    fontSize: 13,
+    marginTop: spacing[0.5],
+    fontSize: fontSize.label,
     lineHeight: 17,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   optCheck: {
     width: 22,
     height: 22,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 12,
+    marginLeft: spacing[3],
   },
   // ---- Chip-style grid layout (content-based width, wrapped, centered) ----
   gridWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: spacing[2.5],
     width: "100%",
     justifyContent: "center",
   },
   chipCard: {
     alignSelf: "flex-start",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 999,
+    paddingHorizontal: spacing[4.5],
+    paddingVertical: spacing[3],
+    borderRadius: radii.full,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
     minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
   },
   chipCardSelected: {
-    borderColor: colors.primary,
+    borderColor: colors.brand.default,
     borderWidth: 2,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   chipCardText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.foreground,
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
     textAlign: "center",
   },
   chipCardTextSelected: {
-    color: colors.primary,
+    color: colors.brand.default,
   },
   chipCheck: {
-    marginLeft: 8,
+    marginLeft: spacing[2],
     width: 16,
     height: 16,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
+    borderRadius: radii.full,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
   chipWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing[2],
     justifyContent: "center",
   },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 10,
+    paddingHorizontal: spacing[3.5],
+    paddingVertical: spacing[2],
+    borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
   },
   chipSelected: {
-    borderColor: colors.primary,
+    borderColor: colors.brand.default,
     borderWidth: 2,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   chipText: {
-    fontSize: 13.5,
-    fontWeight: "600",
-    color: colors.foreground,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
   },
   chipTextSelected: {
-    color: colors.primary,
+    color: colors.brand.default,
   },
   selectTrigger: {
     height: 52,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    paddingHorizontal: 16,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
+    paddingHorizontal: spacing[4],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   selectText: {
-    fontSize: 15,
-    color: colors.foreground,
+    fontSize: fontSize.bodyLarge,
+    color: colors.text.primary,
     flex: 1,
   },
   // ─── Inline autosuggest ─────────────────────────────────────────
@@ -553,32 +534,32 @@ const styles = StyleSheet.create({
   searchableInputWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing[2.5],
     height: 52,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    paddingHorizontal: 14,
+    borderColor: colors.border.default,
+    backgroundColor: colors.surface.default,
+    paddingHorizontal: spacing[3.5],
   },
   searchableInputWrapFocused: {
-    borderColor: colors.primary,
+    borderColor: colors.brand.default,
     borderWidth: 2,
-    paddingHorizontal: 13,
+    paddingHorizontal: spacing[3],
   },
   searchableInput: {
     flex: 1,
-    fontSize: 15,
-    color: colors.foreground,
+    fontSize: fontSize.bodyLarge,
+    color: colors.text.primary,
     // Compensate for the border-width jump between focused/blurred so text
     // doesn't jump on focus.
-    paddingVertical: 0,
+    paddingVertical: spacing[0],
   },
   searchableHelper: {
-    marginTop: 6,
-    marginLeft: 4,
-    fontSize: 12,
-    color: colors.mutedForeground,
+    marginTop: spacing[1.5],
+    marginLeft: spacing[1],
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
   },
   // Floating suggestions panel. Absolute-positioned relative to the wrap.
   // The `top` / `bottom` and `maxHeight` are set inline so the component
@@ -588,12 +569,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    backgroundColor: colors.card,
-    borderRadius: 14,
+    backgroundColor: colors.surface.default,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.border.default,
     // Subtle shadow so the panel looks like it floats over the screen.
-    shadowColor: "#000",
+    shadowColor: colors.shadow.default,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 14,
@@ -605,36 +586,33 @@ const styles = StyleSheet.create({
     // Height is capped inline via `maxHeight` based on live geometry.
   },
   suggestItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  suggestItemPressed: {
-    backgroundColor: colors.secondary,
+    borderTopColor: colors.border.default,
   },
   suggestItemSelected: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.surface.brand,
   },
   suggestItemText: {
-    fontSize: 15,
-    color: colors.foreground,
+    fontSize: fontSize.bodyLarge,
+    color: colors.text.primary,
   },
   suggestItemTextSelected: {
-    color: colors.primary,
-    fontWeight: "600",
+    color: colors.brand.default,
+    fontWeight: fontWeight.semibold,
   },
   suggestEmpty: {
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    paddingVertical: spacing[5],
+    paddingHorizontal: spacing[4],
     alignItems: "center",
   },
   suggestEmptyText: {
-    fontSize: 13,
-    color: colors.mutedForeground,
+    fontSize: fontSize.label,
+    color: colors.text.muted,
     textAlign: "center",
   },
 });

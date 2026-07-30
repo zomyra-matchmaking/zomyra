@@ -12,24 +12,17 @@
  * navigating back preserves prior answers.
  */
 import { useMemo, useState } from "react";
-import {
-  Animated,
-  Easing,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Animated, Easing, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
 import { Slider } from "@/src/components/onboarding/Slider";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, alpha, fontSize, fontWeight, spacing } from "@/src/theme";
 import { SCALE_QUESTIONS } from "@/src/lib/onboarding/scales";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
+import { Touchable } from "@/src/components/ui";
+import { isAndroid } from "@/src/utils/platform";
 
 type Props = {
   state: OnboardingState;
@@ -104,14 +97,14 @@ export function PersonalityQuiz({
       {/* Header with back button + segmented progress bar */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Pressable
+          <Touchable
             testID="personality-back"
             onPress={handleBack}
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+            style={[styles.backBtn]}
             hitSlop={10}
           >
-            <ArrowLeft size={20} color={colors.foreground} strokeWidth={2.2} />
-          </Pressable>
+            <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
+          </Touchable>
           <Text style={styles.counter} testID="personality-counter">
             {index + 1} / {total}
           </Text>
@@ -149,16 +142,13 @@ export function PersonalityQuiz({
           { paddingBottom: Math.max(insets.bottom, 12) },
         ]}
       >
-        <Pressable
+        <Touchable
           testID="personality-continue-button"
           onPress={handleNext}
-          style={({ pressed }) => [
-            styles.nextBtn,
-            pressed && { opacity: 0.9 },
-          ]}
+          style={[styles.nextBtn]}
         >
           <Text style={styles.nextLabel}>{isLast ? "Finish" : "Continue"}</Text>
-        </Pressable>
+        </Touchable>
         <View style={styles.helperSpacer} />
       </View>
     </SafeAreaView>
@@ -232,7 +222,7 @@ function QuestionBody({
         ]}
       >
         <View style={styles.titleRow}>
-          <Sparkles size={16} color={colors.primary} />
+          <Sparkles size={16} color={colors.brand.default} />
           <Text style={styles.titleTag}>{title}</Text>
         </View>
         <Text style={styles.prompt}>{prompt}</Text>
@@ -288,48 +278,48 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? 6 : 4,
-    paddingBottom: 12,
+    paddingHorizontal: spacing[5],
+    paddingTop: isAndroid ? 6 : 4,
+    paddingBottom: spacing[3],
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
+    marginBottom: spacing[3.5],
   },
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 999,
+    borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: -8,
   },
   counter: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1.2,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
   progressRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: spacing[1],
   },
   progressSegment: {
     flex: 1,
     height: 5,
-    borderRadius: 999,
-    backgroundColor: colors.secondary,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface.brand,
   },
   progressSegmentCompleted: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
   },
   progressSegmentActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     // Slight glow-ish emphasis: brighter than completed but same fill.
-    shadowColor: colors.primary,
+    shadowColor: colors.brand.default,
     shadowOpacity: 0.4,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 0 },
@@ -337,9 +327,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 24,
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[8],
+    paddingBottom: spacing[6],
     justifyContent: "center",
   },
   questionCard: {
@@ -349,58 +339,58 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 12,
+    gap: spacing[1.5],
+    marginBottom: spacing[3],
   },
   titleTag: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.bold,
     letterSpacing: 1.2,
-    color: colors.primary,
+    color: colors.brand.default,
     textTransform: "uppercase",
   },
   prompt: {
-    fontSize: 22,
+    fontSize: fontSize.h2,
     lineHeight: 30,
-    fontWeight: "700",
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.3,
-    color: colors.foreground,
+    color: colors.text.primary,
     textAlign: "center",
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing[1],
   },
   sliderBlock: {
-    marginTop: 40,
+    marginTop: spacing[10],
     width: "100%",
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing[1],
   },
   dots: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 10,
-    marginBottom: 16,
+    gap: spacing[2.5],
+    marginBottom: spacing[4],
   },
   dot: {
     width: 7,
     height: 7,
-    borderRadius: 999,
-    backgroundColor: "rgba(31,18,53,0.14)",
+    borderRadius: radii.full,
+    backgroundColor: alpha(colors.brand.strong, 0.14),
   },
   dotActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     transform: [{ scale: 1.5 }],
   },
   sliderWrap: {
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing[1],
   },
   labelRow: {
-    marginTop: 14,
+    marginTop: spacing[3.5],
     flexDirection: "row",
     justifyContent: "space-between",
   },
   axisLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.foregroundMuted,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.muted,
     maxWidth: "45%",
     lineHeight: 18,
   },
@@ -411,36 +401,36 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.border.default,
     backgroundColor: colors.background,
   },
   nextBtn: {
     height: 52,
     borderRadius: radii.md + 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand.default,
     alignItems: "center",
     justifyContent: "center",
   },
   nextBtnDisabled: {
-    backgroundColor: "#D6CFE0",
+    backgroundColor: colors.surface.disabled,
   },
   nextLabel: {
-    color: colors.primaryForeground,
-    fontSize: 15,
-    fontWeight: "700",
+    color: colors.brand.onBrand,
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.1,
   },
   helperText: {
-    marginTop: 8,
+    marginTop: spacing[2],
     textAlign: "center",
-    fontSize: 12,
-    color: colors.foregroundSubtle,
+    fontSize: fontSize.caption,
+    color: colors.text.muted,
   },
   helperSpacer: {
-    marginTop: 8,
+    marginTop: spacing[2],
     height: 15,
   },
 });

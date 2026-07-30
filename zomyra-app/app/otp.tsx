@@ -1,21 +1,14 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { toast } from "@/src/components/ui/Toast";
 import { authService } from "@/src/services/auth";
-import { colors, radii } from "@/src/theme/colors";
+import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
+import { Button, Touchable } from "@/src/components/ui";
+import { isIOS } from "@/src/utils/platform";
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -126,14 +119,14 @@ export default function OtpScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <View style={{ paddingHorizontal: 24, flex: 1 }}>
+        <View style={{ paddingHorizontal: spacing[6], flex: 1 }}>
           <ScreenHeader onBack={() => router.back()} />
           <Text style={styles.title}>Verify your number</Text>
           <Text style={styles.subtitle}>
-            Enter the 6-digit code sent to <Text style={{ color: colors.foreground, fontWeight: "700" }}>{masked}</Text>
+            Enter the 6-digit code sent to <Text style={{ color: colors.text.primary, fontWeight: fontWeight.bold }}>{masked}</Text>
           </Text>
 
           <View style={styles.row}>
@@ -158,37 +151,33 @@ export default function OtpScreen() {
           </View>
 
           <View style={styles.resendRow}>
-            <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
+            <Text style={{ color: colors.text.muted, fontSize: fontSize.label }}>
               Didn't receive the code?
             </Text>
             {secondsLeft > 0 ? (
-              <Text style={{ color: colors.mutedForeground, fontSize: 13, fontWeight: "600" }}>
+              <Text style={{ color: colors.text.muted, fontSize: fontSize.label, fontWeight: fontWeight.semibold }}>
                 {" "}Resend in {mm}:{ss}
               </Text>
             ) : (
-              <Pressable testID="otp-resend" onPress={resend} disabled={resending} hitSlop={6}>
-                <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13 }}>
+              <Touchable testID="otp-resend" onPress={resend} disabled={resending} hitSlop={6}>
+                <Text style={{ color: colors.brand.default, fontWeight: fontWeight.bold, fontSize: fontSize.label }}>
                   {" "}{resending ? "Resending…" : "Resend OTP"}
                 </Text>
-              </Pressable>
+              </Touchable>
             )}
           </View>
 
           <View style={{ flex: 1 }} />
 
-          <Pressable
+          <Button
             testID="otp-verify"
-            disabled={!isComplete || verifying}
+            label={verifying ? "Verifying…" : "Verify & Continue"}
+            loading={verifying}
+            disabled={!isComplete}
             onPress={verify}
-            style={({ pressed }) => [
-              styles.cta,
-              (!isComplete || verifying) && styles.ctaDisabled,
-              pressed && isComplete && { opacity: 0.92 },
-            ]}
-          >
-            {verifying ? <ActivityIndicator color={colors.primaryForeground} /> : null}
-            <Text style={styles.ctaText}>{verifying ? "Verifying…" : "Verify & Continue"}</Text>
-          </Pressable>
+            fullWidth
+            style={styles.cta}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -198,19 +187,19 @@ export default function OtpScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   title: {
-    marginTop: 16,
-    fontSize: 28,
-    fontWeight: "700",
+    marginTop: spacing[4],
+    fontSize: fontSize.display,
+    fontWeight: fontWeight.bold,
     letterSpacing: -0.3,
-    color: colors.foreground,
+    color: colors.text.primary,
   },
   subtitle: {
-    marginTop: 8,
-    fontSize: 15,
+    marginTop: spacing[2],
+    fontSize: fontSize.bodyLarge,
     lineHeight: 21,
-    color: colors.mutedForeground,
+    color: colors.text.muted,
   },
-  row: { marginTop: 24, flexDirection: "row", gap: 8, alignItems: "stretch" },
+  row: { marginTop: spacing[6], flexDirection: "row", gap: spacing[2], alignItems: "stretch" },
   box: {
     width: 44,
     flexGrow: 1,
@@ -220,25 +209,14 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border.neutral,
+    backgroundColor: colors.surface.default,
     textAlign: "center",
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.foreground,
-    paddingHorizontal: 0,
+    fontSize: fontSize.h2,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
+    paddingHorizontal: spacing[0],
   },
-  resendRow: { marginTop: 16, flexDirection: "row", justifyContent: "center", alignItems: "center" },
-  cta: {
-    height: 52,
-    borderRadius: radii.lg,
-    backgroundColor: colors.primary,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 18,
-  },
-  ctaDisabled: { backgroundColor: "#D6CFE0" },
-  ctaText: { color: colors.primaryForeground, fontSize: 15, fontWeight: "700" },
+  resendRow: { marginTop: spacing[4], flexDirection: "row", justifyContent: "center", alignItems: "center" },
+  cta: { marginBottom: spacing[4.5] },
 });

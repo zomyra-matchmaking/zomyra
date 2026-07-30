@@ -1,7 +1,8 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.39**, integrating against the contract in **Backend TDD v1.2**.
+**Frontend TDD v1.40**, integrating against the contract in **Backend TDD v1.2**.
+**Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
 require reading only this file plus the relevant TDD sections — not prior chat history.
@@ -10,20 +11,26 @@ Append a "Module log" entry at the end of every module, in the same session that
 - Started: 2026-07-27
 - Codebase: `zomyra/zomyra-app` (Expo SDK 54, RN 0.81.5, React 19.1, expo-router v6)
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
-- Status: **Module 0 complete** (2026-07-28). §3's baseline still describes the untouched Emergent
-  output and is kept as the historical reference point; §6 records what Module 0 changed.
-- **Handoff state:** six commits sit on `module/0-build-foundation`, **committed but not pushed and
-  with no PR open** — per C-6 the owner does both. A new session must not assume this work is on
-  `master`. `git log master..module/0-build-foundation` shows what is pending.
-- **Verified green as of 2026-07-28:** `yarn doctor` 18/18 · `yarn lint` 0 errors (15 pre-existing
-  warnings) · `yarn typecheck:baseline` clean · `expo export --platform ios` bundles.
+- Status: **Module 1 complete** (2026-07-30). §3's baseline still describes the untouched Emergent
+  output and is kept as the historical reference point; §6 records what each module changed.
+  ⚠️ **§3's "Design language" subsection is now history, not current state** — the 281 hex literals,
+  the 13 rival palettes and the four NFR-6a failures it records were all resolved in Module 1.
+- **Handoff state:** **Module 1 is finished and awaiting the owner.** Twelve commits sit on
+  `module/1-design-system` (branched from `aa80d1a`), **committed but not pushed and with no PR
+  open** — per C-6 the owner does both. A new session must not assume this work is on `master`;
+  `git log master..module/1-design-system` shows what is pending. Module 0 is merged (PR #1).
+- **Verified green as of 2026-07-30:** `yarn doctor` 18/18 · `yarn lint` 0 errors (14 pre-existing
+  warnings, one fewer than Module 0) · `yarn typecheck:baseline` clean · `expo export --platform ios`
+  bundles · every screen re-checked on the iPhone 16 Plus simulator.
+  ⚠️ `yarn lint` caches to **`.expo/cache/eslint`**. If it reports errors that `npx eslint app src
+  --no-cache` does not, `rm -rf .expo/cache` before believing it — this cost time in Module 1.
 - **C-2 is now proven, not just configured.** The first EAS build ran on 2026-07-28
   (`development-simulator`, build 1) and the app launched on an iPhone 16 Plus simulator against
   Metro. See §6's "First build" entry. iOS *device* and Android builds remain unrun.
-- **Next up: Module 1 — Design system & theming.** Confirmed by the owner 2026-07-28; the sequence
-  in §2 is being followed in order. §3's new provenance subsection is written for this module.
+- **Next up: Module 2 — State & data layer.** The sequence in §2 is being followed in order.
+  O-8 and O-11 are the live inputs; §2.3 lists what staging must provide.
 - **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
-  §4 (open items), then §6's Module 0 entry. §3 is history, not current state.
+  §4 (open items), then §6's Module 1 entry. §3 is history, not current state.
 
 ---
 
@@ -40,22 +47,18 @@ These are decided, not open. Do not relitigate them without the owner saying so.
 | C-5 | **One module at a time** | Finish, summarize, append to this log, stop. Never auto-continue into the next module. |
 | C-6 | **Branch per module, merged by PR** | `master` is the integration branch and takes no direct commits. **Create the branch at the *start* of a module, before any file changes** — `module/<n>-<slug>`, e.g. `module/0-build-foundation` — so no work ever lands on `master` by accident. At module end: commit, append the §6 log entry, summarise, and **stop**. **The owner pushes and opens the PR against `master`** — never push, force-push, or open PRs unless explicitly asked. *(Pre-Module-0 setup docs were committed directly to `master`; this rule applies from Module 0 onward.)* |
 
-### Repository state (as of 2026-07-27)
+### Repository state (updated 2026-07-29)
 
-`origin` is `git@github.com:niharshah25/zomyra.git`. **`master` is the live line** — it carries the
-Discovery Mode work (FR-15a) and the `PersonalityChat` → `PersonalityQuiz` rewrite (FR-7) that
-`main` lacks. Everything in this document was assessed against `master`.
+`origin` is `git@github.com:zomyra-matchmaking/zomyra.git`. **`master` is the live line** — it
+carries the Discovery Mode work (FR-15a) and the `PersonalityChat` → `PersonalityQuiz` rewrite
+(FR-7) that `main` lacks. Everything in this document was assessed against `master`, and **`master`
+is now GitHub's default branch**, so PRs target it by default.
 
 `main` is a **separate, unrelated history** (no common ancestor with `master`) last touched
-2026-07-09, and is still GitHub's configured default branch. It is stale — treat it as an archive,
-never as a merge target. Because the histories are unrelated, git cannot merge the two without
-`--allow-unrelated-histories` and an artificial merge commit; there is no reason to attempt it,
-since `master` already contains everything `main` has except `package-lock.json` (the project uses
-yarn) and the superseded `PersonalityChat.tsx`.
-
-> **Outstanding manual step for the owner:** switch the GitHub default branch to `master` in repo
-> settings. Until that happens, new PRs default to targeting the stale `main`, and the repo's
-> landing page shows 9-day-old code.
+2026-07-09. It is stale — treat it as an archive, **never as a merge target**. Because the histories
+are unrelated, git cannot merge the two without `--allow-unrelated-histories` and an artificial merge
+commit; there is no reason to attempt it, since `master` already contains everything `main` has
+except `package-lock.json` (the project uses yarn) and the superseded `PersonalityChat.tsx`.
 
 ---
 
@@ -64,11 +67,11 @@ yarn) and the superseded `PersonalityChat.tsx`.
 | # | Module | Status | One-line rationale for its position |
 |---|---|---|---|
 | 0 | Build & project foundation | **Complete** (2026-07-28) | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
-| 1 | Design system & theming | Not started | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
+| 1 | Design system & theming | **Complete** (2026-07-30) | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
 | 2 | State & data layer | Not started | Every subsequent module plugs into it; nothing can reach the backend until it exists |
 | 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me` |
 | 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
-| 5 | Onboarding & profile schema | Not started | Fixes data-model drift at the source, before other screens consume those enums |
+| 5 | Onboarding & profile schema | Not started | Fixes data-model drift at the source, before other screens consume those enums. **+FE TDD v1.40's state field — see §12.1** |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
@@ -151,8 +154,8 @@ refined as modules land; elapsed time runs longer because of review turnaround a
 
 | Module | Est. build | | Module | Est. build |
 |---|---|---|---|---|
-| 0 · Build foundation | 1 day | | 5 · Onboarding & schema | 3–4 days |
-| 1 · Design system | 1–2 days | | 6 · Photos & verification | 3–4 days |
+| 0 · Build foundation | ✅ 1 day | | 5 · Onboarding & schema | 4–5 days *(+1, §12.1)* |
+| 1 · Design system | ✅ 1–2 days | | 6 · Photos & verification | 3–4 days |
 | 2 · State & data layer | 3–5 days | | 7 · Discover / interest | 4–6 days |
 | 3 · Navigation | 2–3 days | | 8 · Requests | 1–2 days |
 | 4 · Auth | 2–3 days | | 9 · Chat & realtime | 4–6 days |
@@ -284,6 +287,11 @@ not a partially-integrated app.** Do not assume the TDD-described architecture e
 | Accessibility | **1** accessibility prop in the whole codebase, vs. 159 `testID`s. NFR-6/6a unstarted. |
 
 ### Design language
+
+> ⚠️ **Resolved in Module 1 (2026-07-29).** Everything in this subsection describes the prototype as
+> found and is kept only as the before-picture. There are now zero hex and zero `rgba()` literals in
+> `app/` and `src/`, no local palettes, and no text token below WCAG AA. See §6's Module 1 entry.
+
 - `src/theme/colors.ts` exists and is good — and is largely abandoned.
 - **281 hardcoded hex literals, 51 unique**, against a palette defining ~25. Only **26 of 66**
   files import the theme.
@@ -368,7 +376,10 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | O-12 | ~~Is web still a target?~~ **→ No. Web is out of scope** (2026-07-28, owner). Removed in Module 0: the `expo.web` config block, the `yarn web` script, `react-dom` + `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts`, `favicon.png`, and the RN-Web font-injection block in `app/_layout.tsx`. `platforms: ["ios", "android"]` now declares this in config, and `expo export --platform web` refuses. **Consequence for Module 2:** the `import.meta` workaround in `onboarding-store.ts` was a *web-bundle* problem only — it is no longer a constraint on the persistence design. | Module 0 | ✅ Decided |
 | O-13 | ~~`ios.supportsTablet`~~ **→ `false`. iPad is out of MVP scope** (2026-07-28, owner — reversed the same day during Module 0 PR review; the earlier "tablets are a target" note in §6 is superseded). What this buys the MVP: no 13-inch iPad screenshots required at submission, App Review stops exercising a phone-designed UI on iPad, and Modules 1/3 owe no large-screen layout work. **iPad users can still install** — iOS runs it letterboxed in iPhone-compatibility mode; `false` means "not optimised for iPad", not "blocked". **Android needs no equivalent change** — there is no phone-only flag in `app.json`, tablets are supported by default, and Play requires no tablet screenshots. Re-enabling post-MVP is one line plus the layout work. | Post-MVP if revisited | ✅ Decided |
-| O-14 | **Logo delivered 2026-07-28 — splash artwork still pending.** The designer's vector lockup is in-tree (`assets/brand/zomyra-lockup.svg`), and the icon, adaptive icon and in-app logo are now generated from it at full sharpness — see §10. **Still open:** (a) a purpose-designed splash from the designer; the current splash is an interim render of the lockup; (b) the `#FFFFFF` splash and adaptive-icon backgrounds, still C-3 placeholders rather than palette decisions — Module 1 should settle these; (c) whether the app icon should be purple-on-white (current, faithful to the supplied artwork) or inverted white-on-purple, which is a design call nobody has made. | Splash: before submission · backgrounds: Module 1 | Product owner |
+| O-14 | **Logo delivered 2026-07-28 — splash artwork still pending.** The designer's vector lockup is in-tree (`assets/brand/zomyra-lockup.svg`), and the icon, adaptive icon and in-app logo are now generated from it at full sharpness — see §10. **(b) settled in Module 1:** both backgrounds stay `#FFFFFF`, now as `colors.background` rather than a C-3 placeholder — reasoning in §10.2. **Still open:** (a) a purpose-designed splash from the designer; the current splash is an interim render of the lockup; (c) whether the app icon should be purple-on-white (current, faithful to the supplied artwork) or inverted white-on-purple. **Module 1 found (b) and (c) are not separable** — the Android foreground is the purple mark on transparency, so a purple `adaptiveIcon.backgroundColor` renders purple-on-purple. Changing that background *is* the icon-inversion decision, and it needs a new foreground asset with it. | Splash + icon treatment: before submission | Product owner |
+
+| O-15 | **FR-3a fallback when a town isn't in the curated list** — flagged as undecided *by the spec itself* (FE TDD v1.40, §12.1). Three linked questions: (a) does the user pick the nearest listed city, or get a free-text "other" entry; (b) if free-text, is that profile excluded from FR-5 same-city matching; (c) how deep does the curated per-state list go — every district town, or the top N cities per state. **This is not cosmetic:** it decides whether `city` is a closed enum or an open string, which changes the Discover filter (a picker vs. a search), the backend's matching query, and whether two users typing "Bangalore" and "Bengaluru" ever match. Needs settling before Module 5 builds the screen, not after. | **Module 5** | Product owner + BE |
+| O-16 | **Backend TDD v1.2 has no `state` field.** FE TDD v1.40 adds it to FR-3, API-7's `plot` object and API-23's response, but BE §14.2 (line 798) and §14.10 (line 1125) still list `…gender, city, heightCm…` with no `state`. The backend needs the column, the submit-payload field, the `/profile/me` response field, and FR-5's "same state" matching resolved against it rather than via city→state lookup. **Frontend-only constraint (C-1) means this is a message to send, not a change to make** — but Module 5 will 400 on submit until it lands. Exactly the drift O-11 predicted, caught by doc diff rather than at runtime. | **Module 5** | BE (flag from FE) |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -393,7 +404,9 @@ The two documents are genuinely aligned; the backend was revised to match the fr
   `refresh_token_invalid` (BE §9.2).
 - `200 { status: "pending" }` on verification means work is genuinely in flight server-side —
   **must not** offer manual retry. A real 5xx is the opposite and should retry. Easy to conflate.
-- See O-3 and O-4 above for the two live conflicts.
+- **`state` is missing backend-side.** FE TDD v1.40 adds it to API-7 and API-23; BE TDD v1.2 does
+  not have it in either. See O-16 — Module 5 cannot submit onboarding successfully until it exists.
+- See O-3, O-4 and O-16 above for the live conflicts.
 
 ---
 
@@ -567,6 +580,312 @@ one that actually dominates the UI. Visually identical to the brand, textually d
 find-and-replace on `#5B2C70` would miss every occurrence. Corroborating the §3 provenance note,
 `src/theme/colors.ts` line 1 states outright that its tokens were *"extracted from the original
 Tailwind config"*.
+
+### Module 1 — Design system & theming (completed 2026-07-30)
+
+**Changed:**
+
+- **Two-layer token system, as §10.3 specified.** `src/theme/palette.ts` holds five private numbered
+  ramps; `src/theme/colors.ts` holds the semantic tokens everything else imports; `src/theme/index.ts`
+  is the barrel (`import { colors, radii, fontSize } from "@/src/theme"`). The old deep import
+  `@/src/theme/colors` was retargeted at the barrel in all 26 files that used it.
+- **Brand purple anchored at ramp step 900, not 600** — `purple[900]` *is* `#5B2C70`, the single fill
+  in the delivered artwork. The rest of the ramp is generated from its own hue,
+  hsl(281.5, 43.6%, 30.6%), on a Tailwind-shaped lightness curve. Computed contrast on white:
+  500 4.44 · 600 6.35 · 700 8.15 · 800 9.33 · **900 10.30** · 950 14.41, which reproduces §10.3's
+  measured 10.30:1 exactly and confirms the arithmetic.
+- **The greys are Tailwind's default gray ramp, kept verbatim** — §3's provenance note said to remap
+  by role, and because `#111827` *is* gray-900 and always meant "primary text", the substitution is
+  exact rather than a re-design. Amber, red and emerald are likewise Tailwind's, since the prototype
+  was already reaching for those exact steps.
+- **All four purples reconciled onto `#5B2C70`.** `#5B2C6F` (`colors.primary` + the hardcoded
+  `PURPLE` in 13 files), `#7C3AED` (the `Logo.tsx` wordmark) and `#1F1235` (`colors.foreground`) are
+  gone from `app/` and `src/`. **A fifth disguise the doc had not recorded:** `rgba(91,44,111,…)` —
+  `#5B2C6F` in decimal — appeared 8 times and is invisible to any search for the hex form. That is
+  what `alpha(token, n)` now exists to prevent.
+- **Every raw colour is gone: 0 hex literals and 0 `rgba()` literals in `app/` and `src/`**, down
+  from 281 hex (49 unique) and 56 rgba. The 13 rival local palettes (`PURPLE`, `TEXT`, `MUTED`,
+  `BORDER`, `LIGHT_PURPLE`, `GOLD`, `SOFT`, `HAIRLINE`, `DANGER*`, `PURPLE_DEEP`) are deleted.
+- **C-4 is now enforced by ESLint, not by convention.** `eslint.config.js` adds
+  `no-restricted-syntax` selectors that reject hex and `rgba()` string literals anywhere in
+  `app/**` or `src/**`, plus a `no-restricted-imports` rule blocking `**/theme/palette` so the
+  private ramp layer cannot leak into a component. `src/theme/**` is exempt — it is the one place
+  colour values may exist. The rule surfaced the full worklist as 314 lint errors and was driven to
+  zero, which is why "all raw colour is gone" is checkable rather than asserted.
+- **NFR-6a: all four failures fixed; 0 text-carrying tokens now fall below AA** (audited
+  programmatically against `colors.background` across all 64 tokens).
+  - `foregroundSubtle` `#A99DBA` (2.56) → `text.muted` `#6B7280` (4.83). Two call sites.
+  - `SOFT` `#9CA3AF` (2.50), the 11.5px uppercase labels in ProfileView → `text.muted`.
+  - `primarySoft` `#8B5CF6` (4.23) and `accent` `#C084FC` (2.64) → **deleted; both were dead
+    tokens**, referenced nowhere. So were `gradientStart`, `gradientEnd`, `black`, `success`,
+    `warning` and `destructiveForeground`.
+  - `warning` `#F59E0B` (2.15) was the gold, used only for Crown/Lock icons. Split by context:
+    `premium.onDark` (amber-500) on the purple gradient, `premium.icon` (amber-600, 3.19 — clears
+    WCAG 1.4.11's 3:1 for non-text) on white, `premium.text` (amber-700, 5.02) for copy.
+  - `text.disabled` (gray-400, 2.50) ships **below AA on purpose** and is documented as such —
+    WCAG 1.4.3 exempts inactive components. It is the only sub-AA token that can touch text.
+- **Type scale.** 26 distinct font sizes (19 integer + 7 fractional half-steps like 11.5 and 14.5)
+  and 6 weights across 314 literals → 14 named sizes and 5 named weights. The five true one-offs
+  (9, 17, 19, 24, 34 — 16 occurrences) snap to the nearest step, **downward wherever there was a
+  choice**, so nothing that fitted before can start overflowing.
+- **Radii.** 11 distinct values across 193 literals → 9 named steps. `radii.pill` renamed `radii.full`.
+  `borderRadius: 35` and `60` (MatchOverlay's avatar circles) became `radii.full`, which is
+  equivalent on a fixed-size square.
+- **`FONT_FAMILY` has one owner.** It was declared in `src/hooks/use-app-fonts.ts` and would have
+  been declared again in the theme; the theme now owns it and the hook re-exports it, so the loader
+  registers whatever the design system declares.
+- **Third-party colour has an explicit home.** `colors.external.google` (`#EA4335`) exists so the
+  no-raw-hex rule can stay absolute while the one colour we genuinely do not control stays visible
+  as an exception.
+- **O-14(b) settled** — see §10.2. `app.json` is unchanged; what changed is that `#FFFFFF` is now
+  `colors.background` with a stated reason instead of a C-3 placeholder.
+
+**Still stubbed / deferred:**
+
+- ~~Spacing is tokenised but not applied~~ — **superseded: spacing was migrated in full on the
+  owner's ask. See the spacing subsection below.** `lineHeight` literals are still raw.
+- **Eight tokens ship unreferenced** — `text.secondary`, `text.disabled`, `text.link`,
+  `success.text`, `surface.media`, `overlay.scrimStrong`, `premium.textStrong`, `border.onBrand`
+  are roles the system needs to be coherent but that today's screens do not reach for. Noted here
+  rather than left to be discovered: if a later module still has no use for one, delete it. Genuinely
+  speculative tokens (`brand.fill`, `shadow.brand`) were removed rather than shipped.
+- **The component language covers the common controls, not every pattern.** Added on the owner's
+  ask after the token work landed — see the "Component primitives" subsection below.
+- **Accessibility beyond colour is untouched** — NFR-6's touch targets and the single
+  `accessibilityLabel` in the codebase stay with Module 12. `MIN_TOUCH_TARGET` is exported for it.
+- **`src/hooks/use-icon-fonts.ts` pins `ICON_VECTOR_VERSION = "15.0.3"`** while `package.json` now
+  has `@expo/vector-icons@^15.1.1` (Module 0 relaxed it). The file's own comment says the two must
+  match. Harmless today — that CDN path is only taken under Expo Go, which C-2 retired — but it is
+  drift, and it belongs to whoever next touches font loading.
+
+**Inherited by next module:**
+
+- Module 2 receives a project where colour, type and radius are single-sourced **and where the
+  common controls exist** — any UI it adds should import tokens from `@/src/theme` and controls from
+  `@/src/components/ui`, and will fail lint if it reaches for raw colour or `Pressable` instead.
+- **The four-purples trap is closed**, but the lesson generalises: this codebase hides values in
+  `rgba()` decimal form. Grep for both spellings when auditing anything colour-adjacent.
+- Modules 3–9 own migrating spacing per screen as they rewrite, and own deleting any of the eight
+  unused tokens they still do not need.
+
+**Decisions made:**
+
+- Brand purple sits at ramp step **900**. Numbering it 600 would have left no room beneath it.
+- The neutral, amber, red and emerald ramps are **Tailwind's, unmodified** — the prototype's values
+  already were, so adopting them makes the remap exact instead of approximate.
+- Gold is **three tokens, not one**, because a single gold cannot be legible on both white and the
+  purple gradient.
+- `alpha(token, n)` replaces hand-written `rgba()` rather than tokenising 56 individual translucent
+  values.
+- The no-raw-colour rule is an **error, not a warning**. A warning would have been absorbed into the
+  15 the project already tolerates.
+- ~~Spacing was **not** mass-migrated~~ — **reversed on the owner's ask; see the spacing subsection.**
+  The reversal was right for a reason the first pass missed: the objection was that snapping to a 4pt
+  grid would move ~200 elements, but the app is not on a 4pt grid — it is on a **2pt** one, and once
+  the scale matches reality the migration is a substitution, not a re-design.
+
+#### Module 1 addendum — component primitives (owner ask, 2026-07-29)
+
+Tokens fix *what things look like*; they do nothing about **how many times a button is rebuilt**.
+The owner asked for a component language alongside the design language, and specifically for a
+shared touchable — correctly, because press feedback is platform behaviour and resolving it per
+call site guarantees drift.
+
+**The evidence for the touchable, counted before building it:** 106 press call sites (102
+`Pressable`, 4 `TouchableOpacity`) using **7 different press opacities** (0.7 / 0.8 / 0.85 / 0.9 /
+0.92 / 0.95 / 1) and **5 different scales** (0.94 / 0.97 / 0.98 / 0.985 / 0.99) — and
+**zero `android_ripple` anywhere**, so every Android tap was getting iOS feedback.
+
+**`src/components/ui/` is now the primitive tier**, exported from one barrel:
+
+| Primitive | What it owns |
+|---|---|
+| **`Touchable`** | The base. Everything else is built on it. iOS dim / Android ripple chosen once, `feedback` variants (`opacity` · `scale` · `highlight` · `none`), 44pt `hitSlop` by default (NFR-6), `accessibilityRole`/`State` wired |
+| **`Button`** | 5 variants (primary · gradient · secondary · ghost · danger) × 3 sizes, icon, `loading`, one disabled treatment |
+| **`Input`** | Boxed field with label, hint, **error state**, focus ring, `multiline`, character count |
+| **`Overlay`** | The modal shell — RN `Modal` + scrim + backdrop dismiss + `onRequestClose` |
+| **`Dialog`** | Centred card on `Overlay`. `ConfirmDialog` is now a thin composition of `Dialog` + two `Button`s |
+| **`BottomSheet`** | The half-card, rebuilt on `Overlay`. `SHEET_HALF` / `SHEET_TALL` name the two heights |
+
+**Migrated:** all 106 press sites → `Touchable`, with each site's hand-rolled feedback hoisted into
+the `feedback` prop. Auth CTAs (login ×2, phone, otp) and the Requests accept/decline pair →
+`Button`. The phone field and the onboarding bio → `Input`. `ConfirmDialog` and `BottomSheet`
+rebuilt on the primitives.
+
+**Enforced:** `eslint.config.js` now also blocks importing `Pressable` / `TouchableOpacity` /
+`TouchableHighlight` from `react-native` outside `src/components/ui/`, for the same reason the raw
+colour rule exists.
+
+**Two bugs fixed in passing, both from centralising:**
+
+- **Disabled buttons were unreadable.** Every disabled CTA kept its white label on the light
+  lavender disabled fill. `Button` swaps the label to `text.muted` when blocked. Visible on the
+  phone screen's "Send OTP".
+- **Inputs had no focus state.** `Input` draws a brand-coloured focus ring; nothing did before.
+
+**Deliberately not migrated:**
+
+- **`edit-profile.tsx`'s fields stay raw `TextInput`.** They are *inline editable text* — borderless,
+  width-sized-to-content, sitting inside a card row — not boxed form fields. Forcing them into
+  `Input` would have been a visual regression, not a cleanup. Different pattern, different primitive,
+  and that primitive does not exist yet.
+- **The OTP screen's six single-character boxes.** A specialised control, not a form field.
+- **`profile.tsx`'s two bespoke `Modal`s** (log-out, delete-account) — they carry an icon treatment
+  `Dialog` does not model.
+- **No `Card`, `Chip` or `Text`/typography component**, though 28 card-ish and 55 chip-ish style
+  keys say all three are warranted. Left because Modules 3–9 rewrite most of these screens and the
+  right API is easier to see with the real requirements in hand.
+
+> ⚠️ **Pre-existing bug found and confirmed, not introduced here: a `ConfirmDialog` opened while a
+> `BottomSheet` is open never appears.** Both are RN `Modal`s declared as siblings, and iOS silently
+> refuses to present a second modal over the first — so the dialog renders behind the sheet.
+> **Verified by testing the same tap on the pre-primitives commit, where it fails identically.**
+> It affects Requests' decline flow (`app/requests.tsx`) and any future sheet→confirm path.
+> The real fix is a single modal host with a portal, rather than `Modal` per surface — which the
+> `Overlay` primitive now makes a **one-file change** instead of an eleven-file one. Left for
+> whichever module needs the flow to work; Module 8 owns Requests.
+
+#### Module 1 addendum — spacing (owner ask, 2026-07-30)
+
+Module 1 originally shipped a spacing scale without applying it, on the argument that snapping
+~200 off-grid values would shift layout everywhere with no way to verify. The owner pushed back:
+spacing belongs in the design language. **That was right, and the original objection rested on a
+wrong premise.**
+
+**The scale was wrong, not the migration.** The first pass assumed a 4pt grid and then found that
+2, 6, 10, 14 and 18 did not fit it. Counting the real distribution across 603 literals:
+
+| | | | | | | | | | | | | |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **2** | **4** | **6** | **8** | **10** | **12** | **14** | **16** | 18 | **20** | **24** | **28** | **32** · **40** |
+| 31 | 45 | 49 | 97 | 51 | 80 | 43 | 52 | 17 | 16 | 34 | 8 | 18 · 5 |
+
+That is a **2pt grid**, and the bolded values are **exactly Tailwind's default spacing scale**
+(`0.5 1 1.5 2 2.5 3 3.5 4 5 6 7 8 10`) — the same provenance §3 records for the greys, surviving the
+same web→RN conversion. Adopting the real grid turns the migration into a substitution: only
+**27 occurrences** were genuinely off-scale (3, 5, 7, 9, 11, 13, 22, 36), and each snapped by 1–2pt,
+which is imperceptible. Forcing 4pt would have moved 6 → 8, 10 → 12 and 14 → 16 on ~200 elements.
+
+**`spacing[n]` is keyed by step index, not pixel value.** `spacing[4]` is four steps — 16pt today.
+`STEP` in `layout.ts` rescales the app's whole rhythm from one line, which is the property C-4 asks
+for. `4.5` (18pt) is the one step Tailwind does not ship; it is here because 18pt has 17 uses and
+snapping them away would have been a change made to match someone else's table.
+
+**Migrated:** 581 literals → scale steps. **2 left as named local constants** because they are
+layout decisions rather than rhythm — `ROW_ICON_INSET` (68, aligns profile row dividers past the
+icon tile) and `MENU_TOP_OFFSET` (60, drops the chat overflow menu below the header).
+
+**One real inconsistency fixed:** three screens padded their scroll by `120` to clear the floating
+nav and `app/profile.tsx` used `110`, leaving its last row 10pt higher than everywhere else for no
+stated reason. All four now use **`NAV_CLEARANCE`**.
+
+**Enforced:** a third `no-restricted-syntax` selector rejects numeric `padding`/`margin`/`gap`
+values (`0` excepted — it means "none", not a rhythm choice).
+
+> ⚠️ **esquery gotcha, cost real time:** matching a numeric literal with a regex
+> (`Literal[value=/^[0-9.]+$/]`) **silently matches nothing** — esquery does not stringify numbers.
+> The rule reported zero problems while two known violations sat in the tree. Compare
+> (`Literal[value!=0]`), do not regex-match. Noted in the config beside the selector.
+
+Verified on the simulator against the pre-migration screenshots: login, profile, **edit-profile**
+(the densest screen, most spacing literals) and filters all render unchanged.
+
+#### Module 1 addendum — PR review follow-ups (2026-07-30)
+
+Three review comments, all applied on the same branch.
+
+- **Fixed layout values moved out of the theme → `src/constants/`.** `NAV_CLEARANCE` and
+  `MIN_TOUCH_TARGET` were sitting in `src/theme/layout.ts` next to the scales. The line drawn, and
+  written at the top of the new file: **the theme holds scales you pick a step from; constants hold
+  values with one right answer.** `spacing[4]` is a design choice; the nav is as tall as it is.
+  `src/theme/layout.ts` is now purely `radii` + `spacing`. Screen-local one-offs (`ROW_ICON_INSET`,
+  `MENU_TOP_OFFSET`) deliberately stayed in their screens — hoisting single-use values into a shared
+  file turns it into a junk drawer.
+- **Numeric-suffixed icons aliased on import.** `Trash2`, `CheckCircle2`, `UserCircle2` — the digit
+  is lucide's *glyph variant* number and carries no meaning at the call site. Now
+  `Trash2 as TrashIcon` etc., so JSX reads `<TrashIcon />`. Five files. (Lucide's own `…Icon`
+  aliases keep the digit, so they do not help here.)
+- **`Platform.OS` comparisons replaced by `isIOS` / `isAndroid`** in `src/utils/platform.ts` — 16
+  comparisons across 11 files. There is deliberately **no `isWeb`**: web is out of scope (O-12) and
+  `app.json` declares `platforms: ["ios", "android"]`, so a web branch is unreachable code that
+  reads as live.
+
+**Three pieces of dead code fell out of that sweep**, which is the argument for the helper:
+
+| Found | Where |
+|---|---|
+| `keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}` — both branches identical | `app/chats/[id].tsx`, `OnboardingShell.tsx` |
+| `if (Platform.OS !== "web")` guarding a haptic — always true | `DateWheel.tsx` |
+| `if (Platform.OS === "web")` scroll-idle fallback, plus the `idleTimer` ref that only served it | `DateWheel.tsx` |
+
+The DateWheel removal was re-verified on the simulator: the wheel still snaps and the derived age
+still updates, so `commit()` was always coming from the momentum handlers.
+
+> ⚠️ **Left alone deliberately — a real inconsistency worth a decision.** `KeyboardAvoidingView`
+> uses `behavior={isIOS ? "padding" : "height"}` in three screens and `isIOS ? "padding" : undefined`
+> in three others. On Android with `adjustResize` (Expo's default) `undefined` is usually right and
+> `"height"` can double-adjust. Unifying them changes keyboard behaviour on Android, which **cannot
+> be verified on the iOS Simulator** — so it wants an Android dev-client build first. Module 3
+> (Navigation) or whoever runs the first Android build should settle it.
+
+#### Module 1 addendum — first Android build, and two bugs only Android could show (2026-07-30)
+
+Module 0 left Android as "the obvious next one" — it needs no store account, only the Expo org.
+Built and verified locally rather than on EAS: **`BUILD SUCCESSFUL in 17m 13s`**, 76 MB debug APK,
+installed and running on an Android 16 (API 36) emulator.
+
+*Toolchain, since none existed:* `android-commandlinetools` via Homebrew (~5.8 GB with platform 36,
+build-tools 36, platform-tools, emulator and the arm64 system image), plus the NDK 27.1 that Gradle
+pulls on first build for Reanimated's worklets. `ANDROID_HOME=/opt/homebrew/share/android-commandlinetools`.
+`npx expo prebuild --platform android` then `npx expo run:android`. **`yarn.lock` was sha-checked
+before and after every step** (§11) and never changed.
+
+**The manifest confirms Module 0's config reached the binary**, the Android counterpart of §6's
+`Info.plist` table:
+
+| Key | Value | Proves |
+|---|---|---|
+| `package` | `com.zomyra.app` | O-1, identical to the iOS bundle id |
+| `application: label` | `Zomyra` | no longer "frontend" (§8) |
+| `application-icon` | `mipmap-anydpi-v26/ic_launcher.xml` | the adaptive icon is wired |
+| `targetSdkVersion` | `36` | Android 16 |
+| `android:scheme` | `zomyra` | deep links for Module 11 |
+
+**The adaptive icon was seen for the first time, not just measured.** §10.1 computed the 51% scale
+from the safe-radius maths; on the launcher the Z sits fully inside the circular mask with margin,
+so the measurement holds.
+
+**Two bugs, both invisible on iOS by construction:**
+
+1. **The status bar was white-on-white.** Sampled every pixel of the band: all `rgb(255,255,255)`,
+   contrast **1.00:1** — clock, wifi and battery entirely invisible. Cause: with `edgeToEdgeEnabled`
+   the generated `styles.xml` sets `android:statusBarColor` `#FFFFFF` and **no
+   `windowLightStatusBar`**, so Android drew light icons on the app's white surface. iOS never
+   showed it because `UIUserInterfaceStyle: Light` makes it choose dark content itself. Fixed with a
+   single `<StatusBar style="dark" />` in `app/_layout.tsx` — `expo-status-bar` was already a
+   dependency and had never been rendered. Re-measured: **5.73:1 PASS**.
+2. **Filled buttons had no press feedback at all on Android.** `Touchable` suppressed the iOS dim
+   whenever it applied a ripple, but `android_ripple` renders as the view's *background drawable*, so
+   `Button`'s opaque `backgroundColor` painted straight over it. Net effect: ripple hidden, dim
+   suppressed, nothing. Measured 0/39 sampled pixels changing under a held press.
+
+   The first fix — a clipping wrapper with a transparent inner `Pressable` — does make the ripple
+   render, but it means splitting arbitrary caller styles across two views, and it broke the login
+   layout immediately. **Reverted.** `Touchable` now flattens the incoming style and uses a ripple
+   only where one can actually render (transparent surface), falling back to the dim otherwise.
+   Feedback that works beats feedback that is native but invisible. Re-measured on the primary
+   button: **39/39 points change under press.** Opaque surfaces get the same dim iOS has always had.
+
+   `Touchable` also gained `rippleOnDark`, set by `Button` for the filled variants — a ripple tinted
+   like its own background is the same as no feedback. Two ripple tints now exist for that reason.
+
+**Side effect kept:** `expo prebuild` rewrote the `android` / `ios` package scripts from
+`expo start --*` to `expo run:*`. Correct now that a local native build path exists, and neither
+script was documented in the README before.
+
+**Not settled by this build:** the `KeyboardAvoidingView` `"height"` vs `undefined` split flagged in
+the PR-review addendum. It needs a keyboard-open comparison across the six screens, which is its own
+pass — the build only made it *possible*.
 
 <!--
 Template:
@@ -763,13 +1082,34 @@ first paint · supply the AE project file alongside the JSON.
 **Owner note:** the same animation is wanted in-app beyond the splash (e.g. the login hero), which
 is another reason to favour Lottie — one JSON can be reused at any size.
 
-**Both background colours** (`expo-splash-screen` and `android.adaptiveIcon`) are `#FFFFFF`, chosen
-to satisfy C-3 rather than from a palette — a Module 1 decision.
+**Both background colours** (`expo-splash-screen` and `android.adaptiveIcon`) stay `#FFFFFF` —
+**settled in Module 1 (O-14b)**, and now a palette decision rather than a C-3 placeholder. The
+values in `app.json` did not change; what changed is that there is a reason for them:
 
-**Icon treatment:** currently purple-on-white, faithful to the supplied artwork. White-on-purple
-would be more striking on a home screen. Nobody has made that call.
+- The splash background equals `colors.background`, the app's own page colour. The native splash is
+  therefore the same white the first screen paints, so nothing flashes at the handoff. That also
+  serves §10.2a's constraint — the animated splash's first frame has to match the static one, and
+  matching is easiest when the background is already the app's.
+- The adaptive-icon background **cannot** be chosen independently of the icon treatment below.
+  `adaptive-icon.png` is the purple mark on transparency, so a purple `backgroundColor` renders
+  purple-on-purple and the mark disappears. White is the only value consistent with the foreground
+  that exists today.
+
+**Icon treatment (O-14c, still open):** currently purple-on-white, faithful to the supplied artwork.
+White-on-purple would be more striking on a home screen. Per the point above, that is **one decision,
+not two** — inverting the icon means a new white-on-transparent foreground *and* a purple adaptive
+background, together. Module 1 deliberately did not make it: it is a design call, and the brand
+purple is now `colors.brand.default`, so applying it later is a one-line config change plus a rerun
+of `scripts/make-brand-assets.js`.
 
 ### 10.3 Colour tokens — guidance for Module 1 (owner discussion, 2026-07-28)
+
+> **Implemented 2026-07-29.** This section is now the *rationale*; the result is
+> `src/theme/palette.ts` (layer 1) and `src/theme/colors.ts` (layer 2), and §6's Module 1 entry
+> records what shipped. The guidance below was followed as written — brand at step 900, ramp private,
+> semantic tokens public — and C-4 is enforced by ESLint rather than left as a convention. The one
+> thing that changed on contact with the code: the seven "possible palette hints" below were **not**
+> adopted (see the note at the end of §10.1 — still unconfirmed with the designer).
 
 **A numbered ramp is wanted, but it must stay private.** The owner raised naming steps
 `purple-600` / `purple-800` rather than inventing values ad hoc. That is right in spirit, and it
@@ -834,7 +1174,15 @@ Two constraints worth passing to the designer up front: the icon must stay legib
 
 ## 11. Build internals — non-obvious facts, verified 2026-07-28
 
-Four things about how this project builds that are easy to get wrong and expensive to rediscover.
+Things about how this project builds that are easy to get wrong and expensive to rediscover.
+
+**`yarn lint` caches, and the cache lies (found 2026-07-29).** `expo lint` writes to
+**`.expo/cache/eslint/`** — not `.eslintcache`, and not `node_modules/.cache`, which is where you
+will look first. After a large refactor it can keep reporting `import/namespace` parse errors for
+files that are now valid, because the *importing* file's cached result still references the old
+parse of the imported one. `npx eslint app src --no-cache` is the ground truth; when the two
+disagree, `rm -rf .expo/cache` and re-run. This cost real time in Module 1 — the errors looked like
+genuine syntax breakage in a file that was already fixed.
 
 **There is no `babel.config.js`, and that is correct — do not "fix" it.** Metro is the bundler, not
 the transpiler; it delegates per-file transformation to `@expo/metro-config`'s babel-transformer,
@@ -905,3 +1253,44 @@ on every install:
 
 Both surviving entries look like deliberate security bumps. They warn but are harmless; **verify
 before removing either**, and re-check `uuid` if `xcode`/`@expo/config-plugins` is ever upgraded.
+
+---
+
+## 12. Spec-change history
+
+The TDDs are living documents. Every version bump gets an entry here with its **code impact**, so a
+module starting later doesn't have to diff Word files to find out what moved. Diff the extracted
+text rather than reading the whole document — the deltas are usually small and easy to miss by eye.
+
+### 12.1 Frontend TDD v1.39 → v1.40 (received 2026-07-30)
+
+**One change, five places: a `state` field added ahead of `city` in onboarding.** Verified by full
+text diff — 5 hunks, no other edits anywhere in the document.
+
+| # | Where | Change |
+|---|---|---|
+| 1 | **FR-3** | `state` inserted between gender and city — single-select from India's states/UTs. `city` becomes an autocomplete **scoped to the selected state**, not an all-India list |
+| 2 | **FR-3a** *(new)* | Both lists are **bundled client-side as static reference data** (28 states + 8 UTs, curated cities per state) — no endpoint, deliberately, to avoid a network dependency mid-onboarding. Changing state **clears any city already entered** |
+| 3 | **FR-5** | "same state" match preference now resolves against this field directly, instead of requiring a city→state lookup |
+| 4 | **§3.2** | Plot section grows from ~16 to ~17 screens |
+| 5 | **API-7 / API-23** | `state` added to the submit `plot` object and to the `/profile/me` response |
+
+**Code impact — all of it lands in Module 5:**
+
+- `src/lib/onboarding/data.ts` currently exports **`INDIAN_CITIES`, a flat 52-entry all-India
+  array**. It has to become a `state → cities` map. Authoring that dataset is real work, not a
+  rename — 36 states/UTs with a curated city list each — and it is the reason Module 5's estimate
+  moved from 3–4 to **4–5 days**.
+- `OnboardingState` (`src/lib/onboarding/types.ts:48`) has `city: string` and **no state field**.
+  Add `state`, and implement the cascade: changing state clears `city`.
+- One new onboarding screen, positioned before the city screen.
+- **Edit Profile must expose both.** FR-4's immutability list is name / DOB / height only, so state
+  and city *are* editable — and the same cascade rule applies there. Changing state in Edit Profile
+  must clear or re-validate city, or a user ends up in Karnataka/Mumbai.
+- **Module 7 inherits two knock-ons:** `discover-filters-store.ts` currently has `location` as a
+  flat list of 8 hardcoded cities, which no longer reflects the model; and FR-5's "same state"
+  resolution changes what the Discover query filters on.
+
+**Two things this opened, both tracked:** O-15 (the fallback when a user's town isn't listed —
+flagged as undecided by the spec itself, and it determines whether `city` is a closed enum or an
+open string) and O-16 (Backend TDD v1.2 has no `state` field at all).
