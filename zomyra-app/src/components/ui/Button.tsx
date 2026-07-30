@@ -136,6 +136,9 @@ export function Button({
     <Touchable
       accessibilityRole="button"
       accessibilityLabel={label}
+      // Filled variants are dark, so the Android ripple has to be light or it
+      // vanishes into the fill.
+      rippleOnDark={variant === "primary" || variant === "gradient" || variant === "danger"}
       accessibilityState={{ disabled: !!blocked, busy: !!loading }}
       disabled={blocked}
       // The button is already at least 36pt tall; slop here would overlap

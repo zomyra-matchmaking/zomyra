@@ -822,6 +822,65 @@ still updates, so `commit()` was always coming from the momentum handlers.
 > be verified on the iOS Simulator** — so it wants an Android dev-client build first. Module 3
 > (Navigation) or whoever runs the first Android build should settle it.
 
+#### Module 1 addendum — first Android build, and two bugs only Android could show (2026-07-30)
+
+Module 0 left Android as "the obvious next one" — it needs no store account, only the Expo org.
+Built and verified locally rather than on EAS: **`BUILD SUCCESSFUL in 17m 13s`**, 76 MB debug APK,
+installed and running on an Android 16 (API 36) emulator.
+
+*Toolchain, since none existed:* `android-commandlinetools` via Homebrew (~5.8 GB with platform 36,
+build-tools 36, platform-tools, emulator and the arm64 system image), plus the NDK 27.1 that Gradle
+pulls on first build for Reanimated's worklets. `ANDROID_HOME=/opt/homebrew/share/android-commandlinetools`.
+`npx expo prebuild --platform android` then `npx expo run:android`. **`yarn.lock` was sha-checked
+before and after every step** (§11) and never changed.
+
+**The manifest confirms Module 0's config reached the binary**, the Android counterpart of §6's
+`Info.plist` table:
+
+| Key | Value | Proves |
+|---|---|---|
+| `package` | `com.zomyra.app` | O-1, identical to the iOS bundle id |
+| `application: label` | `Zomyra` | no longer "frontend" (§8) |
+| `application-icon` | `mipmap-anydpi-v26/ic_launcher.xml` | the adaptive icon is wired |
+| `targetSdkVersion` | `36` | Android 16 |
+| `android:scheme` | `zomyra` | deep links for Module 11 |
+
+**The adaptive icon was seen for the first time, not just measured.** §10.1 computed the 51% scale
+from the safe-radius maths; on the launcher the Z sits fully inside the circular mask with margin,
+so the measurement holds.
+
+**Two bugs, both invisible on iOS by construction:**
+
+1. **The status bar was white-on-white.** Sampled every pixel of the band: all `rgb(255,255,255)`,
+   contrast **1.00:1** — clock, wifi and battery entirely invisible. Cause: with `edgeToEdgeEnabled`
+   the generated `styles.xml` sets `android:statusBarColor` `#FFFFFF` and **no
+   `windowLightStatusBar`**, so Android drew light icons on the app's white surface. iOS never
+   showed it because `UIUserInterfaceStyle: Light` makes it choose dark content itself. Fixed with a
+   single `<StatusBar style="dark" />` in `app/_layout.tsx` — `expo-status-bar` was already a
+   dependency and had never been rendered. Re-measured: **5.73:1 PASS**.
+2. **Filled buttons had no press feedback at all on Android.** `Touchable` suppressed the iOS dim
+   whenever it applied a ripple, but `android_ripple` renders as the view's *background drawable*, so
+   `Button`'s opaque `backgroundColor` painted straight over it. Net effect: ripple hidden, dim
+   suppressed, nothing. Measured 0/39 sampled pixels changing under a held press.
+
+   The first fix — a clipping wrapper with a transparent inner `Pressable` — does make the ripple
+   render, but it means splitting arbitrary caller styles across two views, and it broke the login
+   layout immediately. **Reverted.** `Touchable` now flattens the incoming style and uses a ripple
+   only where one can actually render (transparent surface), falling back to the dim otherwise.
+   Feedback that works beats feedback that is native but invisible. Re-measured on the primary
+   button: **39/39 points change under press.** Opaque surfaces get the same dim iOS has always had.
+
+   `Touchable` also gained `rippleOnDark`, set by `Button` for the filled variants — a ripple tinted
+   like its own background is the same as no feedback. Two ripple tints now exist for that reason.
+
+**Side effect kept:** `expo prebuild` rewrote the `android` / `ios` package scripts from
+`expo start --*` to `expo run:*`. Correct now that a local native build path exists, and neither
+script was documented in the README before.
+
+**Not settled by this build:** the `KeyboardAvoidingView` `"height"` vs `undefined` split flagged in
+the PR-review addendum. It needs a keyboard-open comparison across the six screens, which is its own
+pass — the build only made it *possible*.
+
 <!--
 Template:
 

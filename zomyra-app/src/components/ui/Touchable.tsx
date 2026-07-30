@@ -18,7 +18,14 @@
  * element is already large enough and the slop would overlap a neighbour.
  */
 import { forwardRef } from "react";
-import { Pressable, type PressableProps, type StyleProp, type View, type ViewStyle } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  type PressableProps,
+  type StyleProp,
+  type View,
+  type ViewStyle,
+} from "react-native";
 
 import { alpha, colors } from "@/src/theme";
 import { MIN_TOUCH_TARGET } from "@/src/constants";
@@ -40,6 +47,12 @@ export type TouchableProps = Omit<PressableProps, "style"> & {
   style?: StyleProp<ViewStyle>;
   /** Style merged in only while pressed, on top of the feedback. */
   pressedStyle?: StyleProp<ViewStyle>;
+  /**
+   * The control sits on a dark surface, so the Android ripple must be light.
+   * Filled `Button` variants set this; a ripple that matches its background is
+   * the same as no feedback at all.
+   */
+  rippleOnDark?: boolean;
 };
 
 /**
@@ -50,19 +63,20 @@ const PRESSED_OPACITY = 0.9;
 const PRESSED_SCALE = 0.98;
 
 /**
- * Android draws its own ripple, so the iOS dim must be suppressed there or the
- * two stack and the control reads as disabled mid-press.
+ * Ripple colour. Two of them, because a ripple has to contrast with whatever it
+ * lands on: a dark wash reads on white surfaces, and disappears entirely on the
+ * brand fill. Callers on a dark surface pass `rippleOnDark`.
  */
-const RIPPLE = {
-  color: alpha(colors.brand.default, 0.12),
-  borderless: false,
-} as const;
+const RIPPLE_ON_LIGHT = alpha(colors.text.primary, 0.12);
+const RIPPLE_ON_DARK = alpha(colors.brand.onBrand, 0.24);
+
 
 export const Touchable = forwardRef<View, TouchableProps>(function Touchable(
   {
     feedback = "opacity",
     style,
     pressedStyle,
+    rippleOnDark,
     disabled,
     hitSlop,
     accessibilityRole = "button",
@@ -70,7 +84,21 @@ export const Touchable = forwardRef<View, TouchableProps>(function Touchable(
   },
   ref,
 ) {
-  const rippled = isAndroid && feedback !== "none";
+  // `android_ripple` renders as the view's *background drawable*, so an opaque
+  // `backgroundColor` on the same view paints straight over it. Verified on the
+  // emulator: a primary Button had **no** press feedback at all, because the
+  // ripple was hidden behind the brand fill and the dim was being suppressed.
+  //
+  // Restructuring into a clipping wrapper + transparent inner Pressable does
+  // make the ripple show, but it means splitting arbitrary caller styles across
+  // two views, which broke layout on the first screen it touched. So: ripple
+  // only where it can actually render — on a transparent surface — and fall
+  // back to the dim everywhere else. Feedback that works beats feedback that is
+  // native but invisible.
+  const flat = StyleSheet.flatten(style) as ViewStyle | undefined;
+  const bg = flat?.backgroundColor;
+  const opaqueSurface = bg !== undefined && bg !== "transparent";
+  const rippled = isAndroid && feedback !== "none" && !disabled && !opaqueSurface;
 
   return (
     <Pressable
@@ -79,13 +107,17 @@ export const Touchable = forwardRef<View, TouchableProps>(function Touchable(
       accessibilityRole={accessibilityRole}
       accessibilityState={{ disabled: !!disabled }}
       hitSlop={hitSlop ?? MIN_TOUCH_TARGET / 4}
-      android_ripple={rippled ? RIPPLE : undefined}
+      android_ripple={
+        rippled
+          ? { color: rippleOnDark ? RIPPLE_ON_DARK : RIPPLE_ON_LIGHT, borderless: false }
+          : undefined
+      }
       style={({ pressed }) => {
         const active = pressed && !disabled;
         return [
           style,
-          // Android's ripple is the whole story there; layering opacity on top
-          // makes the control look disabled while the finger is down.
+          // Where the ripple renders it is the whole story; layering a dim on
+          // top makes the control read as disabled mid-press.
           active && !rippled && feedbackStyle(feedback),
           active && pressedStyle,
         ];

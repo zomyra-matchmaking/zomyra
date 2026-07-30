@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { LogBox, Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -63,6 +64,16 @@ export default function RootLayout() {
             }}
           />
           <ToastHost />
+          {/*
+            Dark status-bar content, because C-3 fixes a light theme and the
+            app paints white behind the bar. Android does not infer this: with
+            edgeToEdgeEnabled the generated styles.xml sets a white
+            statusBarColor but no windowLightStatusBar, so the clock, wifi and
+            battery rendered white-on-white — verified 1.00:1 on the emulator.
+            iOS never showed it, since UIUserInterfaceStyle: Light makes it
+            pick dark content on its own.
+          */}
+          <StatusBar style="dark" />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
