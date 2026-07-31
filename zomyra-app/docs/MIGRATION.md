@@ -406,6 +406,8 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-15 | **Fallback when a user's town isn't in the backend's `cities` table** — flagged as undecided by the spec itself (FE TDD v1.42 FR-3a). **Half-settled as of BE v1.4 (§12.2):** the client side is decided — `city` is a **closed set**, always a `cityId` from the backend's table, never free text. That was the part that would have changed the Discover filter and the matching query, so the client is unblocked. **What remains is a backend data-curation question:** how deep the curated list goes (every district town, or top N per state), and what a user does when their town isn't there. FE v1.42 states plainly that this is *"a backend data-curation gap, not a client one"*. | Module 5 (client unblocked) | BE + product |
 | O-16 | ~~Backend TDD v1.2 has no `state` field~~ **→ Closed by BE TDD v1.4** (2026-07-31, §12.2). Resolved differently from how this item framed it: there is **no `state` column on the profile** and `state` is **never submitted**. The backend's pre-existing `cities` table is exposed via **API-38 `GET /locations/cities`**, onboarding submits **`cityId`** (FK → `cities.id`, matching the `users.city_id` that already existed), and `/profile/me` returns `cityId, cityName, state` denormalized via join. FR-5's "same state" matching already worked through that table — v1.40's claim that it needed fixing was retracted in v1.41. | Module 5 | ✅ Closed |
 
+| O-17 | **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). The owner has **Lottie JSON** animations intended as loading visuals. **Whenever a module needs a loading shimmer or animation (§13), request the asset before building one** — the same rule already applied to brand assets in O-14/§10. **The consequence that needs deciding early:** `lottie-react-native` is **not installed** (`react-native-svg` and `reanimated` are), and it is a **native module** — under C-2 that means adding it forces a **dev-client rebuild**. So the module that first uses a Lottie file pays an EAS build, and it should be batched with any other native dependency rather than triggering a second one. See §13.4 for what to request and the reduce-motion fallback each asset needs. | **Module 3** (first loading state), then §13's owners | Product owner |
+
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
 
@@ -1831,3 +1833,42 @@ the same index, and built on the existing design tokens rather than introducing 
 - **Module 8** — builds 3, reusing Module 7's retry pattern (§6.7 says so explicitly).
 - **Module 9** — builds 2, and the spec is explicit that it is *deliberately simpler* than Discover's;
   resist unifying them.
+
+### 13.4 Artwork comes from the owner — ask before building (O-17)
+
+**Rule: when a module reaches a loading visual in §13.1, request the asset rather than inventing
+one.** The owner holds **Lottie JSON** animations intended for exactly this. Same convention as the
+brand assets in §10 — a placeholder built now is a placeholder replaced later, and the replacement
+is rarely a drop-in because timing, dimensions and colour all shift.
+
+**Which of the five plausibly need supplied artwork:**
+
+- **#5, the branded logo animation** — almost certainly. It is explicitly *branded*, and it is the
+  most visible loading state in the app (§6.5, Discover's card slot).
+- **#1, the shared default** — worth asking. It may be the same Lottie at a smaller size, or a
+  plain token-driven indicator; that is the owner's call, not a default to assume.
+- **#3 and #4, the shimmers** — usually code rather than artwork (a gradient sweep over a
+  content-shaped placeholder), but confirm, since a branded treatment is possible.
+
+**What to ask for, so one round trip is enough:**
+
+| | |
+|---|---|
+| Format | Lottie JSON (`.json`), plus a **static fallback frame** — see reduce-motion below |
+| Dimensions | Intended render size, and whether it scales |
+| Loop | Looping or one-shot, and what happens when the operation finishes |
+| Background | Transparent — it renders over `colors.background`, not a fixed white |
+| Colour | Must sit within the design tokens; C-4's lint rejects raw literals in code, and artwork should not quietly introduce a sixth purple |
+| Size | Keep the JSON small; it ships in the bundle |
+
+Place delivered files beside the existing brand assets in `assets/brand/`.
+
+**Two things that are not optional:**
+
+1. **A static fallback frame per animation (NFR-6a).** Lottie does not honour the OS reduce-motion
+   setting by itself — the primitive has to check it and render a still frame instead. Requesting
+   the frame *with* the animation avoids exporting one later from a file nobody has open.
+2. **The native dependency is a build event.** `lottie-react-native` is not installed, and adding it
+   requires a dev-client rebuild under C-2. Decide during Module 3 whether the shared default uses
+   Lottie: if yes, the dependency lands there; if no, it lands in Module 7 with the branded
+   animation. Either way it should be batched with any other native addition, not paid for twice.
