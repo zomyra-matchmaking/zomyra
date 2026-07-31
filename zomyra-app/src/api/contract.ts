@@ -4,10 +4,9 @@
  * Every type here was transcribed by hand from FE TDD §9 and BE TDD §14 — two
  * documents that describe their own field names as *"illustrative, not
  * finalized"*. Both sides of this project are being built from them in
- * parallel, so divergence is expected rather than hypothetical: O-16 (the
- * backend having no `state` field, which will 400 Module 5's onboarding
- * submit) was found by diffing Word documents, and there is no reason to
- * believe it is the last one.
+ * parallel, so divergence is expected rather than hypothetical: O-16 was found
+ * by diffing Word documents, and there is no reason to believe it is the last
+ * one.
  *
  * **The fix is codegen, not vigilance.** Once the backend serves its OpenAPI
  * schema (O-8), `yarn api:generate` replaces this file's types with generated
@@ -17,11 +16,19 @@
  * Until then, treat a mismatch between this file and the running backend as
  * this file being wrong.
  *
- * Note on `state` (O-16): it is **absent** from `OnboardingSubmitRequest` and
- * `ProfileResponse` below, matching Backend TDD v1.2 as it stands. That is
- * correct and deliberate. FE TDD v1.40 adds it, Module 5 owns it (§12.1), and
- * hand-patching it in here would produce types that compile against a backend
- * that rejects them.
+ * **Location (O-16, now closed — MIGRATION §12.2).** An earlier revision of this
+ * file said `state` was deliberately absent pending a backend change. That is
+ * no longer the situation, and the resolution went the other way: there is **no
+ * `state` column on the profile and `state` is never submitted.** The backend's
+ * pre-existing `cities` table is exposed via **API-38 `GET /locations/cities`**,
+ * onboarding submits a **`cityId`**, and `/profile/me` returns
+ * `cityId, cityName, state` with the last two denormalized via join for display
+ * only. `state` filters the cached city list client-side and nothing more.
+ *
+ * This file is also **one endpoint short of the contract**: API-38 has no
+ * definition here yet. Module 3 owns fetching it at cold start and Module 5 owns
+ * consuming it — see the note in `api.ts` beside the `Locations` tag for the two
+ * data-layer decisions that come with it.
  */
 import type { DiscoverProfile } from "@/src/lib/discover/mock";
 
@@ -95,7 +102,12 @@ export type ProfileResponse = {
   lastName: string;
   dateOfBirth: string;
   gender: string;
-  city: string;
+  /** FK → the backend's `cities` table. The only location value ever *sent*. */
+  cityId: string;
+  /** Denormalized via join for display / pre-fill. Not independently editable. */
+  cityName: string;
+  /** Denormalized likewise. Filters the cached city list; never submitted. */
+  state: string;
   heightCm: number;
   build: string;
   education: string;

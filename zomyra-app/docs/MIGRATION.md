@@ -35,6 +35,8 @@ Append a "Module log" entry at the end of every module, in the same session that
   root gate now has something to call: `useGetMeQuery()` (API-6) exists and answers from mocks.
   O-4 is its live blocker — `GET /me` returns `accountStatus: suspended | banned` and the FE routing
   table has no destination for either. See `docs/CONTRACT-QUESTIONS.md`.
+  **Module 3 also picks up API-38's cold-start fetch** (§12.2) — read the Module 2 reconciliation
+  addendum in §6 first; two of its RTK Query defaults are wrong for this endpoint.
 - **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
   §4 (open items), **§12 (spec-change history — check before starting any module)**, then §6's
   Module 2 entry. §3 is history, not current state.
@@ -991,9 +993,8 @@ layer that did not exist in any form — no base URL, no `fetch` to any host, no
   `Updates.updateId ?? "embedded"` and every call site is already sending the header.
 - **O-11's mechanism shipped.** `openapi-config.ts` + `yarn api:generate` (`@rtk-query/codegen-openapi`)
   are wired against `/v1/docs-json`. `src/api/contract.ts` carries the hand-written types until then,
-  labelled provisional at the top. **`state` is deliberately absent from `OnboardingSubmitRequest`
-  and `ProfileResponse`**, matching BE TDD v1.2 — hand-patching it in would produce types that compile
-  against a backend that rejects them. Module 5 owns it (§12.1); O-16 is a message, not a change.
+  labelled provisional at the top. ~~`state` is deliberately absent, matching BE TDD v1.2~~ —
+  **superseded the same day by BE v1.4; corrected in the addendum below.**
 - **`docs/CONTRACT-QUESTIONS.md` is new** — O-3, O-4 and O-16 written up as one-line asks ready to
   forward, plus three found while building: whether `retryAfterSeconds` sits in `error.details` or
   beside `code` (both documents are ambiguous, and the client currently accepts either — a defensive
@@ -1069,6 +1070,10 @@ layer that did not exist in any form — no base URL, no `fetch` to any host, no
   forced logout from someone who simply hasn't signed in.
 - **O-4 is Module 3's live blocker**, not a footnote: `GET /me` returns `accountStatus: suspended |
   banned` and the FE routing table has no destination for either.
+- **Module 3 also inherits API-38 (`GET /locations/cities`)**, added to the contract by BE v1.4 after
+  Module 2 was written. The endpoint is not defined yet, on purpose — but two of its data-layer
+  defaults are wrong out of the box (`keepUnusedDataFor`, and the temptation to persist it). Both are
+  written up beside the `Locations` tag in `src/api/api.ts` and in the addendum below.
 - **The base query already dispatches `sessionExpired` and clears the keychain on a failed refresh.**
   Module 3 decides where that sends the user; the network layer deliberately does not.
 - Any module adding an endpoint adds a mock beside it, and exports its hooks through `src/api/index.ts`
@@ -1087,8 +1092,11 @@ layer that did not exist in any form — no base URL, no `fetch` to any host, no
 - **`ApiErrorCode` is a closed union.** An open `string` would make every branch a guess.
 - **`X-Bundle-Update-Id: "embedded"` now, rather than omitting the header until `expo-updates` lands.**
   The value is accurate today and the swap is one line later.
-- **The generated types will not have `state`, and that is correct.** Generating against the schema is
-  the whole point of O-11 (§12.1); patching the output would hide O-16 rather than surface it.
+- **Types are generated from the schema, never hand-patched to match a document.** This was written
+  as "the generated types will not have `state`, and that is correct" — and §12.2 then closed O-16 in
+  a shape neither TDD had described when Module 2 was built. **The decision held even though its
+  example did not**, which is the argument for it: a hand-patched `state` field would now be wrong in
+  a *second* way, and the correction would have had to be found by hand again.
 - **The legacy AsyncStorage keys are imported rather than dropped**, even though the only affected
   users are developers — it is cheap now and impossible later.
 
@@ -1154,6 +1162,50 @@ can't (O-11). That still needs the served schema.
 (`EXPO_PUBLIC_APP_ENV=staging`, `EXPO_PUBLIC_API_URL=https://…`), and fill the same two keys into
 `eas.json`'s `preview` profile — flipping `development` from `mock` to `staging` at the same time if
 dev builds should hit it too.
+
+#### Module 2 addendum — reconciled against FE v1.42 / BE v1.4 (2026-07-31)
+
+§12.2's assessment that **"Module 2 needs no rework"** is right about the *architecture* — API-38 is
+one more endpoint on a layer that already exists. It was not right about the **types and comments**,
+which had O-16's old framing baked into them. Checked against the code rather than assumed; three
+things were stale and are now fixed.
+
+| Where | Was | Now |
+|---|---|---|
+| `src/api/contract.ts` header | A note saying `state` is "deliberately absent … O-16 is a message, not a change" — and referring to an `OnboardingSubmitRequest` type **that was never defined** | Records how O-16 actually closed: no `state` column, `cityId` submitted, `cityName`/`state` denormalized on read |
+| `ProfileResponse` | `city: string` | `cityId` · `cityName` · `state`, each annotated with which of the three is ever *sent* (only `cityId`) |
+| `api.ts` `tagTypes` | no `Locations` | `Locations` added, per this file's own rule that the tag list is declared centrally for endpoints later modules add |
+
+The comment mattered more than the types: it told the next module the **opposite of the truth** —
+that a backend change was still pending — which is exactly the failure §12 exists to prevent.
+
+**API-38 is deliberately *not* implemented here.** Module 3 owns fetching it at cold start, Module 5
+owns consuming it. But it carries **two data-layer decisions that both default wrong**, written up
+beside the `Locations` tag in `api.ts` so whoever adds the endpoint meets them:
+
+1. **`keepUnusedDataFor` must be set explicitly.** The spec says the full table is fetched *once at
+   cold start and cached for the session*. RTK Query's default drops a cache entry **60 seconds**
+   after its last subscriber unmounts — so the default re-fetches the entire cities table every time
+   the user returns to a city field. It would look fine in testing and cost real bytes on an Indian
+   mobile network in production.
+2. **It must stay out of redux-persist's whitelist.** Refetching once per cold start *is* the
+   specified behaviour, and `api` is excluded from persistence precisely so a full reference table
+   cannot accumulate on disk (NFR-11, FE TDD §4.4). Adding it would look like an optimisation and
+   would reintroduce the growth the whitelist was designed around.
+
+FE §6.14's "parallel to the auth check, not behind the version gate, must not block the root
+navigator" also has a concrete shape in this layer: API-38 wants a **retry budget** (NFR-7 expects a
+retry state in the city field), not `getMe`'s boot-gate treatment, and must not be awaited inside the
+`PersistGate` / `AppShell` boot path.
+
+**Unaffected, checked:** the base query, token storage, persistence, error and retry layers, and every
+slice. The location change is a payload-shape change, which is the class of change this layer was
+built to absorb.
+
+**Still to reconcile, and unchanged by this sync:** `discover-filters-slice.ts` has `location` as a
+flat `string[]` and `src/lib/discover/filter-options.ts` still hardcodes 8 city names. Both were
+already Module 7's; §12.2 sharpens *how* they change — a filter over `cityId`/`state` drawn from the
+cached API-38 list, not a hand-written array.
 
 <!--
 Template:
