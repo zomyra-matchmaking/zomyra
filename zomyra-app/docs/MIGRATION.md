@@ -1700,7 +1700,26 @@ profession, incomeRange, religion, languages, diet, drinking, smoking, familyTyp
 matchLocationPreference, childrenPreference, interfaithStance, smokingPartnerComfort,
 householdPreference, relocationWillingness (Anchor); discoveryMode (FR-15/15a).
 
-The client **submits keys**, not labels. BE v1.5 §14.2 confirms the same on the receiving side.
+The client **submits keys**, not labels — `profession: "swe"` — and resolves the label for display
+locally. BE v1.5 §14.2 confirms the same on the receiving side.
+
+**Three specifics inside FR-3b that are easy to skim past:**
+
+1. **Profession changes kind.** It was `profession (autocomplete)` over the client's own
+   `PROFESSIONS` list; it is now a **curated backend shortlist of ~100–200 entries**, served inside
+   the API-39 catalogue rather than getting its own endpoint like cities did — it has no
+   state-style scoping dimension to justify splitting it out.
+2. **Languages has an escape hatch.** 10–15 major languages plus an **`Other` key that reveals a
+   free-text field** when selected — the same pattern as FR-28's delete-account reason picker. This
+   is the one place a free-text value survives in the catalogue-driven set.
+3. **The loading state is shared, not bespoke.** If the fetch hasn't resolved when a screen needs
+   it, FR-3b calls for *the shared default loading state* — explicitly **distinct from
+   Chat/Requests' own spinner** — rather than a blank screen. **That primitive does not exist yet**
+   (see the Module 1 row below).
+
+**Client lists this makes obsolete** in `src/lib/onboarding/data.ts`: `INDIAN_CITIES`,
+`PROFESSIONS`, `LANGUAGES` — all three are now backend-driven. `HEIGHT_MIN_CM` / `HEIGHT_MAX_CM`
+stay: a slider's bounds are not a catalogue (though O-6 still questions the filter's bounds).
 
 #### API-38 reverted to per-state
 
@@ -1725,7 +1744,7 @@ to its original scope. Both endpoints move wholly to **Module 5**.
 | Module | Verdict |
 |---|---|
 | **0 · Build foundation** | **No change.** Nothing here touches data sourcing |
-| **1 · Design system** | **No change.** Tokens are indifferent to where values come from |
+| **1 · Design system** | **No change to what it built** — but FR-3b references a *"shared default loading state"* that **does not exist**. Module 1 shipped Button, Input, Dialog, Overlay, Toast, Touchable, BottomSheet, ConfirmDialog — no loading primitive. FR-3b is explicit that it is the shared fallback, **distinct from Chat/Requests' own spinner**, so it belongs with the primitives rather than being invented ad hoc in Module 5. Small addition, not a rework |
 | **2 · State & data layer** | **No code rework — the architecture was right.** It already uses AsyncStorage as redux-persist's engine (now explicitly required by FE §4.2), already excludes `api` from the persist whitelist (now explicitly required for these catalogues), and already documented that `keepUnusedDataFor` must be raised from the 60s default. **Two comments are now stale** and are corrected in this pass: the `Locations` tag block in `src/api/api.ts` describes the full-table cold-start model, and assigns the endpoint to Module 3 |
 
 That Module 2 needed no structural change is worth noting: it was built to the *shape* of the
