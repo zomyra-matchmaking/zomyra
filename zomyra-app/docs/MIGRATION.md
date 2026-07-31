@@ -1088,6 +1088,69 @@ layer that did not exist in any form — no base URL, no `fetch` to any host, no
 - **The legacy AsyncStorage keys are imported rather than dropped**, even though the only affected
   users are developers — it is cheap now and impossible later.
 
+#### Module 2 addendum — named environments, and the first real HTTP call (2026-07-31)
+
+Added when the owner confirmed a staging environment was being stood up the same day. Module 2 had
+shipped a single `EXPO_PUBLIC_API_URL` with an implicit rule — "no URL means mocks" — which is right
+for development and **dangerous in exactly one case**, described below.
+
+**`EXPO_PUBLIC_APP_ENV` now names the environment:** `mock` | `staging` | `production`. It is a named
+environment rather than just a URL because more than the URL hangs off it — Sentry's `environment`
+tag (§10.2), whether dev-only affordances may exist, and which misconfigurations are worth refusing
+to boot over.
+
+**Where each value is set, and why they are separate:**
+
+| | Local (`yarn start`, `yarn ios`, `yarn android`) | EAS cloud builds |
+|---|---|---|
+| Source | `.env` (gitignored; `.env.example` is the template) | `eas.json` → `build.<profile>.env` |
+
+EAS never reads `.env` — it is gitignored and not uploaded — so a local experiment cannot leak into a
+build. Profiles now carry: `development` / `development-simulator` → `mock` (today's working state;
+one word to flip once staging has a URL), `preview` → `staging`, `production` → `production`.
+
+**⚠️ The failure this closes.** Previously a **production** build whose `EXPO_PUBLIC_API_URL` was
+never set would fall back to the mock transport and ship to real users showing **fabricated
+profiles** — an app that looks like it works, populated by invented people. Two rules now prevent it:
+
+1. `staging` and `production` **refuse to boot** without a host, throwing at import time so the very
+   first launch of any such build surfaces it, long before submission. A build that dies is caught by
+   whoever installs it; one that silently serves fixtures may not be.
+2. **`production` can never use mocks** — not by omission, and not via `EXPO_PUBLIC_API_MOCKS=1`.
+   A development switch that can reach a production build is a way to ship fixtures to real users.
+
+`EXPO_PUBLIC_API_MOCKS=1` still works in `mock` and `staging`, which is how a screen gets built
+against a backend that is up but incomplete.
+
+**Verified — the resolution matrix was run against the real module**, not reasoned about: 11 cases
+covering unset, explicit mock, staging with a plain URL / a trailing slash / a URL already ending in
+`/v1`, the mocks override, production, and the three that must throw (staging with no URL, production
+with no URL, and a typo'd `APP_ENV=prod`). All 11 behaved correctly, including `production` +
+`MOCKS=1` keeping mocks **off**.
+
+**More importantly, the real `fetch` path ran for the first time.** Until now every request in this
+project's history has gone through a mock. A throwaway host was stood up on `localhost:4000` speaking
+the TDD's shapes, the app was pointed at it with `APP_ENV=staging`, and the auth flow was driven from
+the simulator. What actually went over the wire:
+
+- `POST /v1/auth/otp/request` — **the `/v1` prefix is on the wire**, not just in a constant.
+- `X-App-Version: 1.0.0` and `X-Bundle-Update-Id: embedded` — both present on every request.
+- Body `{"phoneNumber":"9408265432","countryCode":"+91"}` — matches API-1.
+- No `Authorization` on the unauthenticated endpoints, as `skipAuth` intends.
+- A `400 invalid_otp` in the real error envelope was parsed, surfaced, and **did not navigate**.
+- **Two taps produced exactly two requests** — incidental proof that `retryCondition` refuses to
+  retry a 4xx. A retrying client would have sent six.
+
+**What this does and does not settle.** The transport, prefix, headers, error envelope and retry
+policy are now proven against a real socket. **The contract is still unverified** — the stand-in host
+was written from the same TDDs as the mocks, so it cannot catch drift for the same reason they
+can't (O-11). That still needs the served schema.
+
+**When staging lands, the whole change is:** put the host in `.env` for local work
+(`EXPO_PUBLIC_APP_ENV=staging`, `EXPO_PUBLIC_API_URL=https://…`), and fill the same two keys into
+`eas.json`'s `preview` profile — flipping `development` from `mock` to `staging` at the same time if
+dev builds should hit it too.
+
 <!--
 Template:
 
