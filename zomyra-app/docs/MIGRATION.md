@@ -1,7 +1,7 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.40**, integrating against the contract in **Backend TDD v1.2**.
+**Frontend TDD v1.42**, integrating against the contract in **Backend TDD v1.4**.
 **Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
@@ -78,7 +78,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 2 | State & data layer | **Complete** (2026-07-31) | Every subsequent module plugs into it; nothing can reach the backend until it exists |
 | 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me` |
 | 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
-| 5 | Onboarding & profile schema | Not started | Fixes data-model drift at the source, before other screens consume those enums. **+FE TDD v1.40's state field — see §12.1** |
+| 5 | Onboarding & profile schema | Not started | Fixes data-model drift at the source, before other screens consume those enums. **+state/city cascade and `cityId` — see §12.2** |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
@@ -161,7 +161,7 @@ refined as modules land; elapsed time runs longer because of review turnaround a
 
 | Module | Est. build | | Module | Est. build |
 |---|---|---|---|---|
-| 0 · Build foundation | ✅ 1 day | | 5 · Onboarding & schema | 4–5 days *(+1, §12.1)* |
+| 0 · Build foundation | ✅ 1 day | | 5 · Onboarding & schema | 3–4 days *(§12.1's +1 reversed)* |
 | 1 · Design system | ✅ 1–2 days | | 6 · Photos & verification | 3–4 days |
 | 2 · State & data layer | 3–5 days | | 7 · Discover / interest | 4–6 days |
 | 3 · Navigation | 2–3 days | | 8 · Requests | 1–2 days |
@@ -400,8 +400,8 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-13 | ~~`ios.supportsTablet`~~ **→ `false`. iPad is out of MVP scope** (2026-07-28, owner — reversed the same day during Module 0 PR review; the earlier "tablets are a target" note in §6 is superseded). What this buys the MVP: no 13-inch iPad screenshots required at submission, App Review stops exercising a phone-designed UI on iPad, and Modules 1/3 owe no large-screen layout work. **iPad users can still install** — iOS runs it letterboxed in iPhone-compatibility mode; `false` means "not optimised for iPad", not "blocked". **Android needs no equivalent change** — there is no phone-only flag in `app.json`, tablets are supported by default, and Play requires no tablet screenshots. Re-enabling post-MVP is one line plus the layout work. | Post-MVP if revisited | ✅ Decided |
 | O-14 | **Logo delivered 2026-07-28 — splash artwork still pending.** The designer's vector lockup is in-tree (`assets/brand/zomyra-lockup.svg`), and the icon, adaptive icon and in-app logo are now generated from it at full sharpness — see §10. **(b) settled in Module 1:** both backgrounds stay `#FFFFFF`, now as `colors.background` rather than a C-3 placeholder — reasoning in §10.2. **Still open:** (a) a purpose-designed splash from the designer; the current splash is an interim render of the lockup; (c) whether the app icon should be purple-on-white (current, faithful to the supplied artwork) or inverted white-on-purple. **Module 1 found (b) and (c) are not separable** — the Android foreground is the purple mark on transparency, so a purple `adaptiveIcon.backgroundColor` renders purple-on-purple. Changing that background *is* the icon-inversion decision, and it needs a new foreground asset with it. | Splash + icon treatment: before submission | Product owner |
 
-| O-15 | **FR-3a fallback when a town isn't in the curated list** — flagged as undecided *by the spec itself* (FE TDD v1.40, §12.1). Three linked questions: (a) does the user pick the nearest listed city, or get a free-text "other" entry; (b) if free-text, is that profile excluded from FR-5 same-city matching; (c) how deep does the curated per-state list go — every district town, or the top N cities per state. **This is not cosmetic:** it decides whether `city` is a closed enum or an open string, which changes the Discover filter (a picker vs. a search), the backend's matching query, and whether two users typing "Bangalore" and "Bengaluru" ever match. Needs settling before Module 5 builds the screen, not after. | **Module 5** | Product owner + BE |
-| O-16 | **Backend TDD v1.2 has no `state` field.** FE TDD v1.40 adds it to FR-3, API-7's `plot` object and API-23's response, but BE §14.2 (line 798) and §14.10 (line 1125) still list `…gender, city, heightCm…` with no `state`. The backend needs the column, the submit-payload field, the `/profile/me` response field, and FR-5's "same state" matching resolved against it rather than via city→state lookup. **Frontend-only constraint (C-1) means this is a message to send, not a change to make** — but Module 5 will 400 on submit until it lands. Exactly the drift O-11 predicted, caught by doc diff rather than at runtime. | **Module 5** | BE (flag from FE) |
+| O-15 | **Fallback when a user's town isn't in the backend's `cities` table** — flagged as undecided by the spec itself (FE TDD v1.42 FR-3a). **Half-settled as of BE v1.4 (§12.2):** the client side is decided — `city` is a **closed set**, always a `cityId` from the backend's table, never free text. That was the part that would have changed the Discover filter and the matching query, so the client is unblocked. **What remains is a backend data-curation question:** how deep the curated list goes (every district town, or top N per state), and what a user does when their town isn't there. FE v1.42 states plainly that this is *"a backend data-curation gap, not a client one"*. | Module 5 (client unblocked) | BE + product |
+| O-16 | ~~Backend TDD v1.2 has no `state` field~~ **→ Closed by BE TDD v1.4** (2026-07-31, §12.2). Resolved differently from how this item framed it: there is **no `state` column on the profile** and `state` is **never submitted**. The backend's pre-existing `cities` table is exposed via **API-38 `GET /locations/cities`**, onboarding submits **`cityId`** (FK → `cities.id`, matching the `users.city_id` that already existed), and `/profile/me` returns `cityId, cityName, state` denormalized via join. FR-5's "same state" matching already worked through that table — v1.40's claim that it needed fixing was retracted in v1.41. | Module 5 | ✅ Closed |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -426,9 +426,13 @@ The two documents are genuinely aligned; the backend was revised to match the fr
   `refresh_token_invalid` (BE §9.2).
 - `200 { status: "pending" }` on verification means work is genuinely in flight server-side —
   **must not** offer manual retry. A real 5xx is the opposite and should retry. Easy to conflate.
-- **`state` is missing backend-side.** FE TDD v1.40 adds it to API-7 and API-23; BE TDD v1.2 does
-  not have it in either. See O-16 — Module 5 cannot submit onboarding successfully until it exists.
-- See O-3, O-4 and O-16 above for the live conflicts.
+- **Location is `cityId`, not text** (FE v1.42 / BE v1.4). Onboarding submits a `cityId` from
+  **API-38 `GET /locations/cities`** — a full-table, unpaginated fetch made **once at cold start**
+  and cached client-side. `state` is client-side filtering only and is never sent. `/profile/me`
+  returns `cityId, cityName, state`, the last two denormalized for display. See §12.2.
+- **API-38 must not block the root navigator** — it runs in parallel with the auth/profile check and
+  is not gated behind the version check (FE §6.14). Reference data, not a gate.
+- See O-3 and O-4 above for the live conflicts. **O-16 is closed** (BE v1.4).
 
 ---
 
@@ -1528,6 +1532,10 @@ text rather than reading the whole document — the deltas are usually small and
 
 ### 12.1 Frontend TDD v1.39 → v1.40 (received 2026-07-30)
 
+> ⚠️ **Superseded by §12.2.** v1.41 and v1.42 reversed the central mechanism described below —
+> cities are **not** bundled client-side, and `state` is **not** submitted. Kept for the audit
+> trail; **do not build from this entry.**
+
 **One change, five places: a `state` field added ahead of `city` in onboarding.** Verified by full
 text diff — 5 hunks, no other edits anywhere in the document.
 
@@ -1558,3 +1566,61 @@ text diff — 5 hunks, no other edits anywhere in the document.
 **Two things this opened, both tracked:** O-15 (the fallback when a user's town isn't listed —
 flagged as undecided by the spec itself, and it determines whether `city` is a closed enum or an
 open string) and O-16 (Backend TDD v1.2 has no `state` field at all).
+
+### 12.2 Frontend v1.40 → v1.42, Backend v1.2 → v1.4 (received 2026-07-31)
+
+**The two documents are now aligned on this, and both changed.** v1.41 and v1.42 walked back most
+of §12.1 — read this entry, not that one.
+
+**What actually happened, in order:**
+
+- **v1.40** (§12.1) proposed bundling both the state list *and* per-state city lists client-side.
+- **v1.41** reversed it after backend cross-check: the backend already had a `cities` table with
+  `users.city_id` pointing at it, so a second client-side copy would have been a duplicate source of
+  truth. Cities move to a new endpoint, **API-38 `GET /locations/cities`**, and onboarding submits
+  **`cityId`, not raw city text**. It also **retracted v1.40's claim** that FR-5's "same state"
+  matching was newly fixed — it already worked via that table. FR-3a is a **city-picker UX
+  improvement, not a matching change.**
+- **v1.42** revised API-38 once more: it now returns the **entire cities dataset in one unpaginated
+  response**, fetched **once at app cold start** and cached client-side, with state filtering done
+  locally. The v1.41 per-state-selection call wasn't worth the round trip.
+
+**Where it landed:**
+
+| | Final position (FE v1.42 / BE v1.4) |
+|---|---|
+| **State list** | Bundled client-side — 28 states + 8 UTs, effectively fixed, same treatment as religion/diet/build |
+| **City list** | **Backend-served** via API-38, full table, fetched once at cold start, cached for the session |
+| **Submitted value** | **`cityId`** (uuid, FK → `cities.id`). **`state` is never submitted** — it only filters the cached list client-side; `cityId` already implies the state |
+| **`GET /profile/me`** | Returns `cityId, cityName, state` — the latter two denormalized via join, display/pre-fill only, not independently editable |
+| **Endpoint count** | 37 → **38** |
+
+**Module impact — the estimate bump from §12.1 is reversed:**
+
+- **Module 5 goes back to 3–4 days.** The +1 day was for authoring a 36-state city dataset. That
+  dataset now comes from the backend, so it evaporates. Only the ~36-entry state list is bundled,
+  which is trivial.
+- **Module 3 gains a small piece of cold-start orchestration.** FE §6.14 is explicit: API-38 fires
+  **in parallel with the auth/profile check**, is **not** gated behind the version check, and must
+  **not block the root navigator**. It is reference data, not a gate.
+- **Module 5 owns consumption:** state screen → filters cached list → city screen submits `cityId`.
+  Changing state clears city. If the cold-start fetch hasn't resolved (slow network or retrying),
+  the **city field shows a loading/retry state** — it must not block the state screen, and must not
+  fail silently (NFR-7).
+- **FR-27 is now specific:** state and city sit in Edit Profile's **Quick Facts** card and are
+  edited **as a pair** — changing state re-filters the cached list and clears the city, same cascade
+  as onboarding. Not independently editable.
+- **Module 2 needs no rework.** API-38 is one more endpoint definition on a data layer that already
+  exists; once the OpenAPI schema is served it comes out of `yarn api:generate` for free.
+
+**Also resolved in these versions:** the two long-standing "left to backend coordination" items at
+the end of FE §9 — RevenueCat product identifiers (`product_id` is separate from
+`revenuecat_entitlement_id` in the backend schema) and quiz-set versioning (`quizVersion` now
+travels end to end). Neither needs client work.
+
+**Open-item movement:** **O-16 is closed** — the backend has the contract, though *not* in the shape
+O-16 described (there is no `state` column on the profile; `cityId` carries it). **O-15 is now
+half-settled:** the client side is decided — `city` is a **closed set**, always a `cityId` from the
+backend's table, never free text — which was the part that would have changed the Discover filter
+and the matching query. What remains is purely a **backend data-curation question**: what happens
+when a user's town isn't in the table.

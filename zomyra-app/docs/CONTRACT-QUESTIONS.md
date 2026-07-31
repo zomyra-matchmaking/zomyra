@@ -1,7 +1,11 @@
 # Contract questions for the backend
 
 **Status:** open, raised by the frontend at the end of Module 2 (2026-07-31).
-**Audience:** whoever is building the Zomyra backend from Backend TDD v1.2.
+**Audience:** whoever is building the Zomyra backend from Backend TDD v1.4.
+
+**Updated 2026-07-31 against FE v1.42 / BE v1.4 — item 1 is already answered**
+and is kept below only so the thread makes sense. Items 0 and 2–6 are still
+open and are what actually needs a reply.
 
 C-1 makes this repository frontend-only, so nothing here is a change we can
 make — each item is a **message to send**. Written to be forwarded as-is.
@@ -34,30 +38,33 @@ mocks, so this does not block us — it blocks *verification*.
 
 ---
 
-## 1. O-16 — `state` is missing from the backend schema
+## 1. O-16 — `state` in the schema — ✅ **ANSWERED, no action needed**
 
-**Frontend TDD v1.40** adds a `state` field (India's 28 states + 8 UTs) ahead of
-`city` in onboarding. **Backend TDD v1.2 does not have it anywhere**: §14.2's
-`plot` object and §14.10's `/profile/me` response both still read
-`…gender, city, heightCm…`.
+Raised against BE v1.2; **resolved by BE v1.4**, and resolved better than we
+asked. Recorded here so the conversation isn't reopened.
 
-**Needed backend-side:**
+We asked for a `state` column and a `state` field on submit. What landed
+instead: the backend's **existing `cities` table** is exposed via
+**`GET /v1/locations/cities`** (API-38), onboarding submits **`cityId`**
+(FK → `cities.id`, matching the `users.city_id` that already existed), and
+`/v1/profile/me` returns `cityId, cityName, state` denormalized via join.
 
-- the column on the profile table,
-- `state` accepted in `POST /v1/onboarding/submit`'s `plot` object,
-- `state` returned by `GET /v1/profile/me`,
-- FR-5's "same state" match preference resolved against this field directly,
-  rather than via a city → state lookup.
+That is the better shape — a closed set with referential integrity, rather than
+a second free-text field to keep consistent. `state` is client-side filtering
+only and is never sent. It also removed our worry about "Bangalore" vs
+"Bengaluru" never matching: with a `cityId` there is exactly one row.
 
-**Impact if it does not land:** Module 5 cannot submit onboarding at all — the
-submit 400s on an unrecognised field, or silently drops it and FR-5 has nothing
-to match on.
+**Still open, and it is yours rather than ours (O-15):** how deep the curated
+`cities` list goes, and what a user does when their town isn't in it. FE v1.42
+calls this "a backend data-curation gap, not a client one" — we agree, and the
+client is unblocked either way.
 
-**Related product question (O-15), which the frontend TDD itself flags as
-undecided and which the backend has a stake in:** what happens when a user's
-town is not in the curated list? It decides whether `city` is a closed enum or
-an open string — which in turn decides the shape of the matching query, and
-whether two users typing "Bangalore" and "Bengaluru" ever match.
+**One thing we'd like confirmed:** roughly how many rows is the full `cities`
+response? API-38 is unpaginated and fetched at every cold start, so its payload
+size is a cold-start latency cost on Indian mobile networks. BE §14.2a already
+says to revisit pagination or compression "if the dataset's size becomes a real
+cold-start latency concern" — a rough row count now tells us whether that is a
+today problem or a later one. Gzip alone probably settles it.
 
 ## 2. O-3 — `pushEnabled` vs `notificationsEnabled`
 
