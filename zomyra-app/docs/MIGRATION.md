@@ -79,7 +79,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 0 | Build & project foundation | **Complete** (2026-07-28) | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
 | 1 | Design system & theming | **Complete** (2026-07-30) | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
 | 2 | State & data layer | **Complete** (2026-07-31) | Every subsequent module plugs into it; nothing can reach the backend until it exists |
-| 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me` |
+| 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive — see §13** |
 | 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
 | 5 | Onboarding & profile schema | Not started | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
@@ -167,7 +167,7 @@ refined as modules land; elapsed time runs longer because of review turnaround a
 | 0 · Build foundation | ✅ 1 day | | 5 · Onboarding & schema | 3–4 days *(§12.1's +1 reversed)* |
 | 1 · Design system | ✅ 1–2 days | | 6 · Photos & verification | 3–4 days |
 | 2 · State & data layer | 3–5 days | | 7 · Discover / interest | 4–6 days |
-| 3 · Navigation | 2–3 days | | 8 · Requests | 1–2 days |
+| 3 · Navigation | 2–3 days *(+½, §13)* | | 8 · Requests | 1–2 days |
 | 4 · Auth | 2–3 days | | 9 · Chat & realtime | 4–6 days |
 | | | | **0–9 total** | **24–36 days (5–7 wks build, 7–10 elapsed)** |
 
@@ -1744,7 +1744,7 @@ to its original scope. Both endpoints move wholly to **Module 5**.
 | Module | Verdict |
 |---|---|
 | **0 · Build foundation** | **No change.** Nothing here touches data sourcing |
-| **1 · Design system** | **No change to what it built** — but FR-3b references a *"shared default loading state"* that **does not exist**. Module 1 shipped Button, Input, Dialog, Overlay, Toast, Touchable, BottomSheet, ConfirmDialog — no loading primitive. FR-3b is explicit that it is the shared fallback, **distinct from Chat/Requests' own spinner**, so it belongs with the primitives rather than being invented ad hoc in Module 5. Small addition, not a rework |
+| **1 · Design system** | **No change to what it built** — but FR-3b references a *"shared default loading state"* that **does not exist**. Module 1 shipped Button, Input, Dialog, Overlay, Toast, Touchable, BottomSheet, ConfirmDialog — no loading primitive. FR-3b is explicit that it is the shared fallback, **distinct from Chat/Requests' own spinner**, so it belongs with the primitives rather than being invented ad hoc in Module 5. **Placed in Module 3 — see §13** |
 | **2 · State & data layer** | **No code rework — the architecture was right.** It already uses AsyncStorage as redux-persist's engine (now explicitly required by FE §4.2), already excludes `api` from the persist whitelist (now explicitly required for these catalogues), and already documented that `keepUnusedDataFor` must be raised from the 60s default. **Two comments are now stale** and are corrected in this pass: the `Locations` tag block in `src/api/api.ts` describes the full-table cold-start model, and assigns the endpoint to Module 3 |
 
 That Module 2 needed no structural change is worth noting: it was built to the *shape* of the
@@ -1774,3 +1774,60 @@ renders it. A whole class of Module 5 and Module 7 bugs is designed out.
 
 O-15 stands exactly as it was: the client side is settled (city is a closed set of `cityId`s), and
 what remains is backend data curation. Endpoint count 38 → **39**.
+
+---
+
+## 13. Loading states — one family, five treatments
+
+Added 2026-07-31, after FE v1.44's FR-3b referenced a *"shared default loading state"* that no
+module had built. Module 1 shipped no loading primitive at all.
+
+**The problem this section prevents:** the spec describes **five different loading treatments**
+scattered across FR-3b, FR-23, §6.5, API-13 and API-19/20. Left to each module, five modules invent
+five spinners, and the app looks assembled rather than designed. They are enumerated here once so
+each module knows which one it owns and which it merely consumes.
+
+### 13.1 The five, and where each lands
+
+| # | Treatment | Specified in | Used for | Built in |
+|---|---|---|---|---|
+| 1 | **Shared default** | FR-3b | The generic fallback wherever no bespoke pattern is specified — onboarding catalogues, the root gate, auth submits | **Module 3** |
+| 2 | **Plain spinner → error + Retry** | API-19, API-20 | Chat list and message history — deliberately simpler than Discover's pattern, since these lists are shorter and lower-stakes | Module 9 |
+| 3 | **Shimmer / skeleton (content-shaped)** | FR-23, §6.7 | Non-premium Requests placeholder cards — the *point* is that they convey "requests exist" without detail | Module 8 |
+| 4 | **Shimmer (layout-stabilising)** | API-13, API-30 | The Discover filter row and Premium plans — used because their width genuinely changes once real options arrive, so without it the layout visibly reflows | Module 7 |
+| 5 | **Branded logo animation** | §6.5, §6.7 | Discover's card slot when the user out-runs pagination — there is no scrollable list to host a conventional interstitial in a one-card-at-a-time UI (FR-13) | Module 7 |
+
+Note that 3 and 4 are both "shimmer" but exist for **different reasons** — one is a privacy gate,
+the other is layout stability. They may share an implementation; they must not share a rationale,
+because 4's justification (API-13) explicitly does *not* apply to tab-bar badges or premium status.
+
+### 13.2 Why the shared default belongs to Module 3
+
+Not Module 1 (already merged) and not Module 5 (where FR-3b names it), because **Module 3 is the
+first module that renders a pending network state**: the root gate runs the version check and
+`GET /me` before routing anywhere (FR-30, §9.1). Building it there means Modules 4, 5, 7, 8 and 9
+inherit it rather than each reaching for `ActivityIndicator`.
+
+Scope is small — one primitive plus its tokens, roughly half a day on top of Module 3's estimate.
+It belongs beside Module 1's `Button`/`Input`/`Dialog` set in `src/components/ui/`, exported from
+the same index, and built on the existing design tokens rather than introducing new colour values
+(C-4 lint will reject raw literals anyway).
+
+**Two requirements it must satisfy on day one, both cheap now and expensive to retrofit:**
+
+- **NFR-6a (4): respect the OS "reduce motion" setting.** Every treatment in §13.1 animates. A
+  reduce-motion fallback has to be built into the primitive, not bolted onto five call sites later
+  — and treatment 5, the branded logo animation, is the one most likely to fail this.
+- **NFR-6 / NFR-6a (3): screen-reader behaviour.** A loading state needs an accessibility label and
+  must not trap or silently swallow focus while it is mounted.
+
+### 13.3 What each later module then owes
+
+- **Module 4** — consumes the shared default for auth submits; builds nothing.
+- **Module 5** — consumes it for the FR-3b catalogue fetch, plus the **city field's own
+  loading/retry state** (FR-3a), which is field-level rather than screen-level and must not block
+  the state screen behind it.
+- **Module 7** — builds 4 and 5, including the 3-retry-then-error-with-retry loop (§6.5).
+- **Module 8** — builds 3, reusing Module 7's retry pattern (§6.7 says so explicitly).
+- **Module 9** — builds 2, and the spec is explicit that it is *deliberately simpler* than Discover's;
+  resist unifying them.
