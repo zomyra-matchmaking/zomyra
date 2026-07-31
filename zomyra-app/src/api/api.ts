@@ -33,31 +33,36 @@ export const api = createApi({
     "Quiz",
     "Counts",
     /**
-     * API-38 `GET /locations/cities` (FE v1.42 / BE v1.4 — MIGRATION §12.2).
-     * The endpoint itself is Module 3's to add; the tag is here because this
-     * list is the one part of the API slice that has to be central.
+     * Backend-driven reference data — API-38 `GET /locations/cities?state=<key>`
+     * and API-39 `GET /onboarding/options` (FE v1.44 / BE v1.5 — MIGRATION
+     * §12.3). **Both belong to Module 5**, which fetches *and* consumes them.
      *
-     * **Two data-layer decisions come with it, and both default wrong:**
+     * The tags are declared here because this list has to be central; the
+     * endpoints are not, because nothing before Module 5 can use them.
      *
-     * 1. **`keepUnusedDataFor` must be set explicitly.** The spec says the full
-     *    table is fetched *once at cold start and cached for the session*. RTK
-     *    Query's default evicts a cache entry **60 seconds** after its last
-     *    subscriber unmounts — so leaving the default means re-fetching the
-     *    entire cities table every time the user returns to a city field. It
-     *    would look fine in testing and cost real bytes on an Indian mobile
-     *    network in the field.
-     * 2. **Do not add this to redux-persist's whitelist.** Refetching once per
-     *    cold start is the specified behaviour, and `api` is excluded from
-     *    persistence precisely so a full reference table cannot accumulate on
-     *    disk (NFR-11, FE TDD §4.4). The store's whitelist comment is the
-     *    reference.
+     * **`keepUnusedDataFor` must be set explicitly on both.** RTK Query evicts
+     * a cache entry **60 seconds** after its last subscriber unmounts. FE §4.2
+     * requires these held for the session instead — otherwise walking Plot →
+     * Anchor → Love, or between Edit Profile's cards, silently refetches the
+     * catalogue every time. It looks fine in testing and costs real bytes on an
+     * Indian mobile network in the field.
      *
-     * FE §6.14 also requires it to run *parallel* to the auth check, not behind
-     * the version gate, and never to block the root navigator — so it wants a
-     * retry budget (NFR-7 expects a retry state in the city field), not the
-     * boot-gate treatment `getMe` gets.
+     * **Neither goes in redux-persist's whitelist.** FE §4.2 now names these
+     * catalogues as deliberate exclusions: in-memory for the session, refetched
+     * on a cold start. `api` is already excluded wholesale — see the whitelist
+     * comment in `src/store/index.ts` — so this needs no action, only no
+     * exception.
+     *
+     * **Cache `Locations` per state key**, not globally: API-38 is scoped to one
+     * state per call, and a user may switch state in Edit Profile.
+     *
+     * Corrected from the v1.42 reading, which had these as cold-start fetches
+     * running parallel to the auth check. They are not: both require auth and
+     * are fetched when the Onboarding stack mounts, and again when Edit Profile
+     * opens. They never touch the root navigator or the version gate.
      */
     "Locations",
+    "OnboardingOptions",
   ],
   /**
    * RTK Query's cache is in-memory by design. Anything that must survive a

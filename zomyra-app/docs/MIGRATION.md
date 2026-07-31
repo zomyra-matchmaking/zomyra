@@ -1,7 +1,7 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.42**, integrating against the contract in **Backend TDD v1.4**.
+**Frontend TDD v1.44**, integrating against the contract in **Backend TDD v1.5**.
 **Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
@@ -35,8 +35,9 @@ Append a "Module log" entry at the end of every module, in the same session that
   root gate now has something to call: `useGetMeQuery()` (API-6) exists and answers from mocks.
   O-4 is its live blocker — `GET /me` returns `accountStatus: suspended | banned` and the FE routing
   table has no destination for either. See `docs/CONTRACT-QUESTIONS.md`.
-  **Module 3 also picks up API-38's cold-start fetch** (§12.2) — read the Module 2 reconciliation
-  addendum in §6 first; two of its RTK Query defaults are wrong for this endpoint.
+  **API-38 is no longer Module 3's** — FE v1.44 removed the cold-start model entirely (§12.3).
+  Both reference-data endpoints are auth-gated and fetched when Onboarding mounts, so they belong
+  to **Module 5**. The `keepUnusedDataFor` warning by the `Locations` tag still stands.
 - **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
   §4 (open items), **§12 (spec-change history — check before starting any module)**, then §6's
   Module 2 entry. §3 is history, not current state.
@@ -80,7 +81,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 2 | State & data layer | **Complete** (2026-07-31) | Every subsequent module plugs into it; nothing can reach the backend until it exists |
 | 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me` |
 | 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
-| 5 | Onboarding & profile schema | Not started | Fixes data-model drift at the source, before other screens consume those enums. **+state/city cascade and `cityId` — see §12.2** |
+| 5 | Onboarding & profile schema | Not started | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
@@ -428,12 +429,16 @@ The two documents are genuinely aligned; the backend was revised to match the fr
   `refresh_token_invalid` (BE §9.2).
 - `200 { status: "pending" }` on verification means work is genuinely in flight server-side —
   **must not** offer manual retry. A real 5xx is the opposite and should retry. Easy to conflate.
-- **Location is `cityId`, not text** (FE v1.42 / BE v1.4). Onboarding submits a `cityId` from
-  **API-38 `GET /locations/cities`** — a full-table, unpaginated fetch made **once at cold start**
-  and cached client-side. `state` is client-side filtering only and is never sent. `/profile/me`
-  returns `cityId, cityName, state`, the last two denormalized for display. See §12.2.
-- **API-38 must not block the root navigator** — it runs in parallel with the auth/profile check and
-  is not gated behind the version check (FE §6.14). Reference data, not a gate.
+- **Location is `cityId`, not text** (FE v1.44 / BE v1.5). Onboarding submits a `cityId` from
+  **API-38 `GET /locations/cities?state=<key>`** — **per-state**, fetched the first time a given
+  state is selected, cached per state key in RTK Query memory. `state` is never submitted;
+  `/profile/me` returns `cityId, cityName, state`, the last two denormalized for display.
+- **Every choice field is backend-driven** (FR-3b, **API-39 `GET /onboarding/options`**). The client
+  hardcodes **no** value lists — not gender, not religion, not diet. Categories return
+  `{ key, label }` pairs and the client submits **keys**. See §12.3.
+- **Neither is a cold-start fetch** — both require auth, and are fetched when the Onboarding stack
+  mounts (and again when Edit Profile opens). They do not touch the root navigator or version gate.
+  *This reverses what §12.2 said; FE v1.44 corrected it.*
 - See O-3 and O-4 above for the live conflicts. **O-16 is closed** (BE v1.4).
 
 ---
@@ -1179,8 +1184,9 @@ things were stale and are now fixed.
 The comment mattered more than the types: it told the next module the **opposite of the truth** —
 that a backend change was still pending — which is exactly the failure §12 exists to prevent.
 
-**API-38 is deliberately *not* implemented here.** Module 3 owns fetching it at cold start, Module 5
-owns consuming it. But it carries **two data-layer decisions that both default wrong**, written up
+**API-38 is deliberately *not* implemented here.** *(Updated by §12.3: it is **Module 5**'s, not
+Module 3's — FE v1.44 removed the cold-start model, and the endpoint is now per-state.)* Module 5
+owns both fetching and consuming it. But it carries **two data-layer decisions that both default wrong**, written up
 beside the `Locations` tag in `api.ts` so whoever adds the endpoint meets them:
 
 1. **`keepUnusedDataFor` must be set explicitly.** The spec says the full table is fetched *once at
@@ -1621,6 +1627,9 @@ open string) and O-16 (Backend TDD v1.2 has no `state` field at all).
 
 ### 12.2 Frontend v1.40 → v1.42, Backend v1.2 → v1.4 (received 2026-07-31)
 
+> ⚠️ **Partially superseded by §12.3.** The `cityId` decision below still holds. The *fetch model*
+> does not — v1.44 reverted API-38 to per-state and removed the cold-start framing entirely.
+
 **The two documents are now aligned on this, and both changed.** v1.41 and v1.42 walked back most
 of §12.1 — read this entry, not that one.
 
@@ -1676,3 +1685,73 @@ half-settled:** the client side is decided — `city` is a **closed set**, alway
 backend's table, never free text — which was the part that would have changed the Discover filter
 and the matching query. What remains is purely a **backend data-curation question**: what happens
 when a user's town isn't in the table.
+
+### 12.3 Frontend v1.42 → v1.44, Backend v1.4 → v1.5 (received 2026-07-31)
+
+**The largest spec change so far, and it is a genuine simplification for us.** One new endpoint
+removes an entire category of work the baseline flagged as a risk.
+
+#### FR-3b — the client hardcodes no choice lists at all
+
+New **API-39 `GET /onboarding/options`** serves *every* multiple-choice and multi-select field in
+Plot and Anchor as `{ key, label }` pairs. Not just the ones that plausibly grow — **gender,
+religion and diet too**, deliberately, for consistency. Categories: gender, state, build, education,
+profession, incomeRange, religion, languages, diet, drinking, smoking, familyType (Plot);
+matchLocationPreference, childrenPreference, interfaithStance, smokingPartnerComfort,
+householdPreference, relocationWillingness (Anchor); discoveryMode (FR-15/15a).
+
+The client **submits keys**, not labels. BE v1.5 §14.2 confirms the same on the receiving side.
+
+#### API-38 reverted to per-state
+
+Third revision of this mechanism. `GET /locations/cities?state=<key>` — required param, returns
+`{ cities: [{ id, name }] }` for that state only, `400 invalid_state` on a bad key. Fetched the
+**first time a given state is selected**, cached per state key. The v1.42 full-India cold-start
+fetch is gone: a user picks one or two states, so shipping every city in India to serve that was
+wasted bandwidth on exactly the networks this app targets.
+
+#### Neither is a cold-start fetch — §12.2 was wrong about this
+
+FE v1.44 states it plainly: both endpoints **require auth**, and by the time either is reachable the
+user already holds a token on every path. They fetch when the **Onboarding stack mounts**, and again
+when **Edit Profile opens**. They do not run at cold start, are not gated behind the version check,
+and never block the root navigator.
+
+**Consequence: the cold-start orchestration §12.2 gave Module 3 no longer exists.** Module 3 is back
+to its original scope. Both endpoints move wholly to **Module 5**.
+
+#### What this does to the finished modules
+
+| Module | Verdict |
+|---|---|
+| **0 · Build foundation** | **No change.** Nothing here touches data sourcing |
+| **1 · Design system** | **No change.** Tokens are indifferent to where values come from |
+| **2 · State & data layer** | **No code rework — the architecture was right.** It already uses AsyncStorage as redux-persist's engine (now explicitly required by FE §4.2), already excludes `api` from the persist whitelist (now explicitly required for these catalogues), and already documented that `keepUnusedDataFor` must be raised from the 60s default. **Two comments are now stale** and are corrected in this pass: the `Locations` tag block in `src/api/api.ts` describes the full-table cold-start model, and assigns the endpoint to Module 3 |
+
+That Module 2 needed no structural change is worth noting: it was built to the *shape* of the
+contract — persist whitelist, cache lifetime, tag registry — rather than to any one endpoint's
+wording, so a third revision of that endpoint cost comments rather than code.
+
+#### The strategic win, and the cost
+
+**Win — the enum-drift risk from §3 is largely gone.** The baseline flagged local enums diverging
+from the API (`all|personality|lifestyle|priorities` vs `all|compatibility|lifestyle|marriage_goals`;
+build lists disagreeing between Discover and onboarding; a religion list missing four of FR-3's ten).
+With the server owning every list, **those cannot drift** — there is one source and the client
+renders it. A whole class of Module 5 and Module 7 bugs is designed out.
+
+**Cost — three things to plan for:**
+
+1. **Compile-time safety on those values is gone.** `Religion`, `Diet`, `Education` and friends in
+   `src/lib/onboarding/types.ts` become plain `string` keys. TypeScript can no longer catch a bad
+   religion value; only the backend can. Consider a runtime guard at the edge in Module 5.
+2. **Onboarding cannot render without API-39.** Every choice screen depends on it — a harder
+   dependency than any single field. It needs a **mock fixture** in `src/api/mock` before Module 5
+   can build against it, and a **loading/retry state**, since NFR-7 forbids failing silently.
+3. **`src/lib/onboarding/types.ts`'s hardcoded unions are now wrong by design** — deleting them is
+   Module 5 work, but it is deletion rather than renaming, which is the cheaper direction.
+
+#### Unchanged
+
+O-15 stands exactly as it was: the client side is settled (city is a closed set of `cityId`s), and
+what remains is backend data curation. Endpoint count 38 → **39**.
