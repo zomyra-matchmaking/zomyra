@@ -36,12 +36,10 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DualRangeSlider } from "@/src/components/discover/DualRangeSlider";
-import {
-  FILTER_OPTIONS,
-  useDiscoverFilters,
-  type MultiFilterKey,
-} from "@/src/stores/discover-filters-store";
-import { useRequestsStore } from "@/src/stores/requests-store";
+import { useDiscoverFilters } from "@/src/hooks/use-discover-filters";
+import { FILTER_OPTIONS } from "@/src/lib/discover/filter-options";
+import { useAppSelector } from "@/src/store/hooks";
+import type { MultiFilterKey } from "@/src/store/slices/discover-filters-slice";
 import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
@@ -77,7 +75,7 @@ const PREMIUM_ROWS: Row[] = [
 export default function FiltersScreen() {
   const router = useRouter();
   const filters = useDiscoverFilters();
-  const isPremium = useRequestsStore((s) => s.premium);
+  const isPremium = useAppSelector((s) => s.entitlement.isPremium);
   const [expanded, setExpanded] = useState<RowKey | null>(null);
 
   const toggleExpand = (key: RowKey, locked: boolean) => {

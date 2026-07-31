@@ -5,7 +5,6 @@
  * interleaved photo/info card profile. Tapping the Compatibility chip
  * opens the Discovery Mode bottom sheet.
  */
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ChevronDown, Crown, Send, SlidersHorizontal, Sparkles, X } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
@@ -29,8 +28,9 @@ import { ProfileView } from "@/src/components/discover/ProfileView";
 import { MatchOverlay } from "@/src/components/discover/MatchOverlay";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
-import { discoverService } from "@/src/services/discover";
-import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
+import { useGetDiscoverFeedQuery } from "@/src/api";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { setDiscoveryMode } from "@/src/store/slices/discovery-mode-slice";
 import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 import { NAV_CLEARANCE } from "@/src/constants";
@@ -75,12 +75,14 @@ const DIM_LABEL: Record<CompatibilityDimension, string> = {
 export default function Discover() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["discover-profiles"],
-    queryFn: () => discoverService.list(),
-  });
-  const initialMode = useDiscoveryModeStore((s) => s.mode);
-  const setStoreMode = useDiscoveryModeStore((s) => s.setMode);
+  // API-12. Module 7 owns the rest of the contract: filter serialisation, the
+  // last-3 prefetch, hero prefetch, cursor paging through `nextCursor`, and the
+  // 3-retry error state (§6.5) that `maxRetries` on the endpoint already sets up.
+  const { data: feed } = useGetDiscoverFeedQuery();
+  const profiles = useMemo(() => feed?.profiles ?? [], [feed]);
+  const dispatch = useAppDispatch();
+  const initialMode = useAppSelector((s) => s.discoveryMode.mode);
+  const setStoreMode = (next: CompatibilityDimension) => dispatch(setDiscoveryMode(next));
   const [dimension, setDimension] = useState<CompatibilityDimension>(initialMode ?? "all");
   const [idx, setIdx] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -114,19 +116,14 @@ export default function Discover() {
     setIdx((i) => (i + 1) % sortedProfiles.length);
   };
 
-  const handleLike = async () => {
+  // Express Interest is Module 7 (API-14): the real flow advances optimistically
+  // and snaps back on `cap_exceeded` or a 5xx (§6.6), which is the inverse of
+  // what the prototype did. Until then this advances locally and calls nothing —
+  // the mock service it used to await recorded interests in a dictionary that
+  // could never produce a match, so no behaviour is lost here.
+  const handleLike = () => {
     if (!profile) return;
-
-    // Call API to express interest
-    const currentUserId = "current-user-123"; // TODO: Get from auth context
-    const result = await discoverService.connect(currentUserId, profile.id);
-
-    if (result.isMatch) {
-      setMatchedProfile(profile);
-      setShowMatchOverlay(true);
-    } else {
-      advance();
-    }
+    advance();
   };
 
   const handleStartConversation = () => {

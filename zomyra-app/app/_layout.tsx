@@ -4,12 +4,16 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { LogBox, Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Provider } from "react-redux";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistGate } from "redux-persist/integration/react";
 
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAppFonts, FONT_FAMILY } from "@/src/hooks/use-app-fonts";
+import { bootstrapSession } from "@/src/auth/bootstrap";
 import { ToastHost } from "@/src/components/ui/Toast";
+import { persistor, store } from "@/src/store";
+import { useAppDispatch } from "@/src/store/hooks";
 import { colors } from "@/src/theme";
 
 LogBox.ignoreAllLogs(true);
@@ -32,17 +36,24 @@ TextInputAny.defaultProps.style = [
   (TextInputAny.defaultProps as { style?: unknown }).style,
 ];
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { refetchOnWindowFocus: false, staleTime: 30_000 },
-  },
-});
-
-export default function RootLayout() {
+/**
+ * Everything below `PersistGate`, so it only mounts once the persisted slices
+ * have rehydrated. That ordering matters: a screen reading the onboarding
+ * draft on its first render would otherwise see the empty initial state and
+ * decide the user has no draft. The splash stays up throughout, because
+ * `hideAsync` is called from here.
+ */
+function AppShell() {
+  const dispatch = useAppDispatch();
   const [iconsLoaded, iconsError] = useIconFonts();
   const [appFontsLoaded, appFontsError] = useAppFonts();
   const loaded = iconsLoaded && appFontsLoaded;
   const error = iconsError ?? appFontsError;
+
+  // Resolve the keychain into a session status once per launch (NFR-2).
+  useEffect(() => {
+    void bootstrapSession(dispatch);
+  }, [dispatch]);
 
   useEffect(() => {
     if (loaded || error) {
@@ -53,28 +64,41 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+          contentStyle: { backgroundColor: colors.surface.default },
+        }}
+      />
+      <ToastHost />
+      {/*
+        Dark status-bar content, because C-3 fixes a light theme and the
+        app paints white behind the bar. Android does not infer this: with
+        edgeToEdgeEnabled the generated styles.xml sets a white
+        statusBarColor but no windowLightStatusBar, so the clock, wifi and
+        battery rendered white-on-white — verified 1.00:1 on the emulator.
+        iOS never showed it, since UIUserInterfaceStyle: Light makes it
+        pick dark content on its own.
+      */}
+      <StatusBar style="dark" />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: "slide_from_right",
-              contentStyle: { backgroundColor: colors.surface.default },
-            }}
-          />
-          <ToastHost />
-          {/*
-            Dark status-bar content, because C-3 fixes a light theme and the
-            app paints white behind the bar. Android does not infer this: with
-            edgeToEdgeEnabled the generated styles.xml sets a white
-            statusBarColor but no windowLightStatusBar, so the clock, wifi and
-            battery rendered white-on-white — verified 1.00:1 on the emulator.
-            iOS never showed it, since UIUserInterfaceStyle: Light makes it
-            pick dark content on its own.
-          */}
-          <StatusBar style="dark" />
-        </QueryClientProvider>
+        <Provider store={store}>
+          {/* `loading={null}` keeps the native splash visible rather than
+              flashing a blank frame — rehydration is a single AsyncStorage
+              read and resolves in a frame or two. */}
+          <PersistGate loading={null} persistor={persistor}>
+            <AppShell />
+          </PersistGate>
+        </Provider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -3,7 +3,7 @@
  *
  * Presents the same four options as the Discover header sheet (All /
  * Compatibility / Lifestyle / Marriage Goals) so the user can seed their
- * initial feed lens. Selection persists via `useDiscoveryModeStore`, so on
+ * initial feed lens. The selection is persisted (redux-persist), so on
  * subsequent app launches we bounce straight to `/discover`.
  */
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,7 +20,8 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
-import { useDiscoveryModeStore } from "@/src/stores/discovery-mode-store";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { setDiscoveryMode } from "@/src/store/slices/discovery-mode-slice";
 import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
@@ -62,17 +63,18 @@ const OPTIONS: Option[] = [
 
 export default function DiscoveryMode() {
   const router = useRouter();
-  const mode = useDiscoveryModeStore((s) => s.mode);
-  const setMode = useDiscoveryModeStore((s) => s.setMode);
-  const hasHydrated = useDiscoveryModeStore((s) => s._hasHydrated);
+  const dispatch = useAppDispatch();
+  const mode = useAppSelector((s) => s.discoveryMode.mode);
+  const setMode = (next: CompatibilityDimension) => dispatch(setDiscoveryMode(next));
   const [draft, setDraft] = useState<CompatibilityDimension>("all");
 
-  // Skip this screen if the user already picked once.
+  // Skip this screen if the user already picked once. No hydration guard: the
+  // persisted slices rehydrate behind `PersistGate` before this screen mounts.
   useEffect(() => {
-    if (hasHydrated && mode) {
+    if (mode) {
       router.replace("/discover");
     }
-  }, [hasHydrated, mode, router]);
+  }, [mode, router]);
 
   const apply = () => {
     setMode(draft);

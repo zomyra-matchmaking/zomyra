@@ -32,8 +32,8 @@ import { Animated, Easing, Image, KeyboardAvoidingView, Modal, ScrollView, Style
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
-import { useOnboardingStore } from "@/src/stores/onboarding-store";
-import { useRequestsStore } from "@/src/stores/requests-store";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { resetOnboarding } from "@/src/store/slices/onboarding-slice";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 import { NAV_CLEARANCE } from "@/src/constants";
@@ -44,9 +44,10 @@ const DEFAULT_AVATAR =
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const onboarding = useOnboardingStore((s) => s.state);
-  const reset = useOnboardingStore((s) => s.reset);
-  const isPremium = useRequestsStore((s) => s.premium);
+  const dispatch = useAppDispatch();
+  const onboarding = useAppSelector((s) => s.onboarding.draft);
+  const reset = () => dispatch(resetOnboarding());
+  const isPremium = useAppSelector((s) => s.entitlement.isPremium);
 
   const fullName = useMemo(() => {
     const first = (onboarding.firstName || "Riya").trim();

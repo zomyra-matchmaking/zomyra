@@ -10,6 +10,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "typecheck:baseline": "node ./scripts/typecheck-baseline.js",
+    "api:generate": "rtk-query-codegen-openapi openapi-config.ts",
     "doctor": "npx expo-doctor@latest",
     "build:dev:android": "eas build --profile development --platform android",
     "build:dev:ios-sim": "eas build --profile development-simulator --platform ios",
@@ -24,7 +25,7 @@
     "@react-navigation/elements": "2.3.8",
     "@react-navigation/native": "^7.1.8",
     "@react-navigation/native-stack": "^7.3.16",
-    "@tanstack/react-query": "^5.101.1",
+    "@reduxjs/toolkit": "^2.12.0",
     "date-fns": "4.1.0",
     "dayjs": "1.11.13",
     "expo": "~54.0.32",
@@ -55,9 +56,11 @@
     "react-native-svg": "15.12.1",
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
-    "zustand": "^5.0.14"
+    "react-redux": "^9.3.0",
+    "redux-persist": "^6.0.0"
   },
   "devDependencies": {
+    "@rtk-query/codegen-openapi": "^2.2.0",
     "@types/react": "~19.1.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~10.0.0",

@@ -27,7 +27,9 @@ import {
   LANGUAGES,
   PROFESSIONS,
 } from "@/src/lib/onboarding/data";
-import { useOnboardingStore } from "@/src/stores/onboarding-store";
+import { useOnboardingDraft } from "@/src/hooks/use-onboarding-draft";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { markCompleted, setStepIdx } from "@/src/store/slices/onboarding-slice";
 import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
 import { Input } from "@/src/components/ui";
@@ -438,21 +440,20 @@ const SCREENS: Screen[] = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const state = useOnboardingStore((s) => s.state);
-  const set = useOnboardingStore((s) => s.set);
-  const stepIdx = useOnboardingStore((s) => s.stepIdx);
-  const setStepIdx = useOnboardingStore((s) => s.setStepIdx);
-  const completed = useOnboardingStore((s) => s.completed);
-  const hasHydrated = useOnboardingStore((s) => s._hasHydrated);
-  const markCompleted = useOnboardingStore((s) => s.markCompleted);
+  const dispatch = useAppDispatch();
+  const { draft: state, set } = useOnboardingDraft();
+  const stepIdx = useAppSelector((s) => s.onboarding.stepIdx);
+  const completed = useAppSelector((s) => s.onboarding.completed);
 
   // If the user previously finished onboarding and we land back here,
-  // start fresh from step 0 (clear the completed flag).
+  // start fresh from step 0. No hydration guard is needed any more: the
+  // persisted slices rehydrate behind `PersistGate` before this screen mounts
+  // (see app/_layout.tsx).
   useEffect(() => {
-    if (hasHydrated && completed) {
-      setStepIdx(0);
+    if (completed) {
+      dispatch(setStepIdx(0));
     }
-  }, [hasHydrated, completed, setStepIdx]);
+  }, [completed, dispatch]);
 
   // Guard against an out-of-bounds index if SCREENS shrinks across versions.
   const idx = Math.min(Math.max(stepIdx, 0), SCREENS.length - 1);
@@ -473,16 +474,16 @@ export default function OnboardingScreen() {
       router.replace("/login");
       return;
     }
-    setStepIdx(Math.max(0, idx - 1));
+    dispatch(setStepIdx(Math.max(0, idx - 1)));
   };
 
   const handleNext = () => {
     if (idx >= SCREENS.length - 1) {
-      markCompleted();
+      dispatch(markCompleted());
       router.replace("/verify");
       return;
     }
-    setStepIdx(idx + 1);
+    dispatch(setStepIdx(idx + 1));
   };
 
   // Auto-advance helper for single-select questions: after the user taps
@@ -511,12 +512,6 @@ export default function OnboardingScreen() {
       scheduleAdvance();
     }
   };
-
-  // Wait for the persisted state to rehydrate before rendering so the
-  // user always resumes on the correct step.
-  if (!hasHydrated) {
-    return <View style={{ flex: 1, backgroundColor: colors.surface.default }} />;
-  }
 
   if (screen.kind === "intro") {
     return (

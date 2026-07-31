@@ -10,8 +10,13 @@ import { Image, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingShell } from "@/src/components/onboarding/OnboardingShell";
 import { PhotoUploadGrid } from "@/src/components/verification/PhotoUploadGrid";
-import { MIN_PHOTOS } from "@/src/lib/verification/types";
-import { useVerificationStore } from "@/src/stores/verification-store";
+import { MIN_PHOTOS, type UploadedPhoto } from "@/src/lib/verification/types";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import {
+  markVerificationSubmitted,
+  setSelfieUri,
+  setVerificationPhotos,
+} from "@/src/store/slices/verification-slice";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
@@ -19,10 +24,11 @@ const TOTAL = 6;
 
 export default function VerifyScreen() {
   const router = useRouter();
-  const state = useVerificationStore((s) => s.state);
-  const setPhotos = useVerificationStore((s) => s.setPhotos);
-  const setSelfie = useVerificationStore((s) => s.setSelfie);
-  const submit = useVerificationStore((s) => s.submit);
+  const dispatch = useAppDispatch();
+  const state = useAppSelector((s) => s.verification);
+  const setPhotos = (photos: UploadedPhoto[]) => dispatch(setVerificationPhotos(photos));
+  const setSelfie = (uri: string | null) => dispatch(setSelfieUri(uri));
+  const submit = () => dispatch(markVerificationSubmitted());
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 

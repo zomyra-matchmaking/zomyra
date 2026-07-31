@@ -13,8 +13,10 @@ import { ProfileView } from "@/src/components/discover/ProfileView";
 import { MatchOverlay } from "@/src/components/discover/MatchOverlay";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { toast } from "@/src/components/ui/Toast";
-import { useRequestsStore, type ConnectionRequest } from "@/src/stores/requests-store";
-import { useChatStore } from "@/src/stores/chat-store";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { addConversation } from "@/src/store/slices/chat-slice";
+import { setPremium } from "@/src/store/slices/entitlement-slice";
+import { removeRequest, type ConnectionRequest } from "@/src/store/slices/requests-slice";
 import type { CompatibilityTier } from "@/src/lib/discover/mock";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { ScrollView } from "react-native";
@@ -30,11 +32,9 @@ const TIER_COLOR: Record<CompatibilityTier, (typeof colors.tier)[keyof typeof co
 
 export default function Requests() {
   const router = useRouter();
-  const requests = useRequestsStore((s) => s.requests);
-  const isPremium = useRequestsStore((s) => s.premium);
-  const setPremium = useRequestsStore((s) => s.setPremium);
-  const removeRequest = useRequestsStore((s) => s.remove);
-  const addChat = useChatStore((s) => s.add);
+  const dispatch = useAppDispatch();
+  const requests = useAppSelector((s) => s.requests.requests);
+  const isPremium = useAppSelector((s) => s.entitlement.isPremium);
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingDecline, setPendingDecline] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export default function Requests() {
   const accept = (req: ConnectionRequest) => {
     setAccepting(true);
     setTimeout(() => {
-      addChat({
+      dispatch(addConversation({
         id: req.profile.id,
         name: req.profile.name,
         avatar: req.profile.hero,
@@ -69,8 +69,8 @@ export default function Requests() {
           snapshot: req.profile.snapshot,
           facts: req.profile.facts,
         },
-      });
-      removeRequest(req.id);
+      }));
+      dispatch(removeRequest(req.id));
       setAccepting(false);
       setActiveId(null);
       
@@ -93,7 +93,7 @@ export default function Requests() {
   };
 
   const decline = (id: string) => {
-    removeRequest(id);
+    dispatch(removeRequest(id));
     setPendingDecline(null);
     setActiveId(null);
     toast.show("Request declined");
@@ -108,7 +108,7 @@ export default function Requests() {
         </View>
         <Touchable
           testID="toggle-premium"
-          onPress={() => setPremium(!isPremium)}
+          onPress={() => dispatch(setPremium(!isPremium))}
           style={[
             styles.premiumChip,
             isPremium
@@ -128,7 +128,9 @@ export default function Requests() {
         <FlatList
           data={requests}
           keyExtractor={(r) => r.id}
-          ListHeaderComponent={!isPremium ? <UpsellCard onUpgrade={() => setPremium(true)} /> : null}
+          ListHeaderComponent={
+            !isPremium ? <UpsellCard onUpgrade={() => dispatch(setPremium(true))} /> : null
+          }
           contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: NAV_CLEARANCE, paddingTop: spacing[2] }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) =>

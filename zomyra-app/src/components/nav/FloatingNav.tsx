@@ -7,7 +7,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 
-import { useRequestsStore } from "@/src/stores/requests-store";
+import { useAppSelector } from "@/src/store/hooks";
 import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
@@ -28,7 +28,7 @@ export function FloatingNav() {
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const insets = useSafeAreaInsets();
-  const requestCount = useRequestsStore((s) => s.requests.length);
+  const requestCount = useAppSelector((s) => s.requests.requests.length);
   const badgeText = requestCount > 99 ? "99+" : String(requestCount);
 
   const isActive = (path: string) =>

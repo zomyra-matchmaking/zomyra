@@ -10,18 +10,12 @@ import { useRouter } from "expo-router";
 import { View } from "react-native";
 
 import { PersonalityQuiz } from "@/src/components/onboarding/PersonalityQuiz";
-import { useOnboardingStore } from "@/src/stores/onboarding-store";
+import { useOnboardingDraft } from "@/src/hooks/use-onboarding-draft";
 import { colors } from "@/src/theme";
 
 export default function PersonalityTestScreen() {
   const router = useRouter();
-  const state = useOnboardingStore((s) => s.state);
-  const set = useOnboardingStore((s) => s.set);
-  const hasHydrated = useOnboardingStore((s) => s._hasHydrated);
-
-  if (!hasHydrated) {
-    return <View style={{ flex: 1, backgroundColor: colors.surface.default }} />;
-  }
+  const { draft: state, set } = useOnboardingDraft();
 
   const handleBack = () => {
     if (router.canGoBack()) {
