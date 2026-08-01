@@ -7,6 +7,18 @@
  * Module 7 replaces this with API-13 (`GET /filters/options`), which returns
  * `{ filterKey, label, premiumOnly, values }` per filter and lets the backend
  * own which filters are premium-gated instead of the client deciding.
+ *
+ * ⚠️ **Not the same endpoint as onboarding's catalogue, and deliberately so.**
+ * FR-3b routes every onboarding choice list through API-39
+ * (`GET /onboarding/options`); six of those categories — religion, diet,
+ * drinking, smoking, familyType, incomeRange — *also* appear here in API-13.
+ * BE v1.5 §14.2a keeps the two structurally separate on product direction, so
+ * do not collapse this into API-39 when Module 7 lands.
+ *
+ * **But they are not free to diverge:** FR-3 requires religion's ten options to
+ * be **identical** between onboarding and filters. That is a cross-endpoint
+ * invariant with no single owner and nothing enforcing it — worth an explicit
+ * check in Module 7 rather than an assumption.
  */
 import type { MultiFilterKey } from "@/src/store/slices/discover-filters-slice";
 

@@ -55,6 +55,10 @@ export type ServerErrorCode =
   | "already_blocked"
   // API-25 · discovery mode
   | "invalid_mode"
+  // API-38 · GET /locations/cities — unrecognized `?state=` key (FE v1.44 §9.2,
+  // BE v1.5 §14.2a). API-39 adds no codes of its own: it takes no parameters,
+  // so it has nothing to reject.
+  | "invalid_state"
   // API-28 · premium sync
   | "already_synced"
   // API-31 · push token

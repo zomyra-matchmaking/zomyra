@@ -25,10 +25,11 @@
  * `cityId, cityName, state` with the last two denormalized via join for display
  * only. `state` filters the cached city list client-side and nothing more.
  *
- * This file is also **one endpoint short of the contract**: API-38 has no
- * definition here yet. Module 3 owns fetching it at cold start and Module 5 owns
- * consuming it — see the note in `api.ts` beside the `Locations` tag for the two
- * data-layer decisions that come with it.
+ * This file is **two endpoints short of the contract** — API-38
+ * (`GET /locations/cities?state=`) and API-39 (`GET /onboarding/options`) have
+ * no definitions here. Both belong to **Module 5**, which fetches and consumes
+ * them; see the note in `api.ts` beside the `Locations` tag for the cache
+ * decisions they carry.
  */
 import type { DiscoverProfile } from "@/src/lib/discover/mock";
 
@@ -89,6 +90,15 @@ export type MeResponse = {
  * `CompatibilityDimension` as `all | lifestyle | personality | priorities`,
  * which is neither TDD's spelling. Modules 5 and 7 own reconciling the two —
  * flagged in `docs/CONTRACT-QUESTIONS.md`.
+ *
+ * ⚠️ **Keep this a union — do not widen it to `string` with the others.**
+ * FR-3b makes every other choice list backend-driven, and FR-15 does say these
+ * four labels come from the same API-39 catalogue, which reads like an
+ * instruction to loosen the type. It is not: FR-15 states outright that this is
+ * *"cosmetic consistency, not admin flexibility — the four modes are
+ * structurally wired into the matching engine's sub-scores, so adding a fifth
+ * would need new backend scoring logic regardless of this catalogue."* The
+ * catalogue supplies the **labels**; the **keys** are a fixed contract.
  */
 export type DiscoveryMode = "all" | "compatibility" | "lifestyle" | "marriage_goals";
 
@@ -96,7 +106,17 @@ export type DiscoveryMode = "all" | "compatibility" | "lifestyle" | "marriage_go
 // Profile — FE TDD §9.9 / BE TDD §14.10
 // ---------------------------------------------------------------------------
 
-/** API-23 response — the full onboarding record, for Edit Profile to populate. */
+/**
+ * API-23 response — the full onboarding record, for Edit Profile to populate.
+ *
+ * ⚠️ **A semantic change with no type change (FR-3b, BE v1.5 §14.10).** `gender`,
+ * `build`, `education`, `profession`, `incomeRange`, `religion`, `languages`,
+ * `diet`, `drinking`, `smoking` and `familyType` are now **catalogue keys**
+ * (`"swe"`), not display labels (`"Software Engineer"`). They were already
+ * `string`, so nothing here fails to compile — which is exactly why it is worth
+ * writing down. Edit Profile must resolve each key to a label through API-39's
+ * catalogue rather than rendering the raw value.
+ */
 export type ProfileResponse = {
   firstName: string;
   lastName: string;

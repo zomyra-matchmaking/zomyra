@@ -1747,11 +1747,66 @@ to its original scope. Both endpoints move wholly to **Module 5**.
 |---|---|
 | **0 · Build foundation** | **No change.** Nothing here touches data sourcing |
 | **1 · Design system** | **No change to what it built** — but FR-3b references a *"shared default loading state"* that **does not exist**. Module 1 shipped Button, Input, Dialog, Overlay, Toast, Touchable, BottomSheet, ConfirmDialog — no loading primitive. FR-3b is explicit that it is the shared fallback, **distinct from Chat/Requests' own spinner**, so it belongs with the primitives rather than being invented ad hoc in Module 5. **Placed in Module 3 — see §13** |
-| **2 · State & data layer** | **No code rework — the architecture was right.** It already uses AsyncStorage as redux-persist's engine (now explicitly required by FE §4.2), already excludes `api` from the persist whitelist (now explicitly required for these catalogues), and already documented that `keepUnusedDataFor` must be raised from the 60s default. **Two comments are now stale** and are corrected in this pass: the `Locations` tag block in `src/api/api.ts` describes the full-table cold-start model, and assigns the endpoint to Module 3 |
+| **2 · State & data layer** | **No structural rework — the architecture was right.** It already uses AsyncStorage as redux-persist's engine (now explicitly required by FE §4.2), already excludes `api` from the persist whitelist (now explicitly required for these catalogues), and already documented that `keepUnusedDataFor` must be raised from the 60s default. **Two comments were stale** and are corrected in this pass: the `Locations` tag block in `src/api/api.ts` described the full-table cold-start model, and assigned the endpoint to Module 3. **A follow-up code review then found four more items — one a real gap, not a comment. See §12.3a.** |
 
 That Module 2 needed no structural change is worth noting: it was built to the *shape* of the
 contract — persist whitelist, cache lifetime, tag registry — rather than to any one endpoint's
 wording, so a third revision of that endpoint cost comments rather than code.
+
+#### 12.3a Verification pass against the code (2026-07-31)
+
+The verdicts above were re-checked line by line against the source rather than accepted, since §12
+exists precisely because doc-level assessments miss things. **The architectural verdicts all hold**,
+and one is worth stating as evidence rather than assertion:
+
+> **BE v1.5's §7.1 is byte-identical to v1.2's.** The `/v1` prefix, the
+> `{ error: { code, message, details? } }` envelope, `{ cursor, limit }` →
+> `{ nextCursor, hasMore }`, `Authorization: Bearer` + 401 → silent refresh, the three standard
+> headers, and §9.2's single-in-flight-refresh note **did not move across three backend revisions.**
+> Everything Module 2's base query encodes sits in that section. That is why a third revision of the
+> location mechanism cost comments rather than code — the layer was built to the conventions, not to
+> any endpoint's wording.
+
+**Four items the doc-level pass did not catch. One is a real gap:**
+
+1. **`invalid_state` was missing from `ApiErrorCode`** — a genuine code defect, not a stale comment.
+   API-38 returns `400 invalid_state` (FE §9.2, BE §14.2a). `src/api/errors.ts` declares a
+   **closed** union so that "a typo in a branch is a compile error rather than a branch that
+   silently never runs", and its own header says *"add to this list when an endpoint is added"*.
+   Until this fix, Module 5 writing `errorHasCode(err, "invalid_state")` would not have compiled —
+   the closed union working exactly as intended, against us. Added, with a note that API-39
+   contributes no codes (it takes no parameters, so it has nothing to reject).
+2. **`DiscoveryMode` must stay a union while the other enums become `string`.** FR-3b makes every
+   choice list backend-driven and FR-15 says these four labels now come from the API-39 catalogue —
+   which reads like an instruction to widen the type. It is the opposite: FR-15 states the four
+   modes are *"structurally wired into the matching engine's sub-scores, so adding a fifth would need
+   new backend scoring logic regardless of this catalogue."* **The catalogue supplies the labels; the
+   keys are a fixed contract.** Pinned in `contract.ts`, because a Module 5 sweep replacing enums
+   with `string` would otherwise take this one with it.
+3. **`ProfileResponse`'s choice fields changed meaning without changing type.** `gender`, `build`,
+   `education`, `profession`, `incomeRange`, `religion`, `languages`, `diet`, `drinking`, `smoking`
+   and `familyType` are now **catalogue keys** (`"swe"`), not display labels
+   (`"Software Engineer"`). They were already `string`, so **nothing failed to compile** — which is
+   why it needed writing down rather than discovering in Edit Profile. Module 5/6 must resolve keys
+   to labels through API-39.
+4. **A cross-endpoint invariant with no owner.** BE v1.5 §14.2a keeps API-13 (`/filters/options`)
+   and API-39 (`/onboarding/options`) structurally separate on product direction, while six
+   categories appear in both — **and FR-3 requires religion's ten options to be identical across
+   them.** Nothing enforces that. Recorded in `src/lib/discover/filter-options.ts` so Module 7 meets
+   it as a check rather than an assumption.
+
+**Modules 0 and 1 re-checked too, and both verdicts hold**, with supporting evidence:
+
+- **Module 0** — `@react-native-async-storage/async-storage` is already a dependency, so FE §4.2's
+  newly-explicit requirement is satisfied by what Module 0 shipped. Nothing else in v1.44/v1.5
+  touches build configuration. The one real build consequence is forward-looking and correctly
+  captured as O-17: `lottie-react-native` is a **native** module, so under C-2 the first module to
+  use a Lottie file pays a dev-client rebuild.
+- **Module 1** — confirmed there is no loading primitive: `src/components/ui/` holds
+  `BottomSheet`, `Button`, `ConfirmDialog`, `Dialog`, `Input`, `Overlay`, `Toast`, `Touchable` and
+  nothing else. **The drift §13 predicts has already started** — raw `ActivityIndicator` appears in
+  two places (`ui/Button.tsx` and `onboarding/OnboardingShell.tsx`), which is two treatments before
+  any module has been asked to build one. That is the argument for §13.2 placing it in Module 3.
 
 #### The strategic win, and the cost
 
