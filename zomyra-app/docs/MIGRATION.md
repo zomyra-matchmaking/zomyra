@@ -1276,6 +1276,45 @@ precisely the class of thing no one can typecheck by hand.
 **Local `.env` deliberately stays on `mock`** with the staging URL filled in beneath it, since auth
 is undeployed. Flipping `EXPO_PUBLIC_APP_ENV` to `staging` is the whole switch.
 
+#### Module 2 addendum — `legacy-migration.ts` removed (2026-08-02)
+
+Deleted on the owner's challenge — *"is this needed, the app isn't live yet?"* — which was right, and
+for a stronger reason than the one asked about.
+
+It read the two Zustand-era AsyncStorage keys (`zomyra.onboarding.v1`,
+`zomyra.discovery-mode.v1`) as redux-persist's `migrate` hook and seeded them into the persisted
+state. Three reasons it had to go, in increasing order of force:
+
+1. **There are no users.** The app has never shipped — O-2's store accounts don't exist. The only
+   devices that ever held those keys are this project's simulator and emulator, and the import
+   already ran on both.
+2. **It was coupled to types Module 5 deletes.** It imported `defaultOnboardingState` and
+   `OnboardingState`, which §12.3 records as *"wrong by design"* now that FR-3b makes the choice
+   lists backend-driven. It would have needed editing in Module 5 for zero benefit.
+3. **The data it rescued is no longer submittable — this is the real argument.** A Zustand-era draft
+   holds `city` as free text (the contract now needs `cityId`), enum **labels** rather than catalogue
+   **keys**, and a `discoveryMode` spelled from the prototype's
+   `all | personality | lifestyle | priorities` — which is neither TDD's. A "successful" migration
+   would therefore pre-fill a form with values that **cannot be submitted**, and it would look like
+   real data rather than an empty draft. It had stopped being dead code and become a small trap.
+
+**What replaced it: a warning, not nothing.** The `migrate` hook is gone, but `src/store/index.ts`
+now carries the reason and, more importantly, the instruction Module 5 needs:
+
+> ⚠️ Module 5 changes the `onboarding` slice's shape fundamentally (free-text `city` → `cityId`,
+> enum labels → catalogue keys, `+ languagesOther`). redux-persist's default behaviour on a version
+> mismatch is a **pass-through**, which would rehydrate old-shaped drafts into the new slice and fail
+> at *submit* rather than at *load*. Bump `version` to 2 **and** add an explicit
+> `createMigrate({ 2: () => undefined })` to discard — a pre-v1.45 draft cannot be repaired into a
+> submittable one.
+
+That converts a dead file into a live instruction at the exact place the next author will look.
+
+**Verified on the simulator, not assumed:** with the hook removed, existing persisted state
+(`_persist: {version: 1}`) still rehydrated — the app resumed at `stepIdx: 1` with the draft intact —
+and a further step advanced and wrote through to `stepIdx: 2`. AsyncStorage holds exactly one key,
+`persist:zomyra.root`.
+
 <!--
 Template:
 

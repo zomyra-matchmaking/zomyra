@@ -19,12 +19,10 @@ import {
   REHYDRATE,
   persistReducer,
   persistStore,
-  type PersistedState,
 } from "redux-persist";
 
 import { api } from "@/src/api/api";
 
-import { importLegacyState } from "./legacy-migration";
 import { chatReducer } from "./slices/chat-slice";
 import { discoverFiltersReducer } from "./slices/discover-filters-slice";
 import { discoveryModeReducer } from "./slices/discovery-mode-slice";
@@ -73,16 +71,28 @@ const PERSIST_WHITELIST = ["onboarding", "discoveryMode", "discoverFilters"];
 const persistedReducer = persistReducer(
   {
     key: "zomyra.root",
+    /**
+     * Bump this whenever a persisted slice's *shape* changes, and add a
+     * matching migration — see the note below `whitelist`.
+     */
     version: 1,
     storage: AsyncStorage,
     whitelist: PERSIST_WHITELIST,
     /**
-     * Called with `undefined` on a first run, which is the hook the Zustand
-     * import needs — see `legacy-migration.ts`. Once redux-persist state
-     * exists this is a pass-through, and future schema changes bump `version`
-     * and branch here.
+     * No `migrate` hook. Module 2 shipped one that imported the Zustand-era
+     * AsyncStorage keys; it was removed once the app's own spec made the data
+     * it rescued unusable — see the note on `version` above.
+     *
+     * ⚠️ **Module 5 must not rely on this staying absent.** It changes the
+     * `onboarding` slice's shape fundamentally (free-text `city` → `cityId`,
+     * enum labels → catalogue keys, `+ languagesOther`). redux-persist's
+     * default behaviour when `version` disagrees is a **pass-through**, which
+     * would rehydrate old-shaped drafts into the new slice and fail at submit
+     * rather than at load. Bump `version` to 2 *and* add an explicit
+     * `createMigrate({ 2: () => undefined })` to discard, which is almost
+     * certainly the right call — a pre-v1.45 draft cannot be repaired into a
+     * submittable one.
      */
-    migrate: async (state: PersistedState) => state ?? (await importLegacyState()),
   },
   rootReducer,
 );
