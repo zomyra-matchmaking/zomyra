@@ -1,15 +1,15 @@
 {
-  "_comment": "Known-failing typecheck errors, allowed until the owning module fixes them. Regenerate with `yarn typecheck:baseline --update`. See scripts/typecheck-baseline.js.",
-  "updated": "2026-07-28",
+  "_comment": "Known-failing typecheck errors, allowed until the owning module fixes them. Regenerate with `yarn typecheck:baseline --update`. See scripts/typecheck-baseline.js. Module 3 hand-edited two paths (not --update) when the tab restructure moved edit-profile.tsx and filters.tsx into app/(tabs)/ route groups \u2014 same three errors, same codes, new locations. Owners are unchanged: Modules 6, 7 and 9.",
+  "updated": "2026-08-02",
   "errors": {
-    "app/edit-profile.tsx::TS2304": {
-      "file": "app/edit-profile.tsx",
+    "app/(tabs)/(profile)/edit-profile.tsx::TS2304": {
+      "file": "app/(tabs)/(profile)/edit-profile.tsx",
       "code": "TS2304",
       "count": 1,
       "sample": "Cannot find name 'setPhotoIdxToReplace'."
     },
-    "app/filters.tsx::TS2345": {
-      "file": "app/filters.tsx",
+    "app/(tabs)/(discover)/filters.tsx::TS2345": {
+      "file": "app/(tabs)/(discover)/filters.tsx",
       "code": "TS2345",
       "count": 1,
       "sample": "Argument of type 'RowKey' is not assignable to parameter of type 'MultiFilterKey'."

@@ -11,7 +11,6 @@ import { BottomSheet } from "@/src/components/ui/BottomSheet";
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { ProfileView } from "@/src/components/discover/ProfileView";
 import { MatchOverlay } from "@/src/components/discover/MatchOverlay";
-import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { toast } from "@/src/components/ui/Toast";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import { addConversation } from "@/src/store/slices/chat-slice";
@@ -144,7 +143,6 @@ export default function Requests() {
         />
       )}
 
-      <FloatingNav />
 
       <BottomSheet open={!!active} onClose={() => setActiveId(null)}>
         {active ? (

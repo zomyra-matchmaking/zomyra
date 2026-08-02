@@ -31,7 +31,6 @@ import { useMemo, useState } from "react";
 import { Animated, Easing, Image, KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { signOut } from "@/src/auth/sign-out";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import { resetOnboarding } from "@/src/store/slices/onboarding-slice";
@@ -236,7 +235,6 @@ export default function ProfileScreen() {
         ) : null}
       </ScrollView>
 
-      <FloatingNav />
 
       <LogoutDialog
         visible={showLogout}
@@ -444,7 +442,7 @@ function DeleteAccountDialog({
       statusBarTranslucent
     >
       <KeyboardAvoidingView
-        behavior={isIOS ? "padding" : undefined}
+        behavior={isIOS ? "padding" : "height"}
         style={styles.dialogBackdrop}
       >
         <Touchable
@@ -471,7 +469,23 @@ function DeleteAccountDialog({
           </View>
 
           {step === 1 ? (
-            <View>
+            /*
+              Scrollable because this card is the tallest content in the app that
+              has to share the screen with a keyboard: six reason rows, a warning
+              banner and a 200-character free-text field (FR-28). With the
+              `KeyboardAvoidingView` above now set to "height" on Android
+              (MIGRATION §6, Module 3), the backdrop shrinks to the space above
+              the keyboard and the card no longer fits — verified on the
+              emulator, where the header and the Continue button were both
+              clipped off-screen. `maxHeight` on the card plus this scroll view
+              is what lets it shrink instead of overflow.
+            */
+            <ScrollView
+              style={styles.deleteScroll}
+              contentContainerStyle={styles.deleteScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
               <View style={styles.warnBanner}>
                 <View style={styles.warnIcon}>
                   <ShieldAlert size={16} color={colors.danger.default} strokeWidth={2} />
@@ -545,7 +559,7 @@ function DeleteAccountDialog({
               <Text style={styles.continueHelper}>
                 This helps us prevent accidental deletions.
               </Text>
-            </View>
+            </ScrollView>
           ) : (
             <View>
               <View style={styles.trashIconCircle}>
@@ -869,6 +883,12 @@ const styles = StyleSheet.create({
   deleteCard: {
     width: "100%",
     maxWidth: 380,
+    // Never taller than the space the keyboard leaves. `flexShrink` is the
+    // load-bearing half: RN defaults it to 0, so inside the centred backdrop
+    // the card would keep its content height and spill off both ends rather
+    // than honour `maxHeight`. See the ScrollView note in the step-1 body.
+    maxHeight: "100%",
+    flexShrink: 1,
     backgroundColor: colors.surface.default,
     borderRadius: radii["4xl"],
     padding: spacing[4.5],
@@ -878,6 +898,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 14 },
     elevation: 14,
   },
+  // `flexGrow: 0` so a short card still hugs its content rather than stretching
+  // to the full available height; `flexShrink: 1` so it *can* give way when the
+  // keyboard leaves less room than the content wants. RN defaults `flexShrink`
+  // to 0, which is why `maxHeight` on the card alone did nothing — the card was
+  // capped but its only child refused to shrink, so it overflowed instead.
+  deleteScroll: { flexGrow: 0, flexShrink: 1 },
+  deleteScrollContent: { paddingBottom: spacing[1] },
   deleteHeader: {
     flexDirection: "row",
     alignItems: "center",

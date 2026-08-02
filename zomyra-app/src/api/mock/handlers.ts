@@ -89,15 +89,29 @@ const handlers: Record<string, Handler> = {
   },
 
   // ---- API-5 · GET /app/version-check --------------------------------------
-  "GET /app/version-check": () => ({
-    ok: true,
-    data: {
-      minSupportedVersion: "1.0.0",
-      latestVersion: "1.0.0",
-      forceUpdate: false,
-      updateUrl: "",
-    },
-  }),
+  // Matches what staging really returns, checked on 2026-08-02: the store URL
+  // is per-platform, and `invalid_platform` (400) is the response to a missing
+  // or unrecognised `?platform=`. Module 3 replaced a hardcoded empty
+  // `updateUrl` here, which made FR-30's store button untestable — the gate
+  // hides the button rather than shipping one that goes nowhere.
+  "GET /app/version-check": (req) => {
+    const platform = req.query.get("platform");
+    if (platform !== "ios" && platform !== "android") {
+      return fail(400, "invalid_platform", "platform must be one of: ios, android");
+    }
+    return {
+      ok: true,
+      data: {
+        minSupportedVersion: "1.0.0",
+        latestVersion: "1.0.0",
+        forceUpdate: false,
+        updateUrl:
+          platform === "ios"
+            ? "https://apps.apple.com/app/id0000000000"
+            : "https://play.google.com/store/apps/details?id=com.zomyra.app",
+      },
+    };
+  },
 
   // ---- API-6 · GET /me ------------------------------------------------------
   // The routing table in FE TDD §9.1 reads off exactly these fields, so Module

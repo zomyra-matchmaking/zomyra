@@ -120,7 +120,7 @@ export default function Conversation() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={isIOS ? "padding" : undefined}
+        behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
         keyboardVerticalOffset={0}
       >

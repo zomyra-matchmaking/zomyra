@@ -11,21 +11,22 @@ Append a "Module log" entry at the end of every module, in the same session that
 - Started: 2026-07-27
 - Codebase: `zomyra/zomyra-app` (Expo SDK 54, RN 0.81.5, React 19.1, expo-router v6)
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
-- Status: **Module 2 complete** (2026-07-31). §3's baseline still describes the untouched Emergent
+- Status: **Module 3 complete** (2026-08-02). §3's baseline still describes the untouched Emergent
   output and is kept as the historical reference point; §6 records what each module changed.
   ⚠️ **§3's "Data layer" subsection is now history too** — the 14-line `fakeNetwork` stub, the six
   Zustand stores and "no `fetch` call to any host" it records were all replaced in Module 2.
   ⚠️ **§3's "Design language" subsection is now history, not current state** — the 281 hex literals,
   the 13 rival palettes and the four NFR-6a failures it records were all resolved in Module 1.
-- **Handoff state:** **Module 1 is merged** — PR #2 landed on `master` on 2026-07-30, alongside
-  Module 0 (PR #1). **Module 2 is finished and awaiting the owner:** its commit sits on
-  `module/2-state-data-layer` (branched from `f97e879`), **committed but not pushed and with no PR
-  open** — per C-6 the owner does both. `git log master..module/2-state-data-layer` shows what is
-  pending.
-- **Verified green as of 2026-07-31:** `yarn doctor` 18/18 · `yarn lint` 0 errors (14 pre-existing
+  ⚠️ **§3's "Navigation" subsection is now history too** — the flat 21-route `<Stack>`, the
+  `router.push()` floating bar and the 1.8s splash redirect it records were all replaced in Module 3.
+- **Handoff state:** **Modules 0, 1 and 2 are merged** to `master`. **Module 3 is finished and
+  awaiting the owner:** its commit sits on `module/3-navigation` (branched from `2ffecb0`),
+  **committed but not pushed and with no PR open** — per C-6 the owner does both.
+  `git log master..module/3-navigation` shows what is pending.
+- **Verified green as of 2026-08-02:** `yarn doctor` 18/18 · `yarn lint` 0 errors (14 pre-existing
   warnings) · `yarn typecheck:baseline` clean (the same 3 inherited errors, no new ones) · Metro
-  bundles 3550 modules for iOS and Android · the auth flow walked end to end on the iPhone 16 Plus
-  simulator and on the Android 16 emulator.
+  bundles 3563 modules for iOS and Android · the root gate's branches, the tab navigator and the
+  accountStatus blocker walked on the iPhone 16 Plus simulator and the Android 16 emulator.
   ⚠️ `yarn lint` caches to **`.expo/cache/eslint`**. If it reports errors that `npx eslint app src
   --no-cache` does not, `rm -rf .expo/cache` before believing it — this cost time in Module 1.
 - **C-2 is now proven, not just configured.** The first EAS build ran on 2026-07-28
@@ -36,16 +37,18 @@ Append a "Module log" entry at the end of every module, in the same session that
   `X-Request-Id` and API-5's shape all confirmed. **But phone auth is not deployed**, so no token can
   be obtained and nothing authenticated is verifiable yet; the app stays on mocks. Endpoint map and
   detail in §6's Module 2 addendum.
-- **Next up: Module 3 — Navigation.** The sequence in §2 is being followed in order. Module 3's
-  root gate now has something to call: `useGetMeQuery()` (API-6) exists and answers from mocks.
-  O-4 is its live blocker — `GET /me` returns `accountStatus: suspended | banned` and the FE routing
-  table has no destination for either. See `docs/CONTRACT-QUESTIONS.md`.
-  **API-38 is no longer Module 3's** — FE v1.44 removed the cold-start model entirely (§12.3).
-  Both reference-data endpoints are auth-gated and fetched when Onboarding mounts, so they belong
-  to **Module 5**. The `keepUnusedDataFor` warning by the `Locations` tag still stands.
+- **Next up: Module 4 — Auth & session.** The sequence in §2 is being followed in order. Module 4
+  inherits a working root gate that already routes off API-2's outcome, and the shared loading
+  state for its submits (§13.3 — it **builds nothing** there). Two things in its screens are
+  currently wrong and are its to fix: `login.tsx` ships a `[DEV] Skip to Discover` chip that must
+  not reach production (FR-2), and `otp.tsx` routes to `/onboarding` unconditionally instead of
+  branching on API-2's `profileComplete` (FR-1a). **It should also batch the Google Sign-In SDK
+  with any other native addition** — see O-17, which Module 3 half-closed.
+  ⚠️ **Module 4 still cannot be verified against staging:** re-probed 2026-08-02, API-1/API-2 are
+  still `404` and `/v1/auth/google` still `503`s, so **no token can be obtained**. It stays on mocks.
 - **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
   §4 (open items), **§12 (spec-change history — check before starting any module)**, then §6's
-  Module 2 entry. §3 is history, not current state.
+  Module 3 entry. §3 is history, not current state.
 
 ---
 
@@ -84,7 +87,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 0 | Build & project foundation | **Complete** (2026-07-28) | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
 | 1 | Design system & theming | **Complete** (2026-07-30) | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
 | 2 | State & data layer | **Complete** (2026-07-31) | Every subsequent module plugs into it; nothing can reach the backend until it exists |
-| 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
+| 3 | Navigation | **Complete** (2026-08-02) | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
 | 5 | Onboarding & profile schema | Not started | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
@@ -411,7 +414,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-15 | **Fallback when a user's town isn't in the backend's `cities` table** — flagged as undecided by the spec itself (FE TDD v1.42 FR-3a). **Half-settled as of BE v1.4 (§12.2):** the client side is decided — `city` is a **closed set**, always a `cityId` from the backend's table, never free text. That was the part that would have changed the Discover filter and the matching query, so the client is unblocked. **What remains is a backend data-curation question:** how deep the curated list goes (every district town, or top N per state), and what a user does when their town isn't there. FE v1.42 states plainly that this is *"a backend data-curation gap, not a client one"*. | Module 5 (client unblocked) | BE + product |
 | O-16 | ~~Backend TDD v1.2 has no `state` field~~ **→ Closed by BE TDD v1.4** (2026-07-31, §12.2). Resolved differently from how this item framed it: there is **no `state` column on the profile** and `state` is **never submitted**. The backend's pre-existing `cities` table is exposed via **API-38 `GET /locations/cities`**, onboarding submits **`cityId`** (FK → `cities.id`, matching the `users.city_id` that already existed), and `/profile/me` returns `cityId, cityName, state` denormalized via join. FR-5's "same state" matching already worked through that table — v1.40's claim that it needed fixing was retracted in v1.41. | Module 5 | ✅ Closed |
 
-| O-17 | **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). The owner has **Lottie JSON** animations intended as loading visuals. **Whenever a module needs a loading shimmer or animation (§13), request the asset before building one** — the same rule already applied to brand assets in O-14/§10. **The consequence that needs deciding early:** `lottie-react-native` is **not installed** (`react-native-svg` and `reanimated` are), and it is a **native module** — under C-2 that means adding it forces a **dev-client rebuild**. So the module that first uses a Lottie file pays an EAS build, and it should be batched with any other native dependency rather than triggering a second one. See §13.4 for what to request and the reduce-motion fallback each asset needs. | **Module 3** (first loading state), then §13's owners | Product owner |
+| O-17 | **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). **Module 3's half is decided (2026-08-02, owner): the shared default takes no Lottie.** It is token-driven, so no native dependency and no dev-client rebuild was spent, and `lottie-react-native` now lands with **treatment #5 in Module 7** — the branded logo animation, the one §13.4 says almost certainly needs supplied artwork — **batched with Module 4's Google Sign-In SDK** rather than paying for two rebuilds. `Loading.tsx`'s interior is isolated in one component so a Lottie swap does not touch call sites. **Still open for §13's later owners:** the owner has **Lottie JSON** intended as loading visuals; whenever a module reaches a shimmer or animation (§13), request the asset before building one — the same rule as brand assets in O-14/§10. See §13.4 for what to request and the reduce-motion fallback each asset needs. | ~~Module 3~~ **→ Module 7** (with the branded animation), then §13's owners | Product owner |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -1389,6 +1392,221 @@ SecureStore.xml` held two AES-encrypted entries — `zomyra.auth.accessToken` an
 is `<map />`: **zero keys, zero ciphertext.** Before this change those two entries survived logout
 indefinitely.
 
+### Module 3 — Navigation (completed 2026-08-02)
+
+**Changed:**
+
+- **The root gate is real.** `app/index.tsx` was a 1.8s timer that redirected to `/login`
+  regardless of session. It now runs FR-30's version check → `GET /me` → §9.1's routing table.
+  **The ordering is enforced structurally, not by comment:** `useGetMeQuery` carries
+  `skip: versionGate === "pending" || versionGate === "blocked" || sessionStatus !== "authenticated"`,
+  so API-6 cannot be issued until API-5 has resolved. An anonymous launch never fires an
+  authenticated call it knows will 401.
+- **The §9.1 table is a pure function** — `src/lib/root-route.ts`. `accountStatus` is an **early
+  return**, deliberately not a fifth column: a suspended user with `profileComplete: false` must
+  reach the blocker, not Onboarding, and a column can be reordered by accident.
+- **⚠️ One row of §9.1's table does not exist in the spec, and it is the common case.** The table
+  lists `false/—/—`, `true/pending`, `true/mismatch`, `true/verified/not set`, `true/verified/set`
+  — **`true` + `unverified` is unlisted**, yet it is the state of everyone who has just submitted
+  API-7 and not started photos. Implemented as `/verify?entry=photos`, which is where
+  `app/onboarding.tsx` already routes on submit. Added to `docs/CONTRACT-QUESTIONS.md`.
+- **`?entry=` added to `app/verify.tsx`** so the three verification rows land on the right step:
+  `photos` → 0, `mismatch` → 2 (FR-12's selfie retry), `pending` → 5 (the held submitted screen,
+  which must **not** offer a resubmit). Unrecognised or absent falls back to 0, which is how
+  onboarding still gets here. **Module 6 owns making these genuinely distinct** — reusing step 5
+  for `pending` is a routing fix, not the screen §9.1 describes.
+- **Three version outcomes (§6.14), all three walked on-device.** Below minimum *or* `forceUpdate`
+  → full-screen non-dismissible; below latest → dismissible prompt, then proceed; current →
+  silent. `resolveUpdateRequirement` honours `forceUpdate` **as well as** the arithmetic — it is
+  the backend's lever for forcing an update without moving `minSupportedVersion`.
+  `compareVersions` degrades a non-numeric segment to 0 rather than `NaN`, since `NaN` comparisons
+  are all false and would silently disable the gate.
+- **API-5 fails open, and the constant is named** (`UPDATE_REQUIREMENT_ON_ERROR`) so the intent
+  survives someone "fixing" the gate to surface the error. The failure this prevents is specific:
+  a flaky network producing an inescapable "Update required" for an update that does not exist.
+- **The accountStatus blocker** — `app/blocked.tsx`. One screen for all three causes, no link, no
+  retry, no sign-out. Non-dismissible in every sense the navigator can express: `gestureEnabled:
+  false`, always reached by `replace` so there is no back-stack entry, and `useNonDismissible()`
+  swallowing Android's hardware back. §8's "force-quit is the only exit" trade-off is left intact
+  and documented **in the screen**, so it is not re-added by someone reading it as unfinished.
+- **`403 account_*` in `base-query.ts`**, beside the 401 branch rather than inside it — a 401 means
+  the credential failed and refreshing may help; a 403 `account_*` means the credential is fine and
+  the account is gated, so routing it into refresh would burn a rotating token to be told the same
+  thing. As with `sessionExpired`, the network layer only reports.
+- **`SessionRouter` is the one place a session event becomes a navigation.** Module 2 left this
+  open on purpose. Both signals it listens for are **request-level and mid-session** — NFR-15's
+  forced logout, and BE §9.9's 403, which can arrive while the user is mid-conversation — so
+  neither can be handled by the root gate alone, and putting the check in each screen means eleven
+  copies and one that gets forgotten.
+- **Real tab navigation (FR-20).** Four tabs, four independent stacks. **Each tab is a route
+  *group*** — `app/(tabs)/(discover)/filters.tsx` is still `/filters` — so every `href`, every
+  typed route, and every `zomyra://` deep link Module 11 will issue is unchanged. Directories would
+  have renamed `/filters` → `/discover/filters` and `/edit-profile` → `/profile/edit-profile` for
+  no gain.
+- **§3.4 is expressed as file location**, so getting it wrong is a structural bug rather than a
+  styling one: Premium stays on the **root** stack (reachable from any tab), Filters is in the
+  Discover stack, Delete account stays a dialog inside Profile. A note in `app/(tabs)/_layout.tsx`
+  tells Module 7 the Match screen belongs at the root too — put it in the Discover stack and a
+  match triggered from Requests becomes unreachable.
+- **`FloatingNav` → `FloatingTabBar`**, same pill design, entirely different mechanism:
+  `navigation.emit` + `navigation.navigate` instead of `router.push`. The look was kept
+  deliberately — Module 1 tokenised and verified it on both platforms.
+- **Badges are API-34 now**, not `s.requests.requests.length`. The old count could only report what
+  the client had already loaded, so a request arriving while the user sat on Discover was
+  invisible; and it badged only Requests, while §9.13 returns unread messages too.
+- **The shared loading primitive (§13.1 #1)** — `src/components/ui/Loading.tsx`, exported beside
+  Button/Input/Dialog. Both day-one requirements are **verified on-device, not asserted** (see
+  below). Its header enumerates the other four treatments and their owners, so the next module
+  cannot generalise it into Chat's spinner or Discover's branded animation by accident.
+- **`useReduceMotion` is a shared hook** (`src/hooks/`), not private to `Loading`: all five §13
+  treatments animate, plus the match celebration and card transitions NFR-6a names. One check
+  instead of seven.
+- **Both raw `ActivityIndicator` sites migrated** (`ui/Button.tsx`, `OnboardingShell.tsx`).
+  `ActivityIndicator` now appears in exactly one file in the codebase. Both call sites pass
+  `decorative`, because the enclosing control already carries `accessibilityState={{ busy }}` and a
+  second `progressbar` node would announce "Send OTP, loading, busy".
+- **`session-slice.ts`'s duplicate `VerificationStatus` / `AccountStatus` deleted, not corrected.**
+  They were an unimported second copy of `contract.ts`'s, still carrying O-4's "no destination"
+  comment after v1.45 closed it, and `AccountStatus` was **missing `deleted`** — so anyone who did
+  import them got a union that rejects a value `GET /me` really returns.
+- **`invalid_platform` added to `ApiErrorCode`** — observed on staging (`GET /v1/app/version-check`
+  with no `?platform=` → `400 invalid_platform`), in neither TDD. Same reasoning as Module 2's
+  `unauthorized`/`not_found`/`service_unavailable`.
+- **The API-5 mock now matches staging** — per-platform `updateUrl` and the `invalid_platform`
+  rejection. It previously returned `updateUrl: ""`, which made FR-30's store button untestable.
+  The gate hides that button rather than shipping one that goes nowhere.
+
+**Two defects found and fixed that were not on Module 3's list:**
+
+1. **⚠️ `EXPO_PUBLIC_APP_ENV=mock` was silently talking to staging.** `USE_API_MOCKS` was
+   `MOCKS_REQUESTED || API_BASE_URL === ""`, on the reasoning that "no host" *is* `APP_ENV=mock`.
+   That equivalence held only while O-8 had no URL. Once staging came up on 2026-08-02 and `.env`
+   gained `EXPO_PUBLIC_API_URL` **beneath** an `APP_ENV=mock` it was deliberately keeping — exactly
+   the arrangement this document describes so that flipping one word switches hosts — the two
+   stopped meaning the same thing and mocks resolved **off**. The app then hit a staging server
+   where phone auth is not deployed, so login 404'd and the screen correctly declined to navigate,
+   looking precisely like a dead button. Rule 2 is now `APP_ENV === "mock"` → mocks, always.
+   **This cost Module 3 real time before it was spotted; it would have cost Modules 4–9 more.**
+2. **The tab bar rendered over the chat composer.** A real `<Tabs>` draws its bar over every screen
+   in every tab stack, whereas `FloatingNav` was rendered by the four root screens individually and
+   so never appeared on a detail screen. `FloatingTabBar` now returns `null` when the focused tab
+   has pushed anything — and the four roots are also the only screens padding by `NAV_CLEARANCE`,
+   which is independent confirmation that no pushed screen ever expected a bar over it.
+
+**The `KeyboardAvoidingView` split — settled, and the addendum's guess was backwards:**
+
+Module 1 predicted *"on Android with `adjustResize` `undefined` is usually right and `"height"` can
+double-adjust."* **The opposite is true on this project's configuration**, established by A/B on the
+emulator rather than reasoning:
+
+| Screen | `undefined` | `"height"` |
+|---|---|---|
+| `phone.tsx` (same screen, A/B) | footer **hidden behind** the keyboard | footer sits just above it |
+| `chats/[id].tsx` — the decisive one | **composer entirely invisible**; you type into a field you cannot see | composer directly above the keyboard |
+| `OnboardingShell` | — | Continue lifts, both fields visible, no double-adjust gap |
+
+Cause: `edgeToEdgeEnabled: true` (mandatory from Android 15). The window is laid out **behind** the
+IME and the React root is not shrunk, so `adjustResize` does not do the work and
+`KeyboardAvoidingView` must. **All six screens unified on
+`behavior={isIOS ? "padding" : "height"}`.** No double-adjustment gap was observed anywhere.
+
+One knock-on, fixed here because this change caused it: the FR-28 delete-account card is the
+tallest keyboard-sharing content in the app and overflowed the now-shrunken backdrop, clipping its
+header and Continue. Its body is now a `ScrollView` with `flexShrink: 1` — **that flag is the
+load-bearing half**, since RN defaults `flexShrink` to 0 and `maxHeight` on the card alone did
+nothing while its only child refused to shrink.
+
+> ⚠️ **Fast Refresh does not reliably re-apply `StyleSheet.create` changes.** Three consecutive
+> layout fixes appeared to do nothing — pixel-identical screenshots with state preserved — and all
+> three were in fact correct; a full reload showed them working. **When a style change appears to
+> have no effect on Android, force-stop and relaunch before concluding the fix is wrong.** This
+> cost more time than the bug did.
+
+**A mock fidelity fix that unblocks every later module:**
+
+`isAccessTokenValid` now **re-adopts a token it minted** when the module state is empty. The mock's
+session is module-scoped and dies with the JS context, but the client's tokens are in the keychain
+and survive — so **every cold start in mock mode force-logged the user out**: `bootstrapSession`
+found a good token, `GET /me` 401'd because this file had forgotten it, refresh failed the same
+way, `sessionExpired` fired. That is precisely the path the root gate must *not* take on a normal
+reopen, so Module 3 could not exercise its own routing table, and Modules 5–9 would each have
+re-signed-in on every reload. It stays strict where it matters: a token it did not mint is still
+rejected, `expireAccessToken()` still forces a refresh, and the refresh token stays single-use and
+rotating, so §9.2's concurrent-401 bug still reproduces.
+
+**Verified — on-device, not reasoned about:**
+
+- `yarn lint` **0 errors** (same 14 pre-existing warnings) · `yarn typecheck:baseline` clean (same
+  3 inherited errors) · `yarn doctor` **18/18** · both platforms bundle **3563 modules** ·
+  **`yarn.lock` sha-identical before and after** (`2e3b94c4…`); npm was never run.
+- **Every branch of the gate walked on the iPhone 16 Plus simulator**, by driving the mock and cold
+  starting: forced update · dismissible update (then "Not now" → proceeds) · **API-5 returning 500
+  → failed open and proceeded**, no update screen · anonymous → `/login` · `verified` +
+  `discoveryMode` set → `/discover` · **`accountStatus: "suspended"` beat `verified`/`profileComplete`
+  to the blocker, which is the proof that it is checked first**.
+- **The mid-session 403 path, end to end:** `GET /counts` set to `403 account_banned` → the tab bar
+  fired it on entering Discover → base query dispatched → `SessionRouter` replaced to `/blocked`.
+  Left-edge swipe on the blocker does not dismiss it.
+- **FR-20 proven, not assumed:** pushed Filters in Discover → switched to Profile → returned to
+  Discover and **Filters was still there**. Re-tapping the focused tab popped it to root. The old
+  bar would have pushed `/discover` onto the shared stack.
+- **NFR-6a (4) proven by pixels.** With Android's `transition_animation_scale = 0` — exactly what
+  RN's `isReduceMotionEnabled()` reads — the gate rendered the **still ring** and three frames 2s
+  apart were **byte-identical (36,620 bytes each)**. With the setting restored, three frames were
+  **all different sizes**. Both branches demonstrated rather than asserted.
+- Android was re-verified throughout on the `zomyra-pixel` emulator (Android 16, API 36).
+
+**Still stubbed / deferred:**
+
+- **The gate cannot be verified against staging.** Re-probed 2026-08-02: API-1/API-2 still `404`,
+  `/v1/auth/google` now validates its body (`400 validation_error` on an empty one) but still
+  `503`s with a real token — **so there is still no way to obtain one**. `/v1/docs-json` still
+  `404`s, so O-11 is unmitigated. `.env` stays on `mock`.
+- **No Lottie (O-17, decided).** The shared default is token-driven, so no native dependency and
+  no dev-client rebuild was spent. `lottie-react-native` lands with **treatment #5 in Module 7** —
+  the one §13.4 says almost certainly needs supplied artwork — and should be batched with Module
+  4's Google Sign-In SDK. Swapping the interior later is a change to `Indicator` alone.
+- **Profile detail is still not a route.** §3.3 wants it pushed in *both* Discover and Requests and
+  §3.5 wants its footer to vary by entry context. Module 7 owns it; notes are in both stack layouts.
+- **The Match screen is still a component**, not a root route. FR-21a's FIFO queue needs one global
+  listener above the tabs — Module 7.
+- **Tab order is the prototype's** (Profile · People · Requests · Chats), not §3.3's listing order.
+  §3.3 is a table of what each stack contains, not a bar-order spec, and reordering a nav bar is a
+  design change nobody asked for. `initialRouteName` **is** Discover, which is what §9.1 requires.
+- `setupListeners` still unwired; `expo-updates` still uninstalled (§6.14's OTA half is untouched).
+
+**Inherited by next module:**
+
+- **Module 4 gets the shared loading state for auth submits and builds nothing** (§13.3). `Button`'s
+  `loading` prop already routes through it.
+- **Module 4 owns the two screens the gate now depends on**: `login.tsx` still carries a
+  `[DEV] Skip to Discover` chip that must not ship (FR-2), and `otp.tsx` routes to `/onboarding`
+  unconditionally rather than reading API-2's `profileComplete` (FR-1a).
+- **Module 4 should batch the Google Sign-In SDK with any other native addition** — see O-17 above.
+- **Module 6** owns turning `?entry=pending` and `?entry=mismatch` into the two screens §9.1
+  actually describes.
+- **Module 7** owns the Match route placement and the Profile-detail extraction, both flagged in
+  the layouts they belong to.
+- Any module adding a screen decides its §3.4 placement by **where the file goes**; the table in
+  `app/(tabs)/_layout.tsx` is the reference.
+
+**Decisions made:**
+
+- **Route groups, not directories, for the four tabs** — the navigator tree changed, the address
+  space did not, so no `href` and no future deep link had to move.
+- **`accountStatus` is an early return, not a table column**, so it cannot be reordered by accident.
+- **`session.blocked` is a boolean, not the status.** The blocker is undifferentiated by design, so
+  storing which of the three causes it was would be storing something nothing is allowed to read.
+- **`status` stays `authenticated` when blocked.** BE §9.9 does not revoke the session; downgrading
+  to `anonymous` would send the user to Login, where signing in would succeed and land them back on
+  the blocker.
+- **`blocked` is not persisted**, like the rest of the slice — a stale `true` on disk would lock a
+  reinstated account out with no way back, and the blocker has no retry by design.
+- **The tab bar hides on pushed screens**, matching both platforms' conventions and the four root
+  screens' `NAV_CLEARANCE` padding.
+- **The typecheck baseline was hand-edited, not `--update`d**, when two of its three files moved —
+  `--update` would have silently absorbed any genuinely new error along with the path change.
+
 <!--
 Template:
 
@@ -2022,7 +2240,7 @@ each module knows which one it owns and which it merely consumes.
 
 | # | Treatment | Specified in | Used for | Built in |
 |---|---|---|---|---|
-| 1 | **Shared default** | FR-3b | The generic fallback wherever no bespoke pattern is specified — onboarding catalogues, the root gate, auth submits | **Module 3** |
+| 1 | **Shared default** | FR-3b | The generic fallback wherever no bespoke pattern is specified — onboarding catalogues, the root gate, auth submits | ✅ **Built in Module 3** — `src/components/ui/Loading.tsx` (`Loading` + `LoadingScreen`) |
 | 2 | **Plain spinner → error + Retry** | API-19, API-20 | Chat list and message history — deliberately simpler than Discover's pattern, since these lists are shorter and lower-stakes | Module 9 |
 | 3 | **Shimmer / skeleton (content-shaped)** | FR-23, §6.7 | Non-premium Requests placeholder cards — the *point* is that they convey "requests exist" without detail | Module 8 |
 | 4 | **Shimmer (layout-stabilising)** | API-13, API-30 | The Discover filter row and Premium plans — used because their width genuinely changes once real options arrive, so without it the layout visibly reflows | Module 7 |
@@ -2031,6 +2249,14 @@ each module knows which one it owns and which it merely consumes.
 Note that 3 and 4 are both "shimmer" but exist for **different reasons** — one is a privacy gate,
 the other is layout stability. They may share an implementation; they must not share a rationale,
 because 4's justification (API-13) explicitly does *not* apply to tab-bar badges or premium status.
+
+> ✅ **#1 shipped in Module 3 (2026-08-02).** `Loading` (inline) and `LoadingScreen` (full-screen),
+> exported from `src/components/ui`. Both day-one requirements below are **verified on-device**:
+> the reduce-motion still frame was proven by three byte-identical screenshots 2s apart with
+> Android's `transition_animation_scale = 0`, and by three differing ones with it restored.
+> `useReduceMotion` is a **shared hook** in `src/hooks/` — treatments 2–5 all animate and should
+> import it rather than each re-reading the setting. **It takes no Lottie** (O-17); the interior is
+> isolated in one `Indicator` component so #5's artwork can swap in without touching call sites.
 
 ### 13.2 Why the shared default belongs to Module 3
 

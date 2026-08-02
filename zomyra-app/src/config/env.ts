@@ -115,16 +115,28 @@ export const API_BASE_URL: string =
  * 1. **`production` can never use mocks** — not via `EXPO_PUBLIC_API_MOCKS`,
  *    not by omission. That flag is a development tool, and a tool that can
  *    reach a production build is a way to ship fixtures to real users.
- * 2. `EXPO_PUBLIC_API_MOCKS=1` forces mocks on in `mock` or `staging`. This is
- *    how you build a screen against a backend that is up but incomplete.
- * 3. Otherwise mocks are on exactly when there is no host — i.e. `APP_ENV=mock`,
- *    which is the state O-8 leaves the project in until staging exists.
+ * 2. **`mock` always uses mocks.** The environment is *named*; `mock` means
+ *    mock, whether or not a host also happens to be configured.
+ * 3. In `staging`, `EXPO_PUBLIC_API_MOCKS=1` forces mocks on. This is how you
+ *    build a screen against a backend that is up but incomplete.
+ *
+ * ⚠️ **Rule 2 was a bug until Module 3, and it was a quiet one.** The rule used
+ * to be "mocks are on exactly when there is no host", on the reasoning that no
+ * host *is* `APP_ENV=mock`. That equivalence held only while `O-8` had no URL
+ * to put anywhere. Once staging came up on 2026-08-02 and `.env` gained
+ * `EXPO_PUBLIC_API_URL` **beneath** an `APP_ENV=mock` it was deliberately
+ * keeping — precisely the arrangement MIGRATION §6 describes, so that flipping
+ * one word switches hosts — the two stopped meaning the same thing and
+ * `USE_API_MOCKS` computed `false`. The app then talked to a staging server
+ * where phone auth is not deployed, so every login attempt 404'd and the screen
+ * silently declined to navigate, looking exactly like a broken button. Module 3
+ * lost time to it before spotting it.
  */
 const MOCKS_REQUESTED = process.env.EXPO_PUBLIC_API_MOCKS === "1";
 
 export const USE_API_MOCKS: boolean = IS_PRODUCTION
   ? false
-  : MOCKS_REQUESTED || API_BASE_URL === "";
+  : APP_ENV === "mock" || MOCKS_REQUESTED || API_BASE_URL === "";
 
 /**
  * Per-request ceiling. Deliberately longer than the 3s decision window in

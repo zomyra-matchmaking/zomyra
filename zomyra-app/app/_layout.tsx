@@ -11,6 +11,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAppFonts, FONT_FAMILY } from "@/src/hooks/use-app-fonts";
 import { bootstrapSession } from "@/src/auth/bootstrap";
+import { SessionRouter } from "@/src/components/nav/SessionRouter";
 import { ToastHost } from "@/src/components/ui/Toast";
 import { persistor, store } from "@/src/store";
 import { useAppDispatch } from "@/src/store/hooks";
@@ -65,13 +66,39 @@ function AppShell() {
 
   return (
     <>
+      {/*
+        The root stack. Everything declared here sits *above* the tab navigator,
+        which is what FE §3.4 means by "reachable from any tab": `premium` and
+        (in Module 7) the Match screen must push over the tab bar rather than
+        into one tab's stack, or a Match triggered from Requests would be
+        unreachable from Discover.
+      */}
       <Stack
         screenOptions={{
           headerShown: false,
           animation: "slide_from_right",
           contentStyle: { backgroundColor: colors.surface.default },
         }}
-      />
+      >
+        {/*
+          The account-status blocker (FE §8.1). Non-dismissible in every sense
+          the navigator can express: no swipe-back gesture, and no transition
+          to imply there is something behind it. The Android hardware back is
+          handled inside the screen, and `SessionRouter` always `replace`s so
+          there is no back-stack entry to pop.
+        */}
+        <Stack.Screen
+          name="blocked"
+          options={{ gestureEnabled: false, animation: "fade" }}
+        />
+      </Stack>
+      {/*
+        One listener turning session events into navigations — a failed refresh
+        (NFR-15) and a `403 account_*` (BE §9.9), both of which arrive
+        mid-session from the base query and so cannot be handled by the root
+        gate alone.
+      */}
+      <SessionRouter />
       <ToastHost />
       {/*
         Dark status-bar content, because C-3 fixes a light theme and the

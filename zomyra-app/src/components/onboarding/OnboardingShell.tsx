@@ -1,10 +1,10 @@
 import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useRef, type ReactNode } from "react";
-import { ActivityIndicator, Animated, Easing, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
-import { Touchable } from "@/src/components/ui";
+import { Loading, Touchable } from "@/src/components/ui";
 import { isIOS } from "@/src/utils/platform";
 
 type Props = {
@@ -171,10 +171,15 @@ export function OnboardingShell({
             <Touchable
               testID="onboarding-next"
               disabled={!canNext || loading}
+              accessibilityState={{ disabled: !canNext || loading, busy: !!loading }}
               onPress={onNext}
               style={[styles.nextBtn, (!canNext || loading) && styles.nextBtnDisabled]}
             >
-              {loading ? <ActivityIndicator color={colors.brand.onBrand} /> : null}
+              {/* `decorative` — the Touchable above carries the busy state, so a
+                  second progressbar node would just double the announcement. */}
+              {loading ? (
+                <Loading size="sm" color={colors.brand.onBrand} showLabel={false} decorative />
+              ) : null}
               <Text style={styles.nextLabel}>{nextLabel}</Text>
             </Touchable>
           </View>

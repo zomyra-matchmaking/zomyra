@@ -26,7 +26,6 @@ import { DualRangeSlider } from "@/src/components/discover/DualRangeSlider";
 import { PremiumFilterDialog } from "@/src/components/discover/PremiumFilterDialog";
 import { ProfileView } from "@/src/components/discover/ProfileView";
 import { MatchOverlay } from "@/src/components/discover/MatchOverlay";
-import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import type { CompatibilityDimension } from "@/src/lib/discover/mock";
 import { useGetDiscoverFeedQuery } from "@/src/api";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
@@ -290,7 +289,6 @@ export default function Discover() {
         </ScrollView>
       </Animated.View>
 
-      <FloatingNav />
 
       <CompatibilitySheet
         visible={sheetOpen}
@@ -651,7 +649,7 @@ const styles = StyleSheet.create({
 
   empty: { padding: spacing[8], textAlign: "center", color: colors.text.muted },
 
-  // Floating action pill — sits above the FloatingNav.
+  // Floating action pill — sits above the tab bar.
   actionFloat: {
     position: "absolute",
     left: 0,

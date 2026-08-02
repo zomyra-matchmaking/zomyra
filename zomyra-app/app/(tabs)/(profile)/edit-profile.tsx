@@ -137,7 +137,7 @@ export default function EditProfileScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        behavior={isIOS ? "padding" : undefined}
+        behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         {/* ── Sticky header ── */}

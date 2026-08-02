@@ -14,7 +14,7 @@
 
 /**
  * Bottom padding a scrolling screen needs so its last row clears the floating
- * nav (`FloatingNav` is absolutely positioned over the content).
+ * nav (`FloatingTabBar` is absolutely positioned over the content).
  *
  * It was a bare `120` in three screens and `110` in a fourth — the odd one out
  * being `app/profile.tsx`, where the last row sat 10pt higher than everywhere

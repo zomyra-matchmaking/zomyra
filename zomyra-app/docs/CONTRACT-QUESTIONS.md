@@ -112,6 +112,42 @@ The client currently accepts either, which is exactly the sort of defensive
 guess that should not survive into production. Please pin it — `details` seems
 the natural home given the envelope.
 
+## 4a. `GET /me`'s cold-start table is missing a row — `profileComplete: true` + `verificationStatus: "unverified"`
+
+*Raised by Module 3 while implementing the table (2026-08-02). Almost certainly
+a documentation gap rather than a product one, but it is the state a real user
+sits in for the length of the photo step, so it is worth pinning.*
+
+FE §9.1's routing table lists five rows:
+
+| `profileComplete` | `verificationStatus` | `discoveryMode` |
+|---|---|---|
+| `false` | — | — |
+| `true` | `pending` | — |
+| `true` | `mismatch` | — |
+| `true` | `verified` | not set |
+| `true` | `verified` | already set |
+
+**`true` + `unverified` is not among them**, yet it is the normal state of
+someone who has just submitted API-7 and has not started photos or the
+verification selfie — §3.2 places both at the end of the Onboarding stack, and
+the client already routes there itself on submit.
+
+**We have implemented it as "go to the photos/verification step"**, which is
+where that user belongs and where the app already sends them. Please confirm
+that reading, and specifically:
+
+1. Does `POST /onboarding/submit` set `profileComplete: true` **immediately**,
+   before photos and verification, or only once those are done? Our behaviour
+   assumes the former (it returns `{ profileComplete: true }` per §9.2).
+2. If so, is `unverified` the value `GET /me` returns throughout the photo step,
+   or is there another state we should expect?
+
+If the answer is that `profileComplete` only flips after verification, then this
+row is genuinely unreachable and the table is complete as written — but then
+API-7's documented `{ profileComplete: true }` response is the thing that needs
+correcting.
+
 ## 5. Is `nextCursor` opaque?
 
 Pagination is `{ cursor, limit }` in, `{ nextCursor, hasMore }` out (BE §7.1).
