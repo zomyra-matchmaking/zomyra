@@ -13,7 +13,8 @@ import {
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useRequestsStore } from "@/src/stores/requests-store";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { setPremium } from "@/src/store/slices/entitlement-slice";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 
@@ -27,8 +28,8 @@ const BENEFITS = [
 
 export default function PremiumScreen() {
   const router = useRouter();
-  const setPremium = useRequestsStore((s) => s.setPremium);
-  const premium = useRequestsStore((s) => s.premium);
+  const dispatch = useAppDispatch();
+  const premium = useAppSelector((s) => s.entitlement.isPremium);
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
@@ -96,7 +97,7 @@ export default function PremiumScreen() {
         <Touchable
           feedback="scale"
           testID="premium-purchase"
-          onPress={() => setPremium(!premium)}
+          onPress={() => dispatch(setPremium(!premium))}
           style={[styles.cta]}
         >
           <LinearGradient

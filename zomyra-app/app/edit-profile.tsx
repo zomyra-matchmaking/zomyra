@@ -41,7 +41,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Alert, Image, KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useOnboardingStore } from "@/src/stores/onboarding-store";
+import { useOnboardingDraft } from "@/src/hooks/use-onboarding-draft";
 import type {
   BodyType,
   Diet,
@@ -79,8 +79,7 @@ type PickerState = {
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const state = useOnboardingStore((s) => s.state);
-  const set = useOnboardingStore((s) => s.set);
+  const { draft: state, set } = useOnboardingDraft();
 
   const [picker, setPicker] = useState<PickerState>(null);
 

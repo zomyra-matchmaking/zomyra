@@ -9,15 +9,16 @@ import { useRouter } from "expo-router";
 
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
-import { useChatStore } from "@/src/stores/chat-store";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { unmatchConversation } from "@/src/store/slices/chat-slice";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 import { NAV_CLEARANCE } from "@/src/constants";
 
 export default function ChatsList() {
   const router = useRouter();
-  const conversations = useChatStore((s) => s.conversations);
-  const unmatch = useChatStore((s) => s.unmatch);
+  const dispatch = useAppDispatch();
+  const conversations = useAppSelector((s) => s.chat.conversations);
   const [pendingUnmatch, setPendingUnmatch] = useState<string | null>(null);
 
   return (
@@ -110,7 +111,7 @@ export default function ChatsList() {
         destructive
         onCancel={() => setPendingUnmatch(null)}
         onConfirm={() => {
-          if (pendingUnmatch) unmatch(pendingUnmatch);
+          if (pendingUnmatch) dispatch(unmatchConversation(pendingUnmatch));
           setPendingUnmatch(null);
         }}
       />

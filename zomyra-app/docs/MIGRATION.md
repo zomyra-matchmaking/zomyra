@@ -1,7 +1,7 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.40**, integrating against the contract in **Backend TDD v1.2**.
+**Frontend TDD v1.45**, integrating against the contract in **Backend TDD v1.6**.
 **Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
@@ -11,26 +11,41 @@ Append a "Module log" entry at the end of every module, in the same session that
 - Started: 2026-07-27
 - Codebase: `zomyra/zomyra-app` (Expo SDK 54, RN 0.81.5, React 19.1, expo-router v6)
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
-- Status: **Module 1 complete** (2026-07-30). §3's baseline still describes the untouched Emergent
+- Status: **Module 2 complete** (2026-07-31). §3's baseline still describes the untouched Emergent
   output and is kept as the historical reference point; §6 records what each module changed.
+  ⚠️ **§3's "Data layer" subsection is now history too** — the 14-line `fakeNetwork` stub, the six
+  Zustand stores and "no `fetch` call to any host" it records were all replaced in Module 2.
   ⚠️ **§3's "Design language" subsection is now history, not current state** — the 281 hex literals,
   the 13 rival palettes and the four NFR-6a failures it records were all resolved in Module 1.
-- **Handoff state:** **Module 1 is finished and awaiting the owner.** Twelve commits sit on
-  `module/1-design-system` (branched from `aa80d1a`), **committed but not pushed and with no PR
-  open** — per C-6 the owner does both. A new session must not assume this work is on `master`;
-  `git log master..module/1-design-system` shows what is pending. Module 0 is merged (PR #1).
-- **Verified green as of 2026-07-30:** `yarn doctor` 18/18 · `yarn lint` 0 errors (14 pre-existing
-  warnings, one fewer than Module 0) · `yarn typecheck:baseline` clean · `expo export --platform ios`
-  bundles · every screen re-checked on the iPhone 16 Plus simulator.
+- **Handoff state:** **Module 1 is merged** — PR #2 landed on `master` on 2026-07-30, alongside
+  Module 0 (PR #1). **Module 2 is finished and awaiting the owner:** its commit sits on
+  `module/2-state-data-layer` (branched from `f97e879`), **committed but not pushed and with no PR
+  open** — per C-6 the owner does both. `git log master..module/2-state-data-layer` shows what is
+  pending.
+- **Verified green as of 2026-07-31:** `yarn doctor` 18/18 · `yarn lint` 0 errors (14 pre-existing
+  warnings) · `yarn typecheck:baseline` clean (the same 3 inherited errors, no new ones) · Metro
+  bundles 3550 modules for iOS and Android · the auth flow walked end to end on the iPhone 16 Plus
+  simulator and on the Android 16 emulator.
   ⚠️ `yarn lint` caches to **`.expo/cache/eslint`**. If it reports errors that `npx eslint app src
   --no-cache` does not, `rm -rf .expo/cache` before believing it — this cost time in Module 1.
 - **C-2 is now proven, not just configured.** The first EAS build ran on 2026-07-28
   (`development-simulator`, build 1) and the app launched on an iPhone 16 Plus simulator against
   Metro. See §6's "First build" entry. iOS *device* and Android builds remain unrun.
-- **Next up: Module 2 — State & data layer.** The sequence in §2 is being followed in order.
-  O-8 and O-11 are the live inputs; §2.3 lists what staging must provide.
+- **Staging is live as of 2026-08-02** (`https://zomyra-staging.duckdns.org`) and the contract has
+  been checked against it rather than against the documents — `/v1`, the error envelope,
+  `X-Request-Id` and API-5's shape all confirmed. **But phone auth is not deployed**, so no token can
+  be obtained and nothing authenticated is verifiable yet; the app stays on mocks. Endpoint map and
+  detail in §6's Module 2 addendum.
+- **Next up: Module 3 — Navigation.** The sequence in §2 is being followed in order. Module 3's
+  root gate now has something to call: `useGetMeQuery()` (API-6) exists and answers from mocks.
+  O-4 is its live blocker — `GET /me` returns `accountStatus: suspended | banned` and the FE routing
+  table has no destination for either. See `docs/CONTRACT-QUESTIONS.md`.
+  **API-38 is no longer Module 3's** — FE v1.44 removed the cold-start model entirely (§12.3).
+  Both reference-data endpoints are auth-gated and fetched when Onboarding mounts, so they belong
+  to **Module 5**. The `keepUnusedDataFor` warning by the `Locations` tag still stands.
 - **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
-  §4 (open items), then §6's Module 1 entry. §3 is history, not current state.
+  §4 (open items), **§12 (spec-change history — check before starting any module)**, then §6's
+  Module 2 entry. §3 is history, not current state.
 
 ---
 
@@ -68,10 +83,10 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 |---|---|---|---|
 | 0 | Build & project foundation | **Complete** (2026-07-28) | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
 | 1 | Design system & theming | **Complete** (2026-07-30) | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
-| 2 | State & data layer | Not started | Every subsequent module plugs into it; nothing can reach the backend until it exists |
-| 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me` |
+| 2 | State & data layer | **Complete** (2026-07-31) | Every subsequent module plugs into it; nothing can reach the backend until it exists |
+| 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
-| 5 | Onboarding & profile schema | Not started | Fixes data-model drift at the source, before other screens consume those enums. **+FE TDD v1.40's state field — see §12.1** |
+| 5 | Onboarding & profile schema | Not started | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
@@ -154,10 +169,10 @@ refined as modules land; elapsed time runs longer because of review turnaround a
 
 | Module | Est. build | | Module | Est. build |
 |---|---|---|---|---|
-| 0 · Build foundation | ✅ 1 day | | 5 · Onboarding & schema | 4–5 days *(+1, §12.1)* |
+| 0 · Build foundation | ✅ 1 day | | 5 · Onboarding & schema | 3–4 days *(§12.1's +1 reversed)* |
 | 1 · Design system | ✅ 1–2 days | | 6 · Photos & verification | 3–4 days |
 | 2 · State & data layer | 3–5 days | | 7 · Discover / interest | 4–6 days |
-| 3 · Navigation | 2–3 days | | 8 · Requests | 1–2 days |
+| 3 · Navigation | 2–3 days *(+½, §13)* | | 8 · Requests | 1–2 days |
 | 4 · Auth | 2–3 days | | 9 · Chat & realtime | 4–6 days |
 | | | | **0–9 total** | **24–36 days (5–7 wks build, 7–10 elapsed)** |
 
@@ -171,6 +186,21 @@ refined as modules land; elapsed time runs longer because of review turnaround a
 | Sep 16 – 22 | Modules 8, 9 | — |
 | Sep 23 – 29 | Modules 11, 12 (10 if banking ready) | — |
 | Sep 30 – Oct 7 | Submission + review | — |
+
+**Schedule check against the calendar (2026-07-31).** **Engineering is ahead, not slipping.** The
+table above budgets Jul 29 – Aug 4 for Modules 0 and 1 and Aug 5 – 18 for Modules 2 and 3; Modules 0,
+1 and 2 are all done by Jul 31, so Module 2 landed roughly a week early against a 3–5 day estimate.
+The estimates below are left unchanged rather than rewritten to match — one module finishing fast is
+not evidence the remaining ones will, and Module 2 was unusually self-contained (no backend, no
+device-specific behaviour, no design decisions).
+
+**What that headroom does not cover, and the honest read:** the engineering column is the only one
+with evidence behind it. The same rows carry a legal/accounts column — "Apple + Play enrolled · LLP
+filed · name reserved" for the Jul 29 – Aug 4 window — and this document has no confirmation that any
+of it has started. Per §2.2a that chain is 6–10 weeks and it is the one that gates Modules 10 and 11.
+**O-8 is the nearer risk:** the backend's status note is still the one written on 2026-07-28, and
+Modules 4–9 need it. Being a week ahead on the client buys nothing if the API arrives late — see
+`docs/CONTRACT-QUESTIONS.md`.
 
 **Known risks to this schedule:** backend pace (Modules 4–9 all depend on it); an Apple rejection
 under Guideline 4.3, which FE TDD §12 flags as a live risk for this category — budget one rejection
@@ -365,21 +395,23 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-1 | ~~Real bundle identifier / package name~~ **→ `com.zomyra.app`** (2026-07-28). See §9. **Applied in Module 0**; still needs registering with both stores once O-2 lands. | Module 0 | ✅ Done |
 | O-2 | **Hard gate on Module 10 — see §2.1.** Apple Developer account ($99/yr) + Play Console ($25), `com.zomyra.app` registered on both, the "Zomyra" display name reserved on App Store Connect, and `google-services.json` / `GoogleService-Info.plist` in hand. Modules 0–9 run on the dev client without any of it. | **Before Module 10** | Product owner |
 | O-3 | **API-32 field-name conflict:** FE TDD §9.12 sends/returns `{ pushEnabled }`; BE TDD §14.13 uses `{ notificationsEnabled }`. A real contract conflict, not a doc paraphrase. | Module 11 | FE + BE |
-| O-4 | **`accountStatus` routing gap:** BE `GET /me` returns `active \| suspended \| banned`, but FE §9.1's routing table defines no destination for suspended/banned. | Module 3 | FE + product |
+| O-4 | ~~`accountStatus` routing gap~~ **→ Closed by FE v1.45 / BE v1.6** (2026-08-01, §12.4). `accountStatus` is checked **before** the §9.1 routing table is evaluated at all; any non-`active` value routes to one static, non-dismissible blocker — no retry, no appeal link, no distinction between suspended/banned/deleted. The backend additionally rejects non-active accounts with `403` on every authenticated endpoint except `GET /me` and `POST /auth/refresh`. **Module 3 builds the blocker screen and the base-query handling.** | Module 3 | ✅ Closed |
 | O-5 | Express Interest daily cap value `N` (FR-17a) is still "to be set by product". | Module 7 | Product owner |
 | O-6 | Height filter bounds inconsistent across wireframes (140–210cm vs 140–200cm), FE TDD §8. | Module 7 | Product owner |
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
 | O-10 | **Store accounts → Organization, registered once the LLP and D-U-N-S exist. Final (2026-07-28).** Long-form rationale, critical path and the parallel owner track are in **§2.2a** — the detail outgrew a table cell. | Before the §2.1 gate | Product owner |
 | O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
-| O-8 | **Backend base URL + OpenAPI spec.** Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
-| O-11 | **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
+| O-8 | **Backend base URL + OpenAPI spec — HALF CLOSED (2026-08-02).** ✅ **Base URL exists and is live:** `https://zomyra-staging.duckdns.org`, wired into `eas.json`'s `preview` profile and `.env`, and verified end to end from the simulator. ⚠️ **The schema is still not served** — `/v1/docs-json` returns 404, so `yarn api:generate` cannot run and O-11 stays unmitigated. ⚠️ **The surface is partial:** API-1/API-2 phone auth are undeployed and API-3 returns 503, so **no token can be obtained** and nothing authenticated is verifiable yet. Endpoint map in §6's Module 2 addendum. Superseded detail below. **Backend base URL + OpenAPI spec.** Previously unchanged as of 2026-07-31 — Module 2 looked for a URL to probe and found none: there is no base URL anywhere in this repo, the TDDs, or this document, so there was nothing to test reachability against. Module 2 shipped the mock transport behind the base query as planned, and switching to a live host is now genuinely a one-line `.env` change (`EXPO_PUBLIC_API_URL`). Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
+| O-11 | **Mechanism shipped in Module 2; the asks are sent-ready but not yet sent.** `openapi-config.ts` + `yarn api:generate` are in place, so the moment a schema is served, generated types replace the hand-written ones in `src/api/contract.ts` and drift becomes a compile error. The concrete questions for the backend — O-3, O-4, O-16, plus three found while building (where `retryAfterSeconds` lives, whether `nextCursor` is opaque, and a prototype-side `discoveryMode` enum mismatch) — are written up ready to forward in **`docs/CONTRACT-QUESTIONS.md`**. C-1 means sending them is the owner's step. **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
 
 | O-12 | ~~Is web still a target?~~ **→ No. Web is out of scope** (2026-07-28, owner). Removed in Module 0: the `expo.web` config block, the `yarn web` script, `react-dom` + `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts`, `favicon.png`, and the RN-Web font-injection block in `app/_layout.tsx`. `platforms: ["ios", "android"]` now declares this in config, and `expo export --platform web` refuses. **Consequence for Module 2:** the `import.meta` workaround in `onboarding-store.ts` was a *web-bundle* problem only — it is no longer a constraint on the persistence design. | Module 0 | ✅ Decided |
 | O-13 | ~~`ios.supportsTablet`~~ **→ `false`. iPad is out of MVP scope** (2026-07-28, owner — reversed the same day during Module 0 PR review; the earlier "tablets are a target" note in §6 is superseded). What this buys the MVP: no 13-inch iPad screenshots required at submission, App Review stops exercising a phone-designed UI on iPad, and Modules 1/3 owe no large-screen layout work. **iPad users can still install** — iOS runs it letterboxed in iPhone-compatibility mode; `false` means "not optimised for iPad", not "blocked". **Android needs no equivalent change** — there is no phone-only flag in `app.json`, tablets are supported by default, and Play requires no tablet screenshots. Re-enabling post-MVP is one line plus the layout work. | Post-MVP if revisited | ✅ Decided |
 | O-14 | **Logo delivered 2026-07-28 — splash artwork still pending.** The designer's vector lockup is in-tree (`assets/brand/zomyra-lockup.svg`), and the icon, adaptive icon and in-app logo are now generated from it at full sharpness — see §10. **(b) settled in Module 1:** both backgrounds stay `#FFFFFF`, now as `colors.background` rather than a C-3 placeholder — reasoning in §10.2. **Still open:** (a) a purpose-designed splash from the designer; the current splash is an interim render of the lockup; (c) whether the app icon should be purple-on-white (current, faithful to the supplied artwork) or inverted white-on-purple. **Module 1 found (b) and (c) are not separable** — the Android foreground is the purple mark on transparency, so a purple `adaptiveIcon.backgroundColor` renders purple-on-purple. Changing that background *is* the icon-inversion decision, and it needs a new foreground asset with it. | Splash + icon treatment: before submission | Product owner |
 
-| O-15 | **FR-3a fallback when a town isn't in the curated list** — flagged as undecided *by the spec itself* (FE TDD v1.40, §12.1). Three linked questions: (a) does the user pick the nearest listed city, or get a free-text "other" entry; (b) if free-text, is that profile excluded from FR-5 same-city matching; (c) how deep does the curated per-state list go — every district town, or the top N cities per state. **This is not cosmetic:** it decides whether `city` is a closed enum or an open string, which changes the Discover filter (a picker vs. a search), the backend's matching query, and whether two users typing "Bangalore" and "Bengaluru" ever match. Needs settling before Module 5 builds the screen, not after. | **Module 5** | Product owner + BE |
-| O-16 | **Backend TDD v1.2 has no `state` field.** FE TDD v1.40 adds it to FR-3, API-7's `plot` object and API-23's response, but BE §14.2 (line 798) and §14.10 (line 1125) still list `…gender, city, heightCm…` with no `state`. The backend needs the column, the submit-payload field, the `/profile/me` response field, and FR-5's "same state" matching resolved against it rather than via city→state lookup. **Frontend-only constraint (C-1) means this is a message to send, not a change to make** — but Module 5 will 400 on submit until it lands. Exactly the drift O-11 predicted, caught by doc diff rather than at runtime. | **Module 5** | BE (flag from FE) |
+| O-15 | **Fallback when a user's town isn't in the backend's `cities` table** — flagged as undecided by the spec itself (FE TDD v1.42 FR-3a). **Half-settled as of BE v1.4 (§12.2):** the client side is decided — `city` is a **closed set**, always a `cityId` from the backend's table, never free text. That was the part that would have changed the Discover filter and the matching query, so the client is unblocked. **What remains is a backend data-curation question:** how deep the curated list goes (every district town, or top N per state), and what a user does when their town isn't there. FE v1.42 states plainly that this is *"a backend data-curation gap, not a client one"*. | Module 5 (client unblocked) | BE + product |
+| O-16 | ~~Backend TDD v1.2 has no `state` field~~ **→ Closed by BE TDD v1.4** (2026-07-31, §12.2). Resolved differently from how this item framed it: there is **no `state` column on the profile** and `state` is **never submitted**. The backend's pre-existing `cities` table is exposed via **API-38 `GET /locations/cities`**, onboarding submits **`cityId`** (FK → `cities.id`, matching the `users.city_id` that already existed), and `/profile/me` returns `cityId, cityName, state` denormalized via join. FR-5's "same state" matching already worked through that table — v1.40's claim that it needed fixing was retracted in v1.41. | Module 5 | ✅ Closed |
+
+| O-17 | **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). The owner has **Lottie JSON** animations intended as loading visuals. **Whenever a module needs a loading shimmer or animation (§13), request the asset before building one** — the same rule already applied to brand assets in O-14/§10. **The consequence that needs deciding early:** `lottie-react-native` is **not installed** (`react-native-svg` and `reanimated` are), and it is a **native module** — under C-2 that means adding it forces a **dev-client rebuild**. So the module that first uses a Lottie file pays an EAS build, and it should be batched with any other native dependency rather than triggering a second one. See §13.4 for what to request and the reduce-motion fallback each asset needs. | **Module 3** (first loading state), then §13's owners | Product owner |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -404,9 +436,17 @@ The two documents are genuinely aligned; the backend was revised to match the fr
   `refresh_token_invalid` (BE §9.2).
 - `200 { status: "pending" }` on verification means work is genuinely in flight server-side —
   **must not** offer manual retry. A real 5xx is the opposite and should retry. Easy to conflate.
-- **`state` is missing backend-side.** FE TDD v1.40 adds it to API-7 and API-23; BE TDD v1.2 does
-  not have it in either. See O-16 — Module 5 cannot submit onboarding successfully until it exists.
-- See O-3, O-4 and O-16 above for the live conflicts.
+- **Location is `cityId`, not text** (FE v1.44 / BE v1.5). Onboarding submits a `cityId` from
+  **API-38 `GET /locations/cities?state=<key>`** — **per-state**, fetched the first time a given
+  state is selected, cached per state key in RTK Query memory. `state` is never submitted;
+  `/profile/me` returns `cityId, cityName, state`, the last two denormalized for display.
+- **Every choice field is backend-driven** (FR-3b, **API-39 `GET /onboarding/options`**). The client
+  hardcodes **no** value lists — not gender, not religion, not diet. Categories return
+  `{ key, label }` pairs and the client submits **keys**. See §12.3.
+- **Neither is a cold-start fetch** — both require auth, and are fetched when the Onboarding stack
+  mounts (and again when Edit Profile opens). They do not touch the root navigator or version gate.
+  *This reverses what §12.2 said; FE v1.44 corrected it.*
+- See O-3 and O-4 above for the live conflicts. **O-16 is closed** (BE v1.4).
 
 ---
 
@@ -569,8 +609,10 @@ than just the config file:
 | `CFBundleURLSchemes` | `zomyra`, `com.zomyra.app` | deep-link scheme for Module 11 |
 | `CFBundleVersion` | `1` | EAS now owns build numbers (`appVersionSource: remote`) |
 
-**Still unrun:** Android (needs no account — the obvious next one) and iOS *device* (blocked on the
-Apple account, O-10).
+~~**Still unrun:** Android (needs no account — the obvious next one)~~ — **Android has since been
+built and run.** See the Module 1 addendum "first Android build" below (local Gradle build, 76 MB
+debug APK on an Android 16 emulator), and Module 2, which re-verified the same emulator. **iOS
+*device* remains correctly unrun**, blocked on the Apple account (O-10).
 
 **Bonus finding for Module 1 — there are four purples, not three.** Sampling the rendered login
 screen pixel-by-pixel: the Z mark is `#5B2C70`, the `Zomyra` wordmark `#7C3AED`, the heading
@@ -886,6 +928,466 @@ script was documented in the README before.
 **Not settled by this build:** the `KeyboardAvoidingView` `"height"` vs `undefined` split flagged in
 the PR-review addendum. It needs a keyboard-open comparison across the six screens, which is its own
 pass — the build only made it *possible*.
+
+### Module 2 — State & data layer (completed 2026-07-31)
+
+**The framing that mattered:** §3 called this *"build the data layer that was never built,"* and that
+was right. The Zustand→RTK port was 366 lines and about a fifth of the work; the rest was a network
+layer that did not exist in any form — no base URL, no `fetch` to any host, no tokens, no errors.
+
+**Changed:**
+
+- **A real RTK Query layer.** `src/api/` holds one API slice (`createApi`, endpoints *injected* per
+  module so later modules don't all edit one file) over a base query with four layers: transport →
+  auth/silent-refresh → error normalisation → retry. Endpoints live in `src/api/endpoints/`; screens
+  import from `@/src/api` and nothing else.
+- **The `/v1` prefix is carried once**, in `src/config/env.ts`, so endpoint definitions transcribe
+  straight out of FE TDD §9 (which omits it) while every request hits BE TDD §7.1's real path.
+  `resolveApiBaseUrl()` tolerates a configured URL that already ends in `/v1` — a plausible `.env`
+  value should not silently produce `/v1/v1/…`.
+- **Mocks sit *behind* the base query, not in place of it** (`src/api/mock/`). The mock transport
+  implements the same `BaseQueryFn` signature as `fetchBaseQuery` and returns the same
+  `{ error: { status, data } }` shape, so auth, refresh, error handling and retry are the same code
+  in development as against staging. **Switching to a real backend is setting `EXPO_PUBLIC_API_URL`
+  and nothing else** — which is what O-8 needed to stop being a blocker.
+- **The mock refresh token is single-use and rotating**, exactly as BE TDD §9.2 describes. That is
+  deliberate: the concurrent-401 bug §5 warns about now *reproduces locally* if the shared-promise
+  logic is ever broken, instead of first appearing during integration. `expireAccessToken()` exists
+  so the 401 → refresh → retry path can actually be exercised.
+- **Concurrent 401s share one in-flight refresh promise** (`refreshInFlight` in `base-query.ts`).
+  Without it the second caller presents a token the first already rotated, gets a spurious
+  `refresh_token_invalid`, and force-logs-out a healthy session — and the backend reads the replay
+  as possible token theft (§9.2 phase D), so the bug looks like an attack in the logs.
+- **NFR-2: tokens are in expo-secure-store, and `src/utils/storage`'s `secure*` methods finally have
+  a caller.** `src/auth/tokens.ts` owns them, with a synchronous in-memory mirror in front so a
+  Keychain read doesn't happen per request. **Verified on both platforms rather than asserted** — see
+  "Verified" below.
+- **Errors are one shape, and `code` is the contract.** `src/api/errors.ts` normalises everything
+  into `ApiError { status, code, message, details?, requestId?, retryAfterSeconds? }`.
+  `ApiErrorCode` is a **closed union of every code named in either TDD**, so a typo in a branch is a
+  compile error rather than a branch that silently never runs. `X-Request-Id` is captured onto every
+  error for the Sentry↔backend correlation FE TDD §10.2 wants — most useful exactly when something
+  failed.
+- **Retry is opt-in per endpoint, not global.** FE TDD §9 gives endpoints deliberately different
+  behaviour (Discover 3 retries behind the logo animation §6.5; Chat a Retry button instead §9.8), so
+  a global default would quietly override the spec. `retryCondition` never retries a 4xx — the server
+  rejected the request on its merits and will again — with 429 as the one exception, since that is a
+  "not yet", not a "no".
+- **§5's pending-vs-5xx trap is resolved in one place.** `verificationOutcome()` returns a discriminated
+  union carrying `canRetry`, so `200 { status: "pending" }` (work genuinely in flight — offering retry
+  would fire a duplicate verification) can never be conflated with a 5xx (nothing in flight — retry is
+  exactly right). Both feel like "it didn't finish" at the call site, which is why neither screen gets
+  to decide.
+- **Six Zustand stores → eight RTK slices**, and the split is the point: `premium` was a stray boolean
+  inside `requests-store` and is now its own `entitlement` slice, which is what lets it be excluded
+  from persistence on the record. A new `session` slice gives Module 3's root gate something to read.
+- **Persistence reopened and redesigned (O-12).** `zustand/middleware`'s `persist` was avoided only
+  because it broke the *web* bundle via `import.meta`; web is gone, so the hand-rolled debounced
+  `AsyncStorage.setItem` in `onboarding-store.ts` is replaced by redux-persist. **The whitelist is
+  three slices and every exclusion has a stated reason** (`src/store/index.ts`): tokens → keychain
+  only; `entitlement` → re-derived from RevenueCat, since a stored `isPremium: true` outlives the
+  pass that paid for it; `session` → derivable, and a second copy can only disagree; `verification` →
+  `file://` URIs the OS may reclaim; `api` → RTK Query's cache is in-memory by design.
+- **The Zustand-era persisted state is imported, not abandoned.** `legacy-migration.ts` runs as
+  redux-persist's `migrate` hook — so it happens *before* rehydration rather than racing it, and only
+  when no redux-persist state exists yet — reads `zomyra.onboarding.v1` and
+  `zomyra.discovery-mode.v1`, and deletes them. Skipping this would have silently discarded a
+  part-finished draft: NFR-1's exact failure mode, caused by the code meant to prevent it.
+- **Cache is cleared when a session ends**, via a listener on `signedOut` / `sessionExpired` in the
+  store. Not in the base query (it cannot import `api` without a cycle) and not at each call site,
+  where it is one line from being forgotten on the path that matters — FE TDD §9.12 raises the
+  shared-device case directly.
+- **`X-App-Version` / `X-Bundle-Update-Id` decided explicitly, as §6's Module 0 entry asked.** Both
+  headers are sent now. `X-Bundle-Update-Id` is the literal `"embedded"`, which FE TDD §9 defines as
+  the value for a build that has never received an OTA update — **this project's actual state, so it
+  is accurate rather than a stub.** `expo-updates` stays uninstalled (it drags in `runtimeVersion`
+  policy); when it lands, one constant in `src/config/app-headers.ts` becomes
+  `Updates.updateId ?? "embedded"` and every call site is already sending the header.
+- **O-11's mechanism shipped.** `openapi-config.ts` + `yarn api:generate` (`@rtk-query/codegen-openapi`)
+  are wired against `/v1/docs-json`. `src/api/contract.ts` carries the hand-written types until then,
+  labelled provisional at the top. ~~`state` is deliberately absent, matching BE TDD v1.2~~ —
+  **superseded the same day by BE v1.4; corrected in the addendum below.**
+- **`docs/CONTRACT-QUESTIONS.md` is new** — O-3, O-4 and O-16 written up as one-line asks ready to
+  forward, plus three found while building: whether `retryAfterSeconds` sits in `error.details` or
+  beside `code` (both documents are ambiguous, and the client currently accepts either — a defensive
+  guess that should not survive), whether `nextCursor` is opaque, and a prototype-side
+  `discoveryMode` enum that matches neither TDD. C-1 makes sending them the owner's step.
+- **Dependencies:** `+@reduxjs/toolkit`, `+react-redux`, `+redux-persist`,
+  `+@rtk-query/codegen-openapi` (dev). **`-zustand` and `-@tanstack/react-query`** — the latter was
+  used exactly once (`app/discover.tsx`) and FE TDD §4 replaces it.
+- **Deleted:** `src/services/api.ts` (the 14-line `fakeNetwork`), `auth.ts`, `discover.ts`, and all
+  six files in `src/stores/`. `FILTER_OPTIONS` moved to `src/lib/discover/filter-options.ts` — it is
+  static reference data, not state, and becomes API-13 in Module 7.
+- **Two controller hooks** (FE TDD §4.1's "Controller" layer): `useOnboardingDraft` — which exists so
+  screens keep the type-safe one-liner `set("city", v)` rather than a `dispatch(setField({…}))` whose
+  key and value are unrelated to the compiler — and `useDiscoverFilters`.
+- **The `_hasHydrated` flags and their placeholder screens are gone.** `PersistGate` now gates the
+  whole tree in `app/_layout.tsx`, so rehydration is complete before any screen mounts and three
+  hand-rolled hydration guards became unreachable.
+
+**Verified:**
+
+- `yarn doctor` 18/18 · `yarn lint` 0 errors (the same 14 pre-existing warnings) ·
+  `yarn typecheck:baseline` clean, the same 3 inherited errors and no new ones · Metro bundles 3550
+  modules for **both** iOS and Android · `yarn.lock` sha-checked around every install (§11); npm was
+  never run.
+- **Auth flow walked end to end on both platforms** — iPhone 16 Plus simulator and the Android 16
+  emulator — login → phone → API-1 → OTP → API-2 → onboarding.
+- **NFR-2 checked against the filesystem, not inferred.** On Android, `shared_prefs/SecureStore.xml`
+  appears *only after* login and holds both tokens as AES ciphertext with Keystore-backed keys
+  (`"scheme":"aes"`, `usesKeystoreSuffix`), **zero plaintext**; AsyncStorage's `RKStorage` has
+  `persist:zomyra.root` and **0 occurrences of `accessToken`**. On iOS, grepping the *entire* app data
+  container for the issued token values returns nothing.
+- **The persist whitelist was read off disk**, not trusted: the stored root contains exactly
+  `onboarding`, `discoveryMode`, `discoverFilters` and `_persist` — no `session`, no `entitlement`, no
+  `api`. `stepIdx` was watched updating and persisting as screens advanced.
+- **The legacy import demonstrably ran:** the rehydrated draft came up carrying values that only a
+  pre-Module-2 Zustand session could have written, with the old AsyncStorage keys gone.
+
+**Still stubbed / deferred:**
+
+- **Seven endpoints exist, not thirty-seven.** API-1, API-2, API-4 (internal to the base query),
+  API-5, API-6, API-11, API-12 and API-34 are wired, each with a mock. That is a deliberate spread —
+  one unauthenticated POST, token rotation, an authenticated GET, cursor pagination, multipart, and a
+  low-stakes silent one — so every semantic the module owns is exercised by something. The remaining
+  endpoints belong to the modules that own their screens. **An endpoint without a mock 404s**, which
+  is why none were added speculatively.
+- **`requests` and `chat` slices are still mock data**, ported unchanged. They are server state;
+  Modules 8 and 9 replace them with RTK Query and delete them.
+- **`src/services/upload.ts` survives on purpose** — FE TDD §4.6 puts photo upload behind
+  `expo-file-system`'s `createUploadTask`, not RTK Query, because `fetch` cannot report upload
+  progress and FR-9 needs a bar. Module 6 builds it.
+- **API-12's real response shape is thinner than what the mock serves.** FE TDD §9.5 defines a card as
+  `{ id, name, age, city, heroPhotoUrl, excellentMatch, matchReasons }`; the mock returns the
+  prototype's richer `DiscoverProfile` so Discover keeps rendering. The *pagination envelope* is real.
+  Noted in `contract.ts`; Module 7 reconciles it.
+- **Express Interest calls nothing.** `app/discover.tsx`'s like handler now advances locally. No
+  behaviour was lost — the mock service it used to await recorded interests in a dictionary that could
+  never produce a match. API-14 with optimistic advance and snap-back (§6.6) is Module 7's.
+- **`setupListeners` is not wired** — RTK Query's refetch-on-focus/reconnect needs RN-specific
+  AppState/NetInfo bindings rather than the default window events. Worth doing when a module actually
+  wants it.
+- **The auth screens were rewired, not rebuilt.** `phone.tsx` and `otp.tsx` call the new mutations, but
+  `rate_limited`'s `retryAfterSeconds`, `otp_expired` vs `too_many_attempts`, and the lockout are all
+  still Module 4's.
+- **`redux-persist@6.0.0` warns `unmet peer dependency "redux@>4.0.0"` on install.** Harmless — redux
+  5.0.1 is present as an RTK transitive; yarn only warns because it is not a direct dependency.
+
+**Inherited by next module:**
+
+- **Module 3 gets what it needs to build the root gate:** `useGetMeQuery()` (API-6) answering the full
+  §9.1 routing table from mocks, `useCheckAppVersionQuery()` (API-5, which **fails open by contract** —
+  an error means "no update required", never a reason to hold the user), `useGetCountsQuery()` (API-34)
+  for the tab badges, and a `session` slice with `status` / `expired`, where `expired` distinguishes a
+  forced logout from someone who simply hasn't signed in.
+- **O-4 is Module 3's live blocker**, not a footnote: `GET /me` returns `accountStatus: suspended |
+  banned` and the FE routing table has no destination for either.
+- **Module 3 also inherits API-38 (`GET /locations/cities`)**, added to the contract by BE v1.4 after
+  Module 2 was written. The endpoint is not defined yet, on purpose — but two of its data-layer
+  defaults are wrong out of the box (`keepUnusedDataFor`, and the temptation to persist it). Both are
+  written up beside the `Locations` tag in `src/api/api.ts` and in the addendum below.
+- **The base query already dispatches `sessionExpired` and clears the keychain on a failed refresh.**
+  Module 3 decides where that sends the user; the network layer deliberately does not.
+- Any module adding an endpoint adds a mock beside it, and exports its hooks through `src/api/index.ts`
+  — `injectEndpoints` runs as an import side effect, so an endpoint file nobody imports yields hooks
+  that are `undefined` at runtime.
+
+**Decisions made:**
+
+- **Mocks behind the base query, not a mock service layer.** The alternative — swappable service
+  objects, which is what the prototype had — means the auth, retry and error code paths are never
+  exercised until the backend appears. Here they run from day one and only the host changes.
+- **Endpoints are injected per module rather than declared centrally**, so twelve modules don't
+  serialise on one file. `tagTypes` stays central because invalidation crosses module boundaries.
+- **Retry defaults to off.** FE TDD §9 specifies per-endpoint behaviour; a global default would
+  silently override it.
+- **`ApiErrorCode` is a closed union.** An open `string` would make every branch a guess.
+- **`X-Bundle-Update-Id: "embedded"` now, rather than omitting the header until `expo-updates` lands.**
+  The value is accurate today and the swap is one line later.
+- **Types are generated from the schema, never hand-patched to match a document.** This was written
+  as "the generated types will not have `state`, and that is correct" — and §12.2 then closed O-16 in
+  a shape neither TDD had described when Module 2 was built. **The decision held even though its
+  example did not**, which is the argument for it: a hand-patched `state` field would now be wrong in
+  a *second* way, and the correction would have had to be found by hand again.
+- **The legacy AsyncStorage keys are imported rather than dropped**, even though the only affected
+  users are developers — it is cheap now and impossible later.
+
+#### Module 2 addendum — named environments, and the first real HTTP call (2026-07-31)
+
+Added when the owner confirmed a staging environment was being stood up the same day. Module 2 had
+shipped a single `EXPO_PUBLIC_API_URL` with an implicit rule — "no URL means mocks" — which is right
+for development and **dangerous in exactly one case**, described below.
+
+**`EXPO_PUBLIC_APP_ENV` now names the environment:** `mock` | `staging` | `production`. It is a named
+environment rather than just a URL because more than the URL hangs off it — Sentry's `environment`
+tag (§10.2), whether dev-only affordances may exist, and which misconfigurations are worth refusing
+to boot over.
+
+**Where each value is set, and why they are separate:**
+
+| | Local (`yarn start`, `yarn ios`, `yarn android`) | EAS cloud builds |
+|---|---|---|
+| Source | `.env` (gitignored; `.env.example` is the template) | `eas.json` → `build.<profile>.env` |
+
+EAS never reads `.env` — it is gitignored and not uploaded — so a local experiment cannot leak into a
+build. Profiles now carry: `development` / `development-simulator` → `mock` (today's working state;
+one word to flip once staging has a URL), `preview` → `staging`, `production` → `production`.
+
+**⚠️ The failure this closes.** Previously a **production** build whose `EXPO_PUBLIC_API_URL` was
+never set would fall back to the mock transport and ship to real users showing **fabricated
+profiles** — an app that looks like it works, populated by invented people. Two rules now prevent it:
+
+1. `staging` and `production` **refuse to boot** without a host, throwing at import time so the very
+   first launch of any such build surfaces it, long before submission. A build that dies is caught by
+   whoever installs it; one that silently serves fixtures may not be.
+2. **`production` can never use mocks** — not by omission, and not via `EXPO_PUBLIC_API_MOCKS=1`.
+   A development switch that can reach a production build is a way to ship fixtures to real users.
+
+`EXPO_PUBLIC_API_MOCKS=1` still works in `mock` and `staging`, which is how a screen gets built
+against a backend that is up but incomplete.
+
+**Verified — the resolution matrix was run against the real module**, not reasoned about: 11 cases
+covering unset, explicit mock, staging with a plain URL / a trailing slash / a URL already ending in
+`/v1`, the mocks override, production, and the three that must throw (staging with no URL, production
+with no URL, and a typo'd `APP_ENV=prod`). All 11 behaved correctly, including `production` +
+`MOCKS=1` keeping mocks **off**.
+
+**More importantly, the real `fetch` path ran for the first time.** Until now every request in this
+project's history has gone through a mock. A throwaway host was stood up on `localhost:4000` speaking
+the TDD's shapes, the app was pointed at it with `APP_ENV=staging`, and the auth flow was driven from
+the simulator. What actually went over the wire:
+
+- `POST /v1/auth/otp/request` — **the `/v1` prefix is on the wire**, not just in a constant.
+- `X-App-Version: 1.0.0` and `X-Bundle-Update-Id: embedded` — both present on every request.
+- Body `{"phoneNumber":"9408265432","countryCode":"+91"}` — matches API-1.
+- No `Authorization` on the unauthenticated endpoints, as `skipAuth` intends.
+- A `400 invalid_otp` in the real error envelope was parsed, surfaced, and **did not navigate**.
+- **Two taps produced exactly two requests** — incidental proof that `retryCondition` refuses to
+  retry a 4xx. A retrying client would have sent six.
+
+**What this does and does not settle.** The transport, prefix, headers, error envelope and retry
+policy are now proven against a real socket. **The contract is still unverified** — the stand-in host
+was written from the same TDDs as the mocks, so it cannot catch drift for the same reason they
+can't (O-11). That still needs the served schema.
+
+**When staging lands, the whole change is:** put the host in `.env` for local work
+(`EXPO_PUBLIC_APP_ENV=staging`, `EXPO_PUBLIC_API_URL=https://…`), and fill the same two keys into
+`eas.json`'s `preview` profile — flipping `development` from `mock` to `staging` at the same time if
+dev builds should hit it too.
+
+#### Module 2 addendum — reconciled against FE v1.42 / BE v1.4 (2026-07-31)
+
+§12.2's assessment that **"Module 2 needs no rework"** is right about the *architecture* — API-38 is
+one more endpoint on a layer that already exists. It was not right about the **types and comments**,
+which had O-16's old framing baked into them. Checked against the code rather than assumed; three
+things were stale and are now fixed.
+
+| Where | Was | Now |
+|---|---|---|
+| `src/api/contract.ts` header | A note saying `state` is "deliberately absent … O-16 is a message, not a change" — and referring to an `OnboardingSubmitRequest` type **that was never defined** | Records how O-16 actually closed: no `state` column, `cityId` submitted, `cityName`/`state` denormalized on read |
+| `ProfileResponse` | `city: string` | `cityId` · `cityName` · `state`, each annotated with which of the three is ever *sent* (only `cityId`) |
+| `api.ts` `tagTypes` | no `Locations` | `Locations` added, per this file's own rule that the tag list is declared centrally for endpoints later modules add |
+
+The comment mattered more than the types: it told the next module the **opposite of the truth** —
+that a backend change was still pending — which is exactly the failure §12 exists to prevent.
+
+**API-38 is deliberately *not* implemented here.** *(Updated by §12.3: it is **Module 5**'s, not
+Module 3's — FE v1.44 removed the cold-start model, and the endpoint is now per-state.)* Module 5
+owns both fetching and consuming it. But it carries **two data-layer decisions that both default wrong**, written up
+beside the `Locations` tag in `api.ts` so whoever adds the endpoint meets them:
+
+1. **`keepUnusedDataFor` must be set explicitly.** The spec says the full table is fetched *once at
+   cold start and cached for the session*. RTK Query's default drops a cache entry **60 seconds**
+   after its last subscriber unmounts — so the default re-fetches the entire cities table every time
+   the user returns to a city field. It would look fine in testing and cost real bytes on an Indian
+   mobile network in production.
+2. **It must stay out of redux-persist's whitelist.** Refetching once per cold start *is* the
+   specified behaviour, and `api` is excluded from persistence precisely so a full reference table
+   cannot accumulate on disk (NFR-11, FE TDD §4.4). Adding it would look like an optimisation and
+   would reintroduce the growth the whitelist was designed around.
+
+FE §6.14's "parallel to the auth check, not behind the version gate, must not block the root
+navigator" also has a concrete shape in this layer: API-38 wants a **retry budget** (NFR-7 expects a
+retry state in the city field), not `getMe`'s boot-gate treatment, and must not be awaited inside the
+`PersistGate` / `AppShell` boot path.
+
+**Unaffected, checked:** the base query, token storage, persistence, error and retry layers, and every
+slice. The location change is a payload-shape change, which is the class of change this layer was
+built to absorb.
+
+**Still to reconcile, and unchanged by this sync:** `discover-filters-slice.ts` has `location` as a
+flat `string[]` and `src/lib/discover/filter-options.ts` still hardcodes 8 city names. Both were
+already Module 7's; §12.2 sharpens *how* they change — a filter over `cityId`/`state` drawn from the
+cached API-38 list, not a hand-written array.
+
+#### Module 2 addendum — v1.45 / v1.6, and first contact with the real backend (2026-08-02)
+
+Two things landed together: the spec closed both items Module 2 had raised, and **staging came up**,
+so the contract stopped being a document and became observable.
+
+**Both raised items came back resolved, and one changed a type:**
+
+- **O-4 closed.** `accountStatus` is checked before the routing table, one undifferentiated blocker,
+  and BE v1.6 §9.9 adds request-level `403` enforcement on every authenticated endpoint except
+  `GET /me` and `POST /auth/refresh`. **`deleted` is a fourth value** — reachable because FR-28's
+  soft-delete sets the status immediately but does not revoke tokens until the purge.
+- **`languagesOther` added** to API-7 and API-23 (and `user_languages.other_text` backend-side),
+  which is the gap raised on 2026-08-01: FR-3b pointed at FR-28's `{ reason, details? }` pattern,
+  but `languages` is an *array* and had no sibling to carry the free text.
+
+**Applied here:** `languagesOther?: string` on `ProfileResponse`, and **six error codes added** to the
+closed union — `account_suspended` / `account_banned` / `account_deleted` from BE §9.9, plus
+`unauthorized` / `not_found` / `service_unavailable`, which are **not in either TDD** and were found
+by calling the deployed server. Without them `normalizeError` casts a code the backend really sends
+into a type that claims it cannot occur, which is the one thing a closed union exists to prevent.
+
+##### Staging is live — `https://zomyra-staging.duckdns.org`
+
+**What the contract does on the wire, verified rather than assumed:**
+
+| Checked | Result |
+|---|---|
+| `/v1` prefix | ✅ Correct — `/v1/health` and `/v1/app/version-check` answer, unprefixed paths 404 |
+| Error envelope | ✅ Exactly `{"error":{"code":"unauthorized","message":"Authentication required"}}` |
+| `X-Request-Id` | ✅ Issued on **every** response including errors (`x-request-id: 393cffbc-…`). Confirms CONTRACT-QUESTIONS item 6, and `Headers.get` is case-insensitive so `requestIdOf()` already reads it |
+| API-5 response | ✅ Field-for-field match with `VersionCheckResponse` |
+| `refresh_token_invalid` | ✅ Exact code match on a bogus refresh token |
+| **End-to-end through the app** | ✅ Pointed the simulator at staging: the phone screen's Send OTP hit the real host, the real `404 not_found` came back through the base query, normalised, and the screen correctly **did not advance**. With mocks it would have navigated — so this proves the live path, not the mock one |
+
+##### ⚠️ The endpoint surface is partial — this is what Modules 3 and 4 need to know
+
+| Live | Not deployed (`404 not_found`) |
+|---|---|
+| `/v1/health` · API-5 version-check · API-4 refresh · API-6 `/me` · API-23 `/profile/me` · API-7 submit · API-33 quiz *(the last four returning `401` without a token, i.e. routed and enforcing auth)* | **API-1 `/auth/otp/request`** · **API-2 `/auth/otp/verify`** · API-38 cities · API-39 options · API-12 discover · API-34 counts · API-13 filters · API-16 requests · API-19 chats · API-30 plans |
+| | API-3 `/auth/google` is routed but returns `503 service_unavailable` |
+
+**The consequence that matters: there is currently no way to obtain a token.** Phone auth is not
+deployed and Google returns 503, so every authenticated endpoint is unreachable end-to-end even
+though several are clearly routed. **Module 3's root gate can be built but not verified against
+staging until API-1/API-2 land** — it stays on mocks until then, which is exactly the case the mock
+transport was built for.
+
+**O-8 is therefore half-closed:** the base URL exists (wired into `eas.json`'s `preview` profile and
+`.env`), but **`/v1/docs-json` returns 404** — the OpenAPI schema is still not served, so
+`yarn api:generate` cannot run and O-11 remains unmitigated. That is now the single highest-value
+ask, and more so than before: FR-3b made every choice value a server-owned catalogue key, which is
+precisely the class of thing no one can typecheck by hand.
+
+**Local `.env` deliberately stays on `mock`** with the staging URL filled in beneath it, since auth
+is undeployed. Flipping `EXPO_PUBLIC_APP_ENV` to `staging` is the whole switch.
+
+#### Module 2 addendum — `legacy-migration.ts` removed (2026-08-02)
+
+Deleted on the owner's challenge — *"is this needed, the app isn't live yet?"* — which was right, and
+for a stronger reason than the one asked about.
+
+It read the two Zustand-era AsyncStorage keys (`zomyra.onboarding.v1`,
+`zomyra.discovery-mode.v1`) as redux-persist's `migrate` hook and seeded them into the persisted
+state. Three reasons it had to go, in increasing order of force:
+
+1. **There are no users.** The app has never shipped — O-2's store accounts don't exist. The only
+   devices that ever held those keys are this project's simulator and emulator, and the import
+   already ran on both.
+2. **It was coupled to types Module 5 deletes.** It imported `defaultOnboardingState` and
+   `OnboardingState`, which §12.3 records as *"wrong by design"* now that FR-3b makes the choice
+   lists backend-driven. It would have needed editing in Module 5 for zero benefit.
+3. **The data it rescued is no longer submittable — this is the real argument.** A Zustand-era draft
+   holds `city` as free text (the contract now needs `cityId`), enum **labels** rather than catalogue
+   **keys**, and a `discoveryMode` spelled from the prototype's
+   `all | personality | lifestyle | priorities` — which is neither TDD's. A "successful" migration
+   would therefore pre-fill a form with values that **cannot be submitted**, and it would look like
+   real data rather than an empty draft. It had stopped being dead code and become a small trap.
+
+**What replaced it: a warning, not nothing.** The `migrate` hook is gone, but `src/store/index.ts`
+now carries the reason and, more importantly, the instruction Module 5 needs:
+
+> ⚠️ Module 5 changes the `onboarding` slice's shape fundamentally (free-text `city` → `cityId`,
+> enum labels → catalogue keys, `+ languagesOther`). redux-persist's default behaviour on a version
+> mismatch is a **pass-through**, which would rehydrate old-shaped drafts into the new slice and fail
+> at *submit* rather than at *load*. Bump `version` to 2 **and** add an explicit
+> `createMigrate({ 2: () => undefined })` to discard — a pre-v1.45 draft cannot be repaired into a
+> submittable one.
+
+That converts a dead file into a live instruction at the exact place the next author will look.
+
+**Verified on the simulator, not assumed:** with the hook removed, existing persisted state
+(`_persist: {version: 1}`) still rehydrated — the app resumed at `stepIdx: 1` with the draft intact —
+and a further step advanced and wrote through to `stepIdx: 2`. AsyncStorage holds exactly one key,
+`persist:zomyra.root`.
+
+#### Modules 0–2 addendum — dead-code sweep (2026-08-02)
+
+Run at the owner's ask before Module 2 closes, prompted by `legacy-migration.ts` turning out to be
+carryable dead weight. Scope was Modules 0, 1 and 2's own output; later modules keep their own.
+
+**Method:** every `export` in `app/` and `src/` cross-referenced for external use (68 candidates,
+mostly false positives — types used inside their own file), plus a proper orphan-file pass and a
+dependency scan. The rule applied throughout: **delete what is speculative; keep what has a named
+future owner.** An unused thing with a module attached to it is a seam, not debt.
+
+**One finding was a bug, not dead code — and it is the reason the sweep was worth doing.**
+
+`src/auth/sign-out.ts` showed up as an orphan file. It was not surplus: **`Log out` never cleared the
+tokens.** `app/profile.tsx`'s handler reset the onboarding draft and navigated to `/login`, leaving
+the access and refresh tokens in the keychain, `session.status` still `authenticated`, and the RTK
+Query cache intact. Module 2 wrote the fix and never wired it. Now wired into both Log out and Delete
+account — the latter being the local half of API-27's *"client clears Redux/persisted state +
+SecureStore"*. **Deleting the file as "unused" would have deleted the fix and left the leak.**
+
+**Removed — superseded by Module 2's own work:**
+
+| | Why |
+|---|---|
+| `STORAGE_KEY`, `STORAGE_STEP_KEY` (`lib/onboarding/types.ts`) | Zustand-era AsyncStorage keys; redux-persist owns persistence now |
+| `VERIFICATION_STORAGE_KEY` (`lib/verification/types.ts`) | Same, and the verification slice is deliberately never persisted |
+
+**Removed — speculative:** `resetTokenCache`, `resetRefreshState` (test seams with no test runner —
+Module 12 owns testing and can re-add either in one line), `describeApiTarget`, `IS_STAGING`,
+`clearSession` (mock), and the `typography` aggregate in the theme, which nothing used because call
+sites import `fontSize` / `fontWeight` directly.
+
+**Removed — orphan file:** `src/components/discover/FilterOptionSheet.tsx`, 250 lines with no
+importer anywhere. Prototype-era, and Module 7 rewrites Filters against API-13 regardless. In git
+history if it is ever wanted.
+
+**Module 1's eight flagged tokens, resolved as its log asked.** It shipped them unreferenced with the
+instruction *"if a later module still has no use for one, delete it."* Three have since found use —
+`surface.media` (×1), `premium.textStrong` (×2), `border.onBrand` (×3). Four were deleted:
+`text.secondary`, `text.link`, `success.text`, `overlay.scrimStrong`.
+
+**`text.disabled` was deliberately kept** despite still being unreferenced, which is a departure
+worth stating. It encodes a decision rather than a value: gray-400 at **2.50:1**, below AA *on
+purpose*, because WCAG 1.4.3 exempts inactive components — it is the only sub-AA token allowed near
+text. Module 4 and 5's forms will certainly need a disabled treatment, and deleting it means someone
+later picks a grey without that reasoning attached. A token carrying an accessibility exemption is
+documentation, not dead weight.
+
+**Dependencies removed:** `date-fns`, `dayjs` (two date libraries, *neither* imported anywhere) and
+`@gorhom/bottom-sheet` (Module 1 rebuilt `BottomSheet` on RN `Modal`, leaving this unreferenced).
+All three are JS-only, so no native build surface changed.
+
+**Dependencies deliberately kept though unimported**, so the next scan does not re-litigate them:
+
+- `expo-image` — §3's baseline finding still stands, and **Module 6 owns it** (NFR-9/NFR-14's
+  `cacheKey` decoupled from rotating signed URLs).
+- `expo-dev-client` (C-2), `@expo/metro-runtime`, `@react-navigation/*`, `react-native-screens`,
+  `react-native-worklets`, `expo-linking`, `expo-system-ui` — peers and native deps that are
+  required without appearing in an import statement.
+- `expo-web-browser`, `react-native-webview` — Module 0 already ruled on both.
+- `expo-blur`, `expo-symbols`, `expo-camera` — **flagged, not removed.** Genuinely unimported, but
+  they are native modules: dropping them changes prebuild output and wants a native build to verify,
+  which is not a "quick scan" change. `expo-camera` in particular may be Module 6's. Worth a decision
+  when a native build is being made anyway.
+
+**Verified:** typecheck baseline clean, lint 0 errors, `yarn doctor` 18/18, **both platforms bundle
+at 3551 modules** (so the three dropped dependencies broke neither), and the Profile screen renders
+unchanged after the token removals.
+
+**The logout fix was proven against the filesystem, not the UI.** On Android, `shared_prefs/
+SecureStore.xml` held two AES-encrypted entries — `zomyra.auth.accessToken` and
+`zomyra.auth.refreshToken` — before logout. After tapping through the confirm dialog the same file
+is `<map />`: **zero keys, zero ciphertext.** Before this change those two entries survived logout
+indefinitely.
 
 <!--
 Template:
@@ -1264,6 +1766,10 @@ text rather than reading the whole document — the deltas are usually small and
 
 ### 12.1 Frontend TDD v1.39 → v1.40 (received 2026-07-30)
 
+> ⚠️ **Superseded by §12.2.** v1.41 and v1.42 reversed the central mechanism described below —
+> cities are **not** bundled client-side, and `state` is **not** submitted. Kept for the audit
+> trail; **do not build from this entry.**
+
 **One change, five places: a `state` field added ahead of `city` in onboarding.** Verified by full
 text diff — 5 hunks, no other edits anywhere in the document.
 
@@ -1294,3 +1800,362 @@ text diff — 5 hunks, no other edits anywhere in the document.
 **Two things this opened, both tracked:** O-15 (the fallback when a user's town isn't listed —
 flagged as undecided by the spec itself, and it determines whether `city` is a closed enum or an
 open string) and O-16 (Backend TDD v1.2 has no `state` field at all).
+
+### 12.2 Frontend v1.40 → v1.42, Backend v1.2 → v1.4 (received 2026-07-31)
+
+> ⚠️ **Partially superseded by §12.3.** The `cityId` decision below still holds. The *fetch model*
+> does not — v1.44 reverted API-38 to per-state and removed the cold-start framing entirely.
+
+**The two documents are now aligned on this, and both changed.** v1.41 and v1.42 walked back most
+of §12.1 — read this entry, not that one.
+
+**What actually happened, in order:**
+
+- **v1.40** (§12.1) proposed bundling both the state list *and* per-state city lists client-side.
+- **v1.41** reversed it after backend cross-check: the backend already had a `cities` table with
+  `users.city_id` pointing at it, so a second client-side copy would have been a duplicate source of
+  truth. Cities move to a new endpoint, **API-38 `GET /locations/cities`**, and onboarding submits
+  **`cityId`, not raw city text**. It also **retracted v1.40's claim** that FR-5's "same state"
+  matching was newly fixed — it already worked via that table. FR-3a is a **city-picker UX
+  improvement, not a matching change.**
+- **v1.42** revised API-38 once more: it now returns the **entire cities dataset in one unpaginated
+  response**, fetched **once at app cold start** and cached client-side, with state filtering done
+  locally. The v1.41 per-state-selection call wasn't worth the round trip.
+
+**Where it landed:**
+
+| | Final position (FE v1.42 / BE v1.4) |
+|---|---|
+| **State list** | Bundled client-side — 28 states + 8 UTs, effectively fixed, same treatment as religion/diet/build |
+| **City list** | **Backend-served** via API-38, full table, fetched once at cold start, cached for the session |
+| **Submitted value** | **`cityId`** (uuid, FK → `cities.id`). **`state` is never submitted** — it only filters the cached list client-side; `cityId` already implies the state |
+| **`GET /profile/me`** | Returns `cityId, cityName, state` — the latter two denormalized via join, display/pre-fill only, not independently editable |
+| **Endpoint count** | 37 → **38** |
+
+**Module impact — the estimate bump from §12.1 is reversed:**
+
+- **Module 5 goes back to 3–4 days.** The +1 day was for authoring a 36-state city dataset. That
+  dataset now comes from the backend, so it evaporates. Only the ~36-entry state list is bundled,
+  which is trivial.
+- **Module 3 gains a small piece of cold-start orchestration.** FE §6.14 is explicit: API-38 fires
+  **in parallel with the auth/profile check**, is **not** gated behind the version check, and must
+  **not block the root navigator**. It is reference data, not a gate.
+- **Module 5 owns consumption:** state screen → filters cached list → city screen submits `cityId`.
+  Changing state clears city. If the cold-start fetch hasn't resolved (slow network or retrying),
+  the **city field shows a loading/retry state** — it must not block the state screen, and must not
+  fail silently (NFR-7).
+- **FR-27 is now specific:** state and city sit in Edit Profile's **Quick Facts** card and are
+  edited **as a pair** — changing state re-filters the cached list and clears the city, same cascade
+  as onboarding. Not independently editable.
+- **Module 2 needs no rework.** API-38 is one more endpoint definition on a data layer that already
+  exists; once the OpenAPI schema is served it comes out of `yarn api:generate` for free.
+
+**Also resolved in these versions:** the two long-standing "left to backend coordination" items at
+the end of FE §9 — RevenueCat product identifiers (`product_id` is separate from
+`revenuecat_entitlement_id` in the backend schema) and quiz-set versioning (`quizVersion` now
+travels end to end). Neither needs client work.
+
+**Open-item movement:** **O-16 is closed** — the backend has the contract, though *not* in the shape
+O-16 described (there is no `state` column on the profile; `cityId` carries it). **O-15 is now
+half-settled:** the client side is decided — `city` is a **closed set**, always a `cityId` from the
+backend's table, never free text — which was the part that would have changed the Discover filter
+and the matching query. What remains is purely a **backend data-curation question**: what happens
+when a user's town isn't in the table.
+
+### 12.3 Frontend v1.42 → v1.44, Backend v1.4 → v1.5 (received 2026-07-31)
+
+**The largest spec change so far, and it is a genuine simplification for us.** One new endpoint
+removes an entire category of work the baseline flagged as a risk.
+
+#### FR-3b — the client hardcodes no choice lists at all
+
+New **API-39 `GET /onboarding/options`** serves *every* multiple-choice and multi-select field in
+Plot and Anchor as `{ key, label }` pairs. Not just the ones that plausibly grow — **gender,
+religion and diet too**, deliberately, for consistency. Categories: gender, state, build, education,
+profession, incomeRange, religion, languages, diet, drinking, smoking, familyType (Plot);
+matchLocationPreference, childrenPreference, interfaithStance, smokingPartnerComfort,
+householdPreference, relocationWillingness (Anchor); discoveryMode (FR-15/15a).
+
+The client **submits keys**, not labels — `profession: "swe"` — and resolves the label for display
+locally. BE v1.5 §14.2 confirms the same on the receiving side.
+
+**Three specifics inside FR-3b that are easy to skim past:**
+
+1. **Profession changes kind.** It was `profession (autocomplete)` over the client's own
+   `PROFESSIONS` list; it is now a **curated backend shortlist of ~100–200 entries**, served inside
+   the API-39 catalogue rather than getting its own endpoint like cities did — it has no
+   state-style scoping dimension to justify splitting it out.
+2. **Languages has an escape hatch.** 10–15 major languages plus an **`Other` key that reveals a
+   free-text field** when selected — the same pattern as FR-28's delete-account reason picker. This
+   is the one place a free-text value survives in the catalogue-driven set.
+3. **The loading state is shared, not bespoke.** If the fetch hasn't resolved when a screen needs
+   it, FR-3b calls for *the shared default loading state* — explicitly **distinct from
+   Chat/Requests' own spinner** — rather than a blank screen. **That primitive does not exist yet**
+   (see the Module 1 row below).
+
+**Client lists this makes obsolete** in `src/lib/onboarding/data.ts`: `INDIAN_CITIES`,
+`PROFESSIONS`, `LANGUAGES` — all three are now backend-driven. `HEIGHT_MIN_CM` / `HEIGHT_MAX_CM`
+stay: a slider's bounds are not a catalogue (though O-6 still questions the filter's bounds).
+
+#### API-38 reverted to per-state
+
+Third revision of this mechanism. `GET /locations/cities?state=<key>` — required param, returns
+`{ cities: [{ id, name }] }` for that state only, `400 invalid_state` on a bad key. Fetched the
+**first time a given state is selected**, cached per state key. The v1.42 full-India cold-start
+fetch is gone: a user picks one or two states, so shipping every city in India to serve that was
+wasted bandwidth on exactly the networks this app targets.
+
+#### Neither is a cold-start fetch — §12.2 was wrong about this
+
+FE v1.44 states it plainly: both endpoints **require auth**, and by the time either is reachable the
+user already holds a token on every path. They fetch when the **Onboarding stack mounts**, and again
+when **Edit Profile opens**. They do not run at cold start, are not gated behind the version check,
+and never block the root navigator.
+
+**Consequence: the cold-start orchestration §12.2 gave Module 3 no longer exists.** Module 3 is back
+to its original scope. Both endpoints move wholly to **Module 5**.
+
+#### What this does to the finished modules
+
+| Module | Verdict |
+|---|---|
+| **0 · Build foundation** | **No change.** Nothing here touches data sourcing |
+| **1 · Design system** | **No change to what it built** — but FR-3b references a *"shared default loading state"* that **does not exist**. Module 1 shipped Button, Input, Dialog, Overlay, Toast, Touchable, BottomSheet, ConfirmDialog — no loading primitive. FR-3b is explicit that it is the shared fallback, **distinct from Chat/Requests' own spinner**, so it belongs with the primitives rather than being invented ad hoc in Module 5. **Placed in Module 3 — see §13** |
+| **2 · State & data layer** | **No structural rework — the architecture was right.** It already uses AsyncStorage as redux-persist's engine (now explicitly required by FE §4.2), already excludes `api` from the persist whitelist (now explicitly required for these catalogues), and already documented that `keepUnusedDataFor` must be raised from the 60s default. **Two comments were stale** and are corrected in this pass: the `Locations` tag block in `src/api/api.ts` described the full-table cold-start model, and assigned the endpoint to Module 3. **A follow-up code review then found four more items — one a real gap, not a comment. See §12.3a.** |
+
+That Module 2 needed no structural change is worth noting: it was built to the *shape* of the
+contract — persist whitelist, cache lifetime, tag registry — rather than to any one endpoint's
+wording, so a third revision of that endpoint cost comments rather than code.
+
+#### 12.3a Verification pass against the code (2026-07-31)
+
+The verdicts above were re-checked line by line against the source rather than accepted, since §12
+exists precisely because doc-level assessments miss things. **The architectural verdicts all hold**,
+and one is worth stating as evidence rather than assertion:
+
+> **BE v1.5's §7.1 is byte-identical to v1.2's.** The `/v1` prefix, the
+> `{ error: { code, message, details? } }` envelope, `{ cursor, limit }` →
+> `{ nextCursor, hasMore }`, `Authorization: Bearer` + 401 → silent refresh, the three standard
+> headers, and §9.2's single-in-flight-refresh note **did not move across three backend revisions.**
+> Everything Module 2's base query encodes sits in that section. That is why a third revision of the
+> location mechanism cost comments rather than code — the layer was built to the conventions, not to
+> any endpoint's wording.
+
+**Four items the doc-level pass did not catch. One is a real gap:**
+
+1. **`invalid_state` was missing from `ApiErrorCode`** — a genuine code defect, not a stale comment.
+   API-38 returns `400 invalid_state` (FE §9.2, BE §14.2a). `src/api/errors.ts` declares a
+   **closed** union so that "a typo in a branch is a compile error rather than a branch that
+   silently never runs", and its own header says *"add to this list when an endpoint is added"*.
+   Until this fix, Module 5 writing `errorHasCode(err, "invalid_state")` would not have compiled —
+   the closed union working exactly as intended, against us. Added, with a note that API-39
+   contributes no codes (it takes no parameters, so it has nothing to reject).
+2. **`DiscoveryMode` must stay a union while the other enums become `string`.** FR-3b makes every
+   choice list backend-driven and FR-15 says these four labels now come from the API-39 catalogue —
+   which reads like an instruction to widen the type. It is the opposite: FR-15 states the four
+   modes are *"structurally wired into the matching engine's sub-scores, so adding a fifth would need
+   new backend scoring logic regardless of this catalogue."* **The catalogue supplies the labels; the
+   keys are a fixed contract.** Pinned in `contract.ts`, because a Module 5 sweep replacing enums
+   with `string` would otherwise take this one with it.
+3. **`ProfileResponse`'s choice fields changed meaning without changing type.** `gender`, `build`,
+   `education`, `profession`, `incomeRange`, `religion`, `languages`, `diet`, `drinking`, `smoking`
+   and `familyType` are now **catalogue keys** (`"swe"`), not display labels
+   (`"Software Engineer"`). They were already `string`, so **nothing failed to compile** — which is
+   why it needed writing down rather than discovering in Edit Profile. Module 5/6 must resolve keys
+   to labels through API-39.
+4. **A cross-endpoint invariant with no owner.** BE v1.5 §14.2a keeps API-13 (`/filters/options`)
+   and API-39 (`/onboarding/options`) structurally separate on product direction, while six
+   categories appear in both — **and FR-3 requires religion's ten options to be identical across
+   them.** Nothing enforces that. Recorded in `src/lib/discover/filter-options.ts` so Module 7 meets
+   it as a check rather than an assumption.
+
+**Modules 0 and 1 re-checked too, and both verdicts hold**, with supporting evidence:
+
+- **Module 0** — `@react-native-async-storage/async-storage` is already a dependency, so FE §4.2's
+  newly-explicit requirement is satisfied by what Module 0 shipped. Nothing else in v1.44/v1.5
+  touches build configuration. The one real build consequence is forward-looking and correctly
+  captured as O-17: `lottie-react-native` is a **native** module, so under C-2 the first module to
+  use a Lottie file pays a dev-client rebuild.
+- **Module 1** — confirmed there is no loading primitive: `src/components/ui/` holds
+  `BottomSheet`, `Button`, `ConfirmDialog`, `Dialog`, `Input`, `Overlay`, `Toast`, `Touchable` and
+  nothing else. **The drift §13 predicts has already started** — raw `ActivityIndicator` appears in
+  two places (`ui/Button.tsx` and `onboarding/OnboardingShell.tsx`), which is two treatments before
+  any module has been asked to build one. That is the argument for §13.2 placing it in Module 3.
+
+#### The strategic win, and the cost
+
+**Win — the enum-drift risk from §3 is largely gone.** The baseline flagged local enums diverging
+from the API (`all|personality|lifestyle|priorities` vs `all|compatibility|lifestyle|marriage_goals`;
+build lists disagreeing between Discover and onboarding; a religion list missing four of FR-3's ten).
+With the server owning every list, **those cannot drift** — there is one source and the client
+renders it. A whole class of Module 5 and Module 7 bugs is designed out.
+
+**Cost — three things to plan for:**
+
+1. **Compile-time safety on those values is gone.** `Religion`, `Diet`, `Education` and friends in
+   `src/lib/onboarding/types.ts` become plain `string` keys. TypeScript can no longer catch a bad
+   religion value; only the backend can. Consider a runtime guard at the edge in Module 5.
+2. **Onboarding cannot render without API-39.** Every choice screen depends on it — a harder
+   dependency than any single field. It needs a **mock fixture** in `src/api/mock` before Module 5
+   can build against it, and a **loading/retry state**, since NFR-7 forbids failing silently.
+3. **`src/lib/onboarding/types.ts`'s hardcoded unions are now wrong by design** — deleting them is
+   Module 5 work, but it is deletion rather than renaming, which is the cheaper direction.
+
+#### Unchanged
+
+O-15 stands exactly as it was: the client side is settled (city is a closed set of `cityId`s), and
+what remains is backend data curation. Endpoint count 38 → **39**.
+
+---
+
+## 13. Loading states — one family, five treatments
+
+Added 2026-07-31, after FE v1.44's FR-3b referenced a *"shared default loading state"* that no
+module had built. Module 1 shipped no loading primitive at all.
+
+**The problem this section prevents:** the spec describes **five different loading treatments**
+scattered across FR-3b, FR-23, §6.5, API-13 and API-19/20. Left to each module, five modules invent
+five spinners, and the app looks assembled rather than designed. They are enumerated here once so
+each module knows which one it owns and which it merely consumes.
+
+### 13.1 The five, and where each lands
+
+| # | Treatment | Specified in | Used for | Built in |
+|---|---|---|---|---|
+| 1 | **Shared default** | FR-3b | The generic fallback wherever no bespoke pattern is specified — onboarding catalogues, the root gate, auth submits | **Module 3** |
+| 2 | **Plain spinner → error + Retry** | API-19, API-20 | Chat list and message history — deliberately simpler than Discover's pattern, since these lists are shorter and lower-stakes | Module 9 |
+| 3 | **Shimmer / skeleton (content-shaped)** | FR-23, §6.7 | Non-premium Requests placeholder cards — the *point* is that they convey "requests exist" without detail | Module 8 |
+| 4 | **Shimmer (layout-stabilising)** | API-13, API-30 | The Discover filter row and Premium plans — used because their width genuinely changes once real options arrive, so without it the layout visibly reflows | Module 7 |
+| 5 | **Branded logo animation** | §6.5, §6.7 | Discover's card slot when the user out-runs pagination — there is no scrollable list to host a conventional interstitial in a one-card-at-a-time UI (FR-13) | Module 7 |
+
+Note that 3 and 4 are both "shimmer" but exist for **different reasons** — one is a privacy gate,
+the other is layout stability. They may share an implementation; they must not share a rationale,
+because 4's justification (API-13) explicitly does *not* apply to tab-bar badges or premium status.
+
+### 13.2 Why the shared default belongs to Module 3
+
+Not Module 1 (already merged) and not Module 5 (where FR-3b names it), because **Module 3 is the
+first module that renders a pending network state**: the root gate runs the version check and
+`GET /me` before routing anywhere (FR-30, §9.1). Building it there means Modules 4, 5, 7, 8 and 9
+inherit it rather than each reaching for `ActivityIndicator`.
+
+Scope is small — one primitive plus its tokens, roughly half a day on top of Module 3's estimate.
+It belongs beside Module 1's `Button`/`Input`/`Dialog` set in `src/components/ui/`, exported from
+the same index, and built on the existing design tokens rather than introducing new colour values
+(C-4 lint will reject raw literals anyway).
+
+**Two requirements it must satisfy on day one, both cheap now and expensive to retrofit:**
+
+- **NFR-6a (4): respect the OS "reduce motion" setting.** Every treatment in §13.1 animates. A
+  reduce-motion fallback has to be built into the primitive, not bolted onto five call sites later
+  — and treatment 5, the branded logo animation, is the one most likely to fail this.
+- **NFR-6 / NFR-6a (3): screen-reader behaviour.** A loading state needs an accessibility label and
+  must not trap or silently swallow focus while it is mounted.
+
+### 13.3 What each later module then owes
+
+- **Module 4** — consumes the shared default for auth submits; builds nothing.
+- **Module 5** — consumes it for the FR-3b catalogue fetch, plus the **city field's own
+  loading/retry state** (FR-3a), which is field-level rather than screen-level and must not block
+  the state screen behind it.
+- **Module 7** — builds 4 and 5, including the 3-retry-then-error-with-retry loop (§6.5).
+- **Module 8** — builds 3, reusing Module 7's retry pattern (§6.7 says so explicitly).
+- **Module 9** — builds 2, and the spec is explicit that it is *deliberately simpler* than Discover's;
+  resist unifying them.
+
+### 13.4 Artwork comes from the owner — ask before building (O-17)
+
+**Rule: when a module reaches a loading visual in §13.1, request the asset rather than inventing
+one.** The owner holds **Lottie JSON** animations intended for exactly this. Same convention as the
+brand assets in §10 — a placeholder built now is a placeholder replaced later, and the replacement
+is rarely a drop-in because timing, dimensions and colour all shift.
+
+**Which of the five plausibly need supplied artwork:**
+
+- **#5, the branded logo animation** — almost certainly. It is explicitly *branded*, and it is the
+  most visible loading state in the app (§6.5, Discover's card slot).
+- **#1, the shared default** — worth asking. It may be the same Lottie at a smaller size, or a
+  plain token-driven indicator; that is the owner's call, not a default to assume.
+- **#3 and #4, the shimmers** — usually code rather than artwork (a gradient sweep over a
+  content-shaped placeholder), but confirm, since a branded treatment is possible.
+
+**What to ask for, so one round trip is enough:**
+
+| | |
+|---|---|
+| Format | Lottie JSON (`.json`), plus a **static fallback frame** — see reduce-motion below |
+| Dimensions | Intended render size, and whether it scales |
+| Loop | Looping or one-shot, and what happens when the operation finishes |
+| Background | Transparent — it renders over `colors.background`, not a fixed white |
+| Colour | Must sit within the design tokens; C-4's lint rejects raw literals in code, and artwork should not quietly introduce a sixth purple |
+| Size | Keep the JSON small; it ships in the bundle |
+
+Place delivered files beside the existing brand assets in `assets/brand/`.
+
+**Two things that are not optional:**
+
+1. **A static fallback frame per animation (NFR-6a).** Lottie does not honour the OS reduce-motion
+   setting by itself — the primitive has to check it and render a still frame instead. Requesting
+   the frame *with* the animation avoids exporting one later from a file nobody has open.
+2. **The native dependency is a build event.** `lottie-react-native` is not installed, and adding it
+   requires a dev-client rebuild under C-2. Decide during Module 3 whether the shared default uses
+   Lottie: if yes, the dependency lands there; if no, it lands in Module 7 with the branded
+   animation. Either way it should be batched with any other native addition, not paid for twice.
+
+### 12.4 Frontend v1.44 → v1.45, Backend v1.5 → v1.6 (received 2026-08-01)
+
+**Two spec gaps closed, both found during implementation review rather than by reading.** One of
+them was **O-4**, which had been Module 3's live blocker since the baseline.
+
+#### (1) `accountStatus` now has a destination — O-4 closed
+
+The gap: `GET /me` returned `suspended` / `banned` / `deleted`, but §9.1's cold-start table only
+ever branched on `profileComplete` / `verificationStatus` / `discoveryMode`. A suspended user routed
+as though nothing were wrong.
+
+**Resolution, and the ordering matters:** `accountStatus` is evaluated **first — before the routing
+table is consulted at all**. Any non-`active` value routes to a **single static, non-dismissible
+blocker** (same pattern as FR-30's "Update required"): no retry, no appeal link, and **deliberately
+no distinction between the three causes**, since there is no in-app path back regardless.
+
+**BE v1.6 §9.9 adds the enforcement half**, and it changes the shape of client error handling:
+
+- Every authenticated endpoint **except `GET /me` and `POST /auth/refresh`** now rejects a
+  non-active account with **`403`** (`account_suspended` / `account_banned` / `account_deleted` —
+  distinct server-side for support diagnostics, undifferentiated to the client).
+- **The session is not revoked.** Tokens stay valid and refresh keeps working; the account is gated
+  at the *usage* level, not logged out. The two exemptions exist precisely so the client can still
+  discover *why* it is blocked.
+- **`deleted` is reachable on purpose:** FR-28's soft-delete sets the status immediately but does
+  not revoke tokens until the hard-delete purge after the grace window. BE §9.9 notes this window
+  was previously "a real, if narrow, exposure" — this check is what closes it.
+
+**Module 3 owns both halves:** the blocker screen, and detecting a `403 account_*` in
+`base-query.ts`. Note the second is not just a gate concern — because enforcement is request-level,
+that 403 can surface on *any* call mid-session, not only at cold start.
+
+**Carried trade-off, flagged by the spec itself, not an oversight:** the blocker is a deliberate
+dead end, so a user has no in-app way to exit or switch accounts from it — only a force-quit. FE
+v1.45 records this in its own Open Items in case a minimal escape hatch is wanted later.
+
+#### (2) `languagesOther` — the carrier field that didn't exist
+
+§12.3 recorded that languages has an `"Other"` key revealing a free-text field, "the same pattern as
+FR-28's delete-account reason picker." **That comparison was wrong, and the docs have now corrected
+it**: FR-28's `reason` is a *scalar* enum with a `details` sibling, whereas `languages` is an
+*array*. There was no field anywhere in either document for the free text to travel in.
+
+**Resolution:** a **`languagesOther`** sibling alongside `languages: [...]` in **API-7 and API-24** —
+not nested inside the array. `400 validation_error` if `"other"` is present without `languagesOther`
+or vice versa. Backend stores it as `user_languages.other_text`, populated only on the `other` row.
+
+#### What this does to the finished modules
+
+| Module | Verdict |
+|---|---|
+| **0 · Build foundation** | No change |
+| **1 · Design system** | No change beyond the loading primitive already tracked in §13 |
+| **2 · State & data layer** | **Two small corrections, applied in this pass.** `AccountStatus` was typed `"active" \| "suspended" \| "banned"` — **missing `"deleted"`**, which is reachable during the grace window, so a real value would have failed the union. And `contract.ts`'s O-4 comment described an open gap that is now closed. Both fixed. The `403 account_*` handling in `base-query.ts` is left for **Module 3**, which owns the route it needs to send users to |
+
+`languagesOther` needs no Module 2 change — it lands in API-7/API-24's request bodies, which Module 5
+builds.

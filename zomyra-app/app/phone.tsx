@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CountrySelector } from "@/src/components/auth/CountrySelector";
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { DEFAULT_COUNTRY, type Country } from "@/src/lib/countries";
-import { authService } from "@/src/services/auth";
+import { useRequestOtpMutation } from "@/src/api";
 import { colors, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Button, Input } from "@/src/components/ui";
 import { isIOS } from "@/src/utils/platform";
@@ -16,7 +16,10 @@ export default function PhoneScreen() {
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [phone, setPhone] = useState("");
   const [touched, setTouched] = useState(false);
-  const [sending, setSending] = useState(false);
+  // API-1. Module 4 owns this screen's real error handling — `rate_limited`
+  // carries a `retryAfterSeconds` the UI should honour, and
+  // `sms_delivery_failed` is worth telling the user about.
+  const [requestOtp, { isLoading: sending }] = useRequestOtpMutation();
 
   const digits = phone.replace(/\D/g, "");
   const isValid = digits.length === country.length;
@@ -41,9 +44,8 @@ export default function PhoneScreen() {
 
   const send = async () => {
     if (!isValid || sending) return;
-    setSending(true);
-    await authService.sendOtp(country, digits);
-    setSending(false);
+    const result = await requestOtp({ phoneNumber: digits, countryCode: country.dial });
+    if (result.error) return;
     router.push({ pathname: "/otp", params: { dial: country.dial, phone: digits } });
   };
 

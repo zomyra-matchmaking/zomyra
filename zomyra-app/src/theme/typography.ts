@@ -79,11 +79,3 @@ export const letterSpacing = {
   wide: 0.3,
   wider: 0.6,
 } as const;
-
-export const typography = {
-  family: FONT_FAMILY,
-  size: fontSize,
-  weight: fontWeight,
-  lineHeight,
-  letterSpacing,
-} as const;

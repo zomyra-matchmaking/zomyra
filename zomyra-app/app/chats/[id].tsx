@@ -13,7 +13,8 @@ import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
 import { ProfileView } from "@/src/components/discover/ProfileView";
 import { toast } from "@/src/components/ui/Toast";
 import { chatToDiscoverProfile, type ChatMessage } from "@/src/lib/chats/mock";
-import { useChatStore, useConversation } from "@/src/stores/chat-store";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { unmatchConversation } from "@/src/store/slices/chat-slice";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 import { isIOS } from "@/src/utils/platform";
@@ -23,8 +24,10 @@ const REPORT_REASONS = ["Fake profile", "Inappropriate behavior", "Harassment", 
 export default function Conversation() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const conversation = useConversation(id ?? "");
-  const unmatch = useChatStore((s) => s.unmatch);
+  const dispatch = useAppDispatch();
+  const conversation = useAppSelector((s) =>
+    s.chat.conversations.find((c) => c.id === (id ?? "")),
+  );
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => conversation?.messages ?? []);
   const [draft, setDraft] = useState("");
@@ -68,7 +71,7 @@ export default function Conversation() {
     setDialog(null);
     setProfileOpen(false);
     router.replace("/chats");
-    setTimeout(() => unmatch(conversation.id), 250);
+    setTimeout(() => dispatch(unmatchConversation(conversation.id)), 250);
   };
 
   const confirmBlock = () => {
@@ -76,7 +79,7 @@ export default function Conversation() {
     setProfileOpen(false);
     router.replace("/chats");
     setTimeout(() => {
-      unmatch(conversation.id);
+      dispatch(unmatchConversation(conversation.id));
       toast.success(`${conversation.name.split(" ")[0]} has been blocked`);
     }, 250);
   };

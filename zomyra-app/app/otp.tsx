@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
 import { toast } from "@/src/components/ui/Toast";
-import { authService } from "@/src/services/auth";
+import { errorMessage, useRequestOtpMutation, useVerifyOtpMutation } from "@/src/api";
 import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Button, Touchable } from "@/src/components/ui";
 import { isIOS } from "@/src/utils/platform";
@@ -24,8 +24,11 @@ export default function OtpScreen() {
   const router = useRouter();
   const { dial = "+91", phone = "" } = useLocalSearchParams<{ dial?: string; phone?: string }>();
   const [digits, setDigits] = useState<string[]>(() => Array(OTP_LENGTH).fill(""));
-  const [verifying, setVerifying] = useState(false);
-  const [resending, setResending] = useState(false);
+  // API-2 / API-1. The mutation lands the tokens in expo-secure-store itself
+  // (see src/api/endpoints/auth.ts), so no token ever passes through this
+  // screen. Module 4 owns branching on `otp_expired` vs `too_many_attempts`.
+  const [verifyOtp, { isLoading: verifying }] = useVerifyOtpMutation();
+  const [requestOtp, { isLoading: resending }] = useRequestOtpMutation();
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const inputsRef = useRef<Array<TextInput | null>>([]);
 
@@ -90,23 +93,22 @@ export default function OtpScreen() {
 
   const verify = async () => {
     if (!isComplete || verifying) return;
-    setVerifying(true);
-    try {
-      await authService.verifyOtp(dial as string, phone as string, code);
-      toast.success("Welcome to Zomyra");
-      router.replace("/onboarding");
-    } catch (e) {
-      toast.show((e as Error).message);
-    } finally {
-      setVerifying(false);
+    const result = await verifyOtp({
+      phoneNumber: phone as string,
+      countryCode: dial as string,
+      otp: code,
+    });
+    if (result.error) {
+      toast.show(errorMessage(result.error));
+      return;
     }
+    toast.success("Welcome to Zomyra");
+    router.replace("/onboarding");
   };
 
   const resend = async () => {
     if (secondsLeft > 0 || resending) return;
-    setResending(true);
-    await authService.resendOtp(dial as string, phone as string);
-    setResending(false);
+    await requestOtp({ phoneNumber: phone as string, countryCode: dial as string });
     setDigits(Array(OTP_LENGTH).fill(""));
     inputsRef.current[0]?.focus();
     setSecondsLeft(RESEND_SECONDS);
