@@ -26,6 +26,18 @@ export type ServerErrorCode =
   | "invalid_google_token"
   // API-4 · POST /auth/refresh
   | "refresh_token_invalid"
+  /**
+   * API-5 · `GET /app/version-check` — `?platform=` missing or not
+   * `ios`/`android`. **Observed against staging on 2026-08-02**, not in either
+   * TDD: `GET /v1/app/version-check` with no query returns
+   * `400 invalid_platform`.
+   *
+   * `checkAppVersion` always sends a real platform, so the client should never
+   * provoke it. It is listed because the union describes what the server can
+   * send, not what we expect to receive — the same reason the generic codes at
+   * the bottom of this list are here.
+   */
+  | "invalid_platform"
   // API-7 / API-24 / API-26 · submit + patch
   | "validation_error"
   | "already_submitted"

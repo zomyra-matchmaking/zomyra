@@ -31,9 +31,9 @@ import {
 } from "@/src/config/app-headers";
 import { API_BASE_URL, API_TIMEOUT_MS, USE_API_MOCKS } from "@/src/config/env";
 import { clearTokens, getRefreshToken, loadTokens, peekAccessToken, setTokens } from "@/src/auth/tokens";
-import { sessionExpired } from "@/src/store/slices/session-slice";
+import { accountBlocked, sessionExpired } from "@/src/store/slices/session-slice";
 
-import { isRetryable, normalizeError, type ApiError } from "./errors";
+import { isRetryable, normalizeError, type ApiError, type ApiErrorCode } from "./errors";
 import { mockBaseQuery } from "./mock";
 
 /** Per-endpoint knobs, passed as RTK Query's `extraOptions`. */
@@ -132,6 +132,19 @@ function requestIdOf(meta: unknown): string | undefined {
   return response?.headers?.get(HEADER_REQUEST_ID) ?? undefined;
 }
 
+/**
+ * The three codes BE v1.6 §9.9 returns for a non-active account.
+ *
+ * They are listed together and never distinguished: FE §8.1 specifies one
+ * undifferentiated blocker, so the only thing this layer reads off them is
+ * *that* the account is blocked.
+ */
+const ACCOUNT_BLOCKED_CODES: readonly ApiErrorCode[] = [
+  "account_suspended",
+  "account_banned",
+  "account_deleted",
+];
+
 const baseQueryWithReauth: ZomyraBaseQuery = async (args, api, extraOptions) => {
   const options = extraOptions ?? {};
   let result = await transport(args, api, options);
@@ -150,7 +163,33 @@ const baseQueryWithReauth: ZomyraBaseQuery = async (args, api, extraOptions) => 
   }
 
   if (result.error) {
-    return { error: normalizeError(result.error, requestIdOf(result.meta)) };
+    const error = normalizeError(result.error, requestIdOf(result.meta));
+
+    /*
+     * Account-status enforcement (BE v1.6 §9.9, FE v1.45 §8.1).
+     *
+     * This sits beside the 401 branch above rather than inside it, and the
+     * distinction is the whole point: a 401 means the *credential* failed and
+     * refreshing may fix it, whereas a 403 `account_*` means the credential is
+     * perfectly good and the *account* is gated. Routing it into the refresh
+     * path would burn a refresh token to be told the same thing again.
+     *
+     * It is handled here rather than at the gate because enforcement is
+     * **request-level**: every authenticated endpoint except `GET /me` and
+     * `POST /auth/refresh` returns it, so it can arrive on any call at any
+     * point in a session — the user may be mid-chat when an admin suspends the
+     * account. The two exemptions exist so a blocked client can still discover
+     * why, which is exactly what the root gate uses.
+     *
+     * As with `sessionExpired` above, this layer only reports the fact. Where
+     * it sends the user is `SessionRouter`'s decision, not the network's — the
+     * base query cannot import a route without knowing about navigation.
+     */
+    if (error.status === 403 && ACCOUNT_BLOCKED_CODES.includes(error.code)) {
+      api.dispatch(accountBlocked());
+    }
+
+    return { error };
   }
   return { data: result.data, meta: result.meta as Record<string, unknown> | undefined };
 };

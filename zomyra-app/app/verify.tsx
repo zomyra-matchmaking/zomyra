@@ -1,14 +1,29 @@
 /**
  * Photos + verification selfie flow. Steps:
  *   0 upload, 1 intro, 2 selfie instructions, 3/4 review, 5 submitted.
+ *
+ * **`?entry=` — added by Module 3 for the root gate.** FE §9.1's cold-start
+ * table has three rows that land here, and each wants a different step: a user
+ * who has finished onboarding but not started photos (`unverified`) belongs at
+ * the beginning; one whose check is still running server-side (`pending`)
+ * belongs on the held "submitted" screen and must **not** be offered a
+ * resubmit; one who came back `mismatch` belongs at FR-12's selfie retry. See
+ * `src/lib/root-route.ts`.
+ *
+ * ⚠️ **Module 6 owns making these three genuinely distinct.** Reusing step 5
+ * for `pending` is a routing fix, not the screen FE §9.1 describes — its copy
+ * says "Verification submitted", which reads oddly to someone reopening the app
+ * days later, and its Continue button walks on to `/matching` regardless of
+ * whether the check has actually returned.
  */
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Camera, Check, Clock, ImagePlus, ShieldCheck, Sun, UserCircle2 as UserCircleIcon, X } from "lucide-react-native";
 import { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingShell } from "@/src/components/onboarding/OnboardingShell";
+import { HeldVerification } from "@/src/components/verification/HeldVerification";
 import { PhotoUploadGrid } from "@/src/components/verification/PhotoUploadGrid";
 import { MIN_PHOTOS, type UploadedPhoto } from "@/src/lib/verification/types";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
@@ -22,6 +37,20 @@ import { Touchable } from "@/src/components/ui";
 
 const TOTAL = 6;
 
+/**
+ * Which step each `?entry=` value opens on. Anything unrecognised — including
+ * arriving with no param at all, which is how `app/onboarding.tsx` still gets
+ * here — falls back to 0, the photo grid.
+ */
+const INITIAL_STEP: Record<string, number> = {
+  /** `verificationStatus: "unverified"` — start at the photo grid. */
+  photos: 0,
+  /** `"mismatch"` — FR-12's retry, i.e. the selfie instructions. */
+  mismatch: 2,
+  /** `"pending"` — the held submitted screen. Never a resubmit prompt. */
+  pending: 5,
+};
+
 export default function VerifyScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -29,8 +58,11 @@ export default function VerifyScreen() {
   const setPhotos = (photos: UploadedPhoto[]) => dispatch(setVerificationPhotos(photos));
   const setSelfie = (uri: string | null) => dispatch(setSelfieUri(uri));
   const submit = () => dispatch(markVerificationSubmitted());
-  const [step, setStep] = useState(0);
+  const { entry } = useLocalSearchParams<{ entry?: string }>();
+  const [step, setStep] = useState(() => INITIAL_STEP[entry ?? ""] ?? 0);
   const [submitting, setSubmitting] = useState(false);
+  /** The root gate sent us here because the backend still reports `pending`. */
+  const heldPending = entry === "pending" && step === 5;
 
   const goBack = () => {
     if (step === 0) {
@@ -198,7 +230,32 @@ export default function VerifyScreen() {
     );
   }
 
-  // step 5: submitted
+  /*
+   * Step 5 — submitted.
+   *
+   * ⚠️ **When the *server* says `pending`, this screen must hold.** FE §9.1
+   * calls it a "Held 'Verification in progress' screen" and FR-11 makes
+   * verification mandatory before matching — but its Continue button walked
+   * straight on to `/matching` → the Discovery Mode picker → Discover, which a
+   * `pending` user reached in testing. So when the root gate sent us here
+   * (`?entry=pending`) the forward CTA is removed entirely and replaced with a
+   * status re-check.
+   *
+   * `heldPending` is deliberately keyed on the **entry param**, not on the local
+   * `verification` slice: the distinction that matters is "the backend told us
+   * it is still working", which only `GET /me` knows. Someone who has just
+   * finished the flow in this session keeps the original CTA.
+   *
+   * **Re-checking is not re-submitting.** FR-11's "must not offer manual retry"
+   * forbids firing a second verification attempt, which would duplicate work
+   * server-side. Re-reading `GET /me` is the self-correcting path §9.1 already
+   * relies on, and it is the only way out of this screen that does not require
+   * killing the app.
+   */
+  if (heldPending) {
+    return <HeldVerification />;
+  }
+
   return (
     <OnboardingShell
       step={5}

@@ -51,6 +51,9 @@ export function currentUserId(): string | null {
   return session?.userId ?? null;
 }
 
+/** Tokens this mock issues are recognisable, which is what lets it re-adopt one. */
+const ACCESS_TOKEN_PREFIX = "mock-access-";
+
 /**
  * Whether a bearer token is the one currently issued.
  *
@@ -58,9 +61,41 @@ export function currentUserId(): string | null {
  * in development: without a way to invalidate an access token on demand, the
  * 401→refresh→retry flow would never run against mocks and would first
  * execute in front of a real backend.
+ *
+ * ## Re-adopting a token across a reload (added in Module 3)
+ *
+ * This state is module-scoped, so it dies with the JS context — but the
+ * client's tokens do not: they are in the keychain (NFR-2) and survive a kill.
+ * Until now that asymmetry meant **every cold start in mock mode force-logged
+ * the user out**: `bootstrapSession` found a perfectly good token, `GET /me`
+ * came back 401 because this file had forgotten it, the refresh failed for the
+ * same reason, and `sessionExpired` fired. Which is precisely the one path the
+ * root gate must *not* take on a normal reopen — Module 3 could not exercise
+ * its own routing table, and Modules 5–9 would each have re-signed-in on every
+ * reload.
+ *
+ * So a token this mock recognises as one of its own is **adopted**: a session is
+ * re-established around it, exactly as a real backend still holding the session
+ * server-side would behave. It stays strict about everything that matters —
+ * a token it did not mint is still rejected, `expireAccessToken()` still forces
+ * a refresh, and the refresh token stays single-use and rotating (§9.2), so the
+ * concurrent-401 bug still reproduces here.
  */
 export function isAccessTokenValid(token: string | undefined): boolean {
-  return !!session && !!token && token === session.accessToken;
+  if (!token) return false;
+  if (session) return token === session.accessToken;
+  if (!token.startsWith(ACCESS_TOKEN_PREFIX)) return false;
+
+  // Cold start with a keychain token. The user id is not recoverable from the
+  // token — it was never encoded in it — so the adopted session takes the
+  // placeholder `GET /me` already falls back to.
+  session = {
+    userId: "mock-user",
+    accessToken: token,
+    refreshToken: `mock-refresh-${nextId()}`,
+    revoked: new Set(),
+  };
+  return true;
 }
 
 export function expireAccessToken(): void {

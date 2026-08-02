@@ -16,3 +16,4 @@ export { Dialog } from "./Dialog";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { BottomSheet, SHEET_HALF, SHEET_TALL } from "./BottomSheet";
 export { ToastHost, toast } from "./Toast";
+export { Loading, LoadingScreen, type LoadingProps, type LoadingSize } from "./Loading";

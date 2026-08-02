@@ -8,7 +8,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { ConfirmDialog } from "@/src/components/ui/ConfirmDialog";
-import { FloatingNav } from "@/src/components/nav/FloatingNav";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import { unmatchConversation } from "@/src/store/slices/chat-slice";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
@@ -101,7 +100,6 @@ export default function ChatsList() {
         />
       )}
 
-      <FloatingNav />
 
       <ConfirmDialog
         open={pendingUnmatch !== null}

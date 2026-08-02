@@ -12,17 +12,11 @@
  *     <Button label="Upgrade" variant="gradient" size="lg" icon={Sparkles} />
  */
 import { type ComponentType } from "react";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
+import { Loading } from "./Loading";
 import { Touchable, type TouchableProps } from "./Touchable";
 
 /** Any icon that takes lucide's shape. Kept structural so this file does not depend on lucide. */
@@ -106,7 +100,9 @@ export function Button({
   const content = (
     <>
       {loading ? (
-        <ActivityIndicator size="small" color={v.label} />
+        // `decorative` because the Touchable below already carries
+        // `accessibilityState={{ busy }}` — see Loading's prop docs.
+        <Loading size="sm" color={v.label} showLabel={false} decorative />
       ) : (
         <>
           {Icon && !iconTrailing ? (
