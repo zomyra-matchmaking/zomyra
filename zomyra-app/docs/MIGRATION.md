@@ -1,7 +1,7 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.44**, integrating against the contract in **Backend TDD v1.5**.
+**Frontend TDD v1.45**, integrating against the contract in **Backend TDD v1.6**.
 **Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
@@ -79,7 +79,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 0 | Build & project foundation | **Complete** (2026-07-28) | Bundle ID must be final before RevenueCat/FCM bind to it; unblocks all native deps |
 | 1 | Design system & theming | **Complete** (2026-07-30) | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
 | 2 | State & data layer | **Complete** (2026-07-31) | Every subsequent module plugs into it; nothing can reach the backend until it exists |
-| 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive — see §13** |
+| 3 | Navigation | Not started | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
 | 5 | Onboarding & profile schema | Not started | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
@@ -390,7 +390,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-1 | ~~Real bundle identifier / package name~~ **→ `com.zomyra.app`** (2026-07-28). See §9. **Applied in Module 0**; still needs registering with both stores once O-2 lands. | Module 0 | ✅ Done |
 | O-2 | **Hard gate on Module 10 — see §2.1.** Apple Developer account ($99/yr) + Play Console ($25), `com.zomyra.app` registered on both, the "Zomyra" display name reserved on App Store Connect, and `google-services.json` / `GoogleService-Info.plist` in hand. Modules 0–9 run on the dev client without any of it. | **Before Module 10** | Product owner |
 | O-3 | **API-32 field-name conflict:** FE TDD §9.12 sends/returns `{ pushEnabled }`; BE TDD §14.13 uses `{ notificationsEnabled }`. A real contract conflict, not a doc paraphrase. | Module 11 | FE + BE |
-| O-4 | **`accountStatus` routing gap:** BE `GET /me` returns `active \| suspended \| banned`, but FE §9.1's routing table defines no destination for suspended/banned. | Module 3 | FE + product |
+| O-4 | ~~`accountStatus` routing gap~~ **→ Closed by FE v1.45 / BE v1.6** (2026-08-01, §12.4). `accountStatus` is checked **before** the §9.1 routing table is evaluated at all; any non-`active` value routes to one static, non-dismissible blocker — no retry, no appeal link, no distinction between suspended/banned/deleted. The backend additionally rejects non-active accounts with `403` on every authenticated endpoint except `GET /me` and `POST /auth/refresh`. **Module 3 builds the blocker screen and the base-query handling.** | Module 3 | ✅ Closed |
 | O-5 | Express Interest daily cap value `N` (FR-17a) is still "to be set by product". | Module 7 | Product owner |
 | O-6 | Height filter bounds inconsistent across wireframes (140–210cm vs 140–200cm), FE TDD §8. | Module 7 | Product owner |
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
@@ -1927,3 +1927,61 @@ Place delivered files beside the existing brand assets in `assets/brand/`.
    requires a dev-client rebuild under C-2. Decide during Module 3 whether the shared default uses
    Lottie: if yes, the dependency lands there; if no, it lands in Module 7 with the branded
    animation. Either way it should be batched with any other native addition, not paid for twice.
+
+### 12.4 Frontend v1.44 → v1.45, Backend v1.5 → v1.6 (received 2026-08-01)
+
+**Two spec gaps closed, both found during implementation review rather than by reading.** One of
+them was **O-4**, which had been Module 3's live blocker since the baseline.
+
+#### (1) `accountStatus` now has a destination — O-4 closed
+
+The gap: `GET /me` returned `suspended` / `banned` / `deleted`, but §9.1's cold-start table only
+ever branched on `profileComplete` / `verificationStatus` / `discoveryMode`. A suspended user routed
+as though nothing were wrong.
+
+**Resolution, and the ordering matters:** `accountStatus` is evaluated **first — before the routing
+table is consulted at all**. Any non-`active` value routes to a **single static, non-dismissible
+blocker** (same pattern as FR-30's "Update required"): no retry, no appeal link, and **deliberately
+no distinction between the three causes**, since there is no in-app path back regardless.
+
+**BE v1.6 §9.9 adds the enforcement half**, and it changes the shape of client error handling:
+
+- Every authenticated endpoint **except `GET /me` and `POST /auth/refresh`** now rejects a
+  non-active account with **`403`** (`account_suspended` / `account_banned` / `account_deleted` —
+  distinct server-side for support diagnostics, undifferentiated to the client).
+- **The session is not revoked.** Tokens stay valid and refresh keeps working; the account is gated
+  at the *usage* level, not logged out. The two exemptions exist precisely so the client can still
+  discover *why* it is blocked.
+- **`deleted` is reachable on purpose:** FR-28's soft-delete sets the status immediately but does
+  not revoke tokens until the hard-delete purge after the grace window. BE §9.9 notes this window
+  was previously "a real, if narrow, exposure" — this check is what closes it.
+
+**Module 3 owns both halves:** the blocker screen, and detecting a `403 account_*` in
+`base-query.ts`. Note the second is not just a gate concern — because enforcement is request-level,
+that 403 can surface on *any* call mid-session, not only at cold start.
+
+**Carried trade-off, flagged by the spec itself, not an oversight:** the blocker is a deliberate
+dead end, so a user has no in-app way to exit or switch accounts from it — only a force-quit. FE
+v1.45 records this in its own Open Items in case a minimal escape hatch is wanted later.
+
+#### (2) `languagesOther` — the carrier field that didn't exist
+
+§12.3 recorded that languages has an `"Other"` key revealing a free-text field, "the same pattern as
+FR-28's delete-account reason picker." **That comparison was wrong, and the docs have now corrected
+it**: FR-28's `reason` is a *scalar* enum with a `details` sibling, whereas `languages` is an
+*array*. There was no field anywhere in either document for the free text to travel in.
+
+**Resolution:** a **`languagesOther`** sibling alongside `languages: [...]` in **API-7 and API-24** —
+not nested inside the array. `400 validation_error` if `"other"` is present without `languagesOther`
+or vice versa. Backend stores it as `user_languages.other_text`, populated only on the `other` row.
+
+#### What this does to the finished modules
+
+| Module | Verdict |
+|---|---|
+| **0 · Build foundation** | No change |
+| **1 · Design system** | No change beyond the loading primitive already tracked in §13 |
+| **2 · State & data layer** | **Two small corrections, applied in this pass.** `AccountStatus` was typed `"active" \| "suspended" \| "banned"` — **missing `"deleted"`**, which is reachable during the grace window, so a real value would have failed the union. And `contract.ts`'s O-4 comment described an open gap that is now closed. Both fixed. The `403 account_*` handling in `base-query.ts` is left for **Module 3**, which owns the route it needs to send users to |
+
+`languagesOther` needs no Module 2 change — it lands in API-7/API-24's request bodies, which Module 5
+builds.

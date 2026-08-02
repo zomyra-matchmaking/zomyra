@@ -1,11 +1,11 @@
 # Contract questions for the backend
 
 **Status:** open, raised by the frontend at the end of Module 2 (2026-07-31).
-**Audience:** whoever is building the Zomyra backend from Backend TDD v1.4.
+**Audience:** whoever is building the Zomyra backend from Backend TDD v1.6.
 
-**Updated 2026-07-31 against FE v1.42 / BE v1.4 — item 1 is already answered**
-and is kept below only so the thread makes sense. Items 0 and 2–6 are still
-open and are what actually needs a reply.
+**Updated 2026-08-01 against FE v1.45 / BE v1.6 — items 1 and 3 are now
+answered** and are kept below only so the thread makes sense. **Items 0, 2, 4,
+5 and 6 are still open** and are what actually needs a reply.
 
 C-1 makes this repository frontend-only, so nothing here is a change we can
 make — each item is a **message to send**. Written to be forwarded as-is.
@@ -74,18 +74,32 @@ API-32 (`PATCH /v1/push/preferences`): FE TDD §9.12 sends and expects
 Same field, two names — a real conflict, not a documentation paraphrase.
 Needed by Module 11. **Either name is fine; we need one.**
 
-## 3. O-4 — `accountStatus: suspended | banned` has no defined client behaviour
+## 3. O-4 — `accountStatus` — ✅ **ANSWERED, no action needed**
 
-`GET /v1/me` returns `accountStatus: active | suspended | banned` (BE §14.1),
-but FE TDD §9.1's cold-start routing table defines a destination only for
-`active`. Two questions:
+Raised against BE v1.5; **resolved by FE v1.45 §8.1 + BE v1.6 §9.9.** Recorded
+here so it isn't re-asked.
 
-1. **What should the client do** for `suspended` and `banned` — a blocking
-   screen, a sign-out, an appeals contact?
-2. **Do other endpoints 403 for those accounts**, or does the client hold them
-   at the gate? If the backend enforces it, we need the error code.
+Both questions we posed came back answered:
 
-Needed by Module 3 (the root navigation gate).
+1. **What the client does:** `accountStatus` is checked *before* the cold-start
+   routing table is evaluated at all. Any non-`active` value routes to one
+   static, non-dismissible blocker — no retry, no appeal link, and no
+   distinction between the three causes.
+2. **Whether other endpoints 403:** yes. Every authenticated endpoint except
+   `GET /me` and `POST /auth/refresh` rejects a non-active account with `403`
+   (`account_suspended` / `account_banned` / `account_deleted`). The session is
+   *not* revoked — tokens stay valid, refresh keeps working; the gate is at the
+   usage level. The two exemptions are what let the client find out why it is
+   blocked.
+
+We are treating the three codes as **undifferentiated**, per BE §9.9's note that
+they exist for support diagnostics only. Nothing in the client branches on which.
+
+**One thing we have taken as given, flag it if wrong:** because enforcement is
+request-level rather than session-level, a `403 account_*` can surface on *any*
+call mid-session, not only at cold start — e.g. an account suspended while the
+user is mid-conversation. We are handling it globally in the base query rather
+than per-screen.
 
 ## 4. Where exactly does `retryAfterSeconds` live?
 

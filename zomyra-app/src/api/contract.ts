@@ -64,14 +64,32 @@ export type VersionCheckResponse = {
 };
 
 export type VerificationStatus = "unverified" | "pending" | "mismatch" | "verified";
-export type AccountStatus = "active" | "suspended" | "banned";
+/**
+ * `deleted` is reachable, and omitting it was a real gap (FE v1.45 §8.1,
+ * BE v1.6 §9.9): FR-28's soft-delete sets the status immediately but does not
+ * revoke tokens until the hard-delete purge after the grace window, so a
+ * soft-deleted account still authenticates during it.
+ */
+export type AccountStatus = "active" | "suspended" | "banned" | "deleted";
 
 /**
  * API-6 response — the routing table in FE TDD §9.1 is computed from these
  * fields, which is why the root gate (Module 3) needs nothing else.
  *
- * `accountStatus` is O-4: the backend returns `suspended` and `banned`, and the
- * frontend routing table defines no destination for either.
+ * **O-4 is closed (FE v1.45 / BE v1.6 — MIGRATION §12.4).** `accountStatus` is
+ * checked **first**, before `profileComplete` / `verificationStatus` /
+ * `discoveryMode` are looked at at all. Any non-`active` value routes to one
+ * static, non-dismissible blocker — no retry, no appeal link, and deliberately
+ * **no distinction between the three causes**. The backend returns distinct
+ * codes (`account_suspended` / `account_banned` / `account_deleted`) for
+ * support diagnostics only; nothing in the client branches on which.
+ *
+ * **The matching runtime concern is Module 3's**: BE §9.9 now rejects
+ * non-active accounts with `403` on *every* authenticated endpoint except this
+ * one and `POST /auth/refresh` — both exempt precisely so the client can still
+ * discover why it is blocked. So a 403 with an `account_*` code can surface on
+ * any call, not just at the gate, and needs handling in `base-query.ts` once
+ * there is a blocker route to send it to.
  */
 export type MeResponse = {
   userId: string;
