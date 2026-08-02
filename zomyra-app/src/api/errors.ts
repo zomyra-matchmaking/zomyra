@@ -62,7 +62,39 @@ export type ServerErrorCode =
   // API-28 · premium sync
   | "already_synced"
   // API-31 · push token
-  | "invalid_token";
+  | "invalid_token"
+  /**
+   * Account-status enforcement — BE v1.6 §9.9, added with O-4's resolution.
+   *
+   * Returned as **403 on every authenticated endpoint except `GET /me` and
+   * `POST /auth/refresh`**, which are exempt precisely so a blocked client can
+   * still find out why. The session is *not* revoked: tokens stay valid and
+   * refresh keeps working, so this is emphatically **not** a 401 path and must
+   * never be routed into the silent-refresh flow. `isRetryable` already
+   * declines 403, which is correct — the answer will not change on a retry.
+   *
+   * The three are distinct server-side for support diagnostics only — FE §8.1
+   * shows one undifferentiated blocker, so **nothing in the client should
+   * branch on which**. They are listed separately because these are the codes
+   * that arrive on the wire, not because the UI distinguishes them.
+   */
+  | "account_suspended"
+  | "account_banned"
+  | "account_deleted"
+  /**
+   * Generic codes the deployed backend returns that neither TDD enumerates —
+   * **observed against staging on 2026-08-02**, not inferred:
+   * `GET /v1/me` without a token → `401 unauthorized`; an unrouted path →
+   * `404 not_found`; `POST /v1/auth/google` with Google unconfigured →
+   * `503 service_unavailable`.
+   *
+   * Worth having even though no screen branches on them: without these,
+   * `normalizeError` casts a code the server really sends into a type that
+   * claims it cannot occur — the one thing a closed union exists to prevent.
+   */
+  | "unauthorized"
+  | "not_found"
+  | "service_unavailable";
 
 /**
  * Codes this client synthesises when the failure never reached the backend, so

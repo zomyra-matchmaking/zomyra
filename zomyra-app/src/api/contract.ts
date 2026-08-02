@@ -153,6 +153,14 @@ export type ProfileResponse = {
   incomeRange: string;
   religion: string;
   languages: string[];
+  /**
+   * Free text captured when `languages` contains the `other` key (FR-3b;
+   * FE v1.45 API-7/API-23, BE v1.6 stores it as `user_languages.other_text`).
+   *
+   * The one place a free-text value survives the catalogue-driven set. Absent
+   * or empty unless `other` was actually selected.
+   */
+  languagesOther?: string;
   diet: string;
   drinking: string;
   smoking: string;
