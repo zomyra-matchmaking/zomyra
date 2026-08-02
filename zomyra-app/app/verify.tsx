@@ -23,6 +23,7 @@ import { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingShell } from "@/src/components/onboarding/OnboardingShell";
+import { HeldVerification } from "@/src/components/verification/HeldVerification";
 import { PhotoUploadGrid } from "@/src/components/verification/PhotoUploadGrid";
 import { MIN_PHOTOS, type UploadedPhoto } from "@/src/lib/verification/types";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
@@ -60,6 +61,8 @@ export default function VerifyScreen() {
   const { entry } = useLocalSearchParams<{ entry?: string }>();
   const [step, setStep] = useState(() => INITIAL_STEP[entry ?? ""] ?? 0);
   const [submitting, setSubmitting] = useState(false);
+  /** The root gate sent us here because the backend still reports `pending`. */
+  const heldPending = entry === "pending" && step === 5;
 
   const goBack = () => {
     if (step === 0) {
@@ -227,7 +230,32 @@ export default function VerifyScreen() {
     );
   }
 
-  // step 5: submitted
+  /*
+   * Step 5 — submitted.
+   *
+   * ⚠️ **When the *server* says `pending`, this screen must hold.** FE §9.1
+   * calls it a "Held 'Verification in progress' screen" and FR-11 makes
+   * verification mandatory before matching — but its Continue button walked
+   * straight on to `/matching` → the Discovery Mode picker → Discover, which a
+   * `pending` user reached in testing. So when the root gate sent us here
+   * (`?entry=pending`) the forward CTA is removed entirely and replaced with a
+   * status re-check.
+   *
+   * `heldPending` is deliberately keyed on the **entry param**, not on the local
+   * `verification` slice: the distinction that matters is "the backend told us
+   * it is still working", which only `GET /me` knows. Someone who has just
+   * finished the flow in this session keeps the original CTA.
+   *
+   * **Re-checking is not re-submitting.** FR-11's "must not offer manual retry"
+   * forbids firing a second verification attempt, which would duplicate work
+   * server-side. Re-reading `GET /me` is the self-correcting path §9.1 already
+   * relies on, and it is the only way out of this screen that does not require
+   * killing the app.
+   */
+  if (heldPending) {
+    return <HeldVerification />;
+  }
+
   return (
     <OnboardingShell
       step={5}

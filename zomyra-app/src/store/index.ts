@@ -23,6 +23,7 @@ import {
 
 import { api } from "@/src/api/api";
 
+import { appUpdateReducer } from "./slices/app-update-slice";
 import { chatReducer } from "./slices/chat-slice";
 import { discoverFiltersReducer } from "./slices/discover-filters-slice";
 import { discoveryModeReducer } from "./slices/discovery-mode-slice";
@@ -34,6 +35,7 @@ import { verificationReducer } from "./slices/verification-slice";
 
 const rootReducer = combineReducers({
   [api.reducerPath]: api.reducer,
+  appUpdate: appUpdateReducer,
   chat: chatReducer,
   discoverFilters: discoverFiltersReducer,
   discoveryMode: discoveryModeReducer,
@@ -51,6 +53,10 @@ const rootReducer = combineReducers({
  * - `onboarding` — the part-finished draft (NFR-1).
  * - `discoveryMode` — a one-time choice; re-asking it is a bug (FR-15a).
  * - `discoverFilters` — a preference the user set by hand.
+ * - `appUpdate` — when the optional-update prompt was last shown (FR-30). The
+ *   only thing here that would be *useless* unpersisted rather than merely
+ *   re-derivable: the prompt fires on cold start, so an in-memory cooldown
+ *   would reset on exactly the launch it is meant to suppress.
  *
  * Not persisted, each for a stated reason:
  * - **tokens** — expo-secure-store only, never AsyncStorage (NFR-2, §4.3).
@@ -66,7 +72,7 @@ const rootReducer = combineReducers({
  * - **`api`** — RTK Query's cache is in-memory by design; persisting it whole
  *   is exactly the unbounded growth NFR-11 forbids.
  */
-const PERSIST_WHITELIST = ["onboarding", "discoveryMode", "discoverFilters"];
+const PERSIST_WHITELIST = ["onboarding", "discoveryMode", "discoverFilters", "appUpdate"];
 
 const persistedReducer = persistReducer(
   {

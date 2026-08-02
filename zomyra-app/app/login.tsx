@@ -4,8 +4,8 @@ import { Image, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { toast } from "@/src/components/ui/Toast";
-import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
-import { Button, Touchable } from "@/src/components/ui";
+import { colors, fontSize, fontWeight, spacing } from "@/src/theme";
+import { Button } from "@/src/components/ui";
 
 function GoogleG() {
   return <Text style={styles.googleG}>G</Text>;
@@ -71,17 +71,25 @@ export default function Login() {
             .
           </Text>
 
-          {/* ────────────────────────────────────────────────────────────── */}
-          {/* TEMPORARY: dev skip — jumps straight to Discover, bypassing  */}
-          {/* phone/otp/onboarding/verify/matching. REMOVE before launch.  */}
-          {/* ────────────────────────────────────────────────────────────── */}
-          <Touchable
-            testID="login-dev-skip"
-            onPress={() => router.replace("/discover")}
-            style={styles.devSkipBtn}
-          >
-            <Text style={styles.devSkipText}>[DEV] Skip to Discover →</Text>
-          </Touchable>
+          {/*
+            The `[DEV] Skip to Discover` chip that used to sit here is gone
+            (Module 3). Two reasons, and the second is why it could not simply
+            be left for Module 4:
+
+            1. FR-2 excludes it from production, so it was always going to be
+               deleted — and a "REMOVE before launch" comment is a poor
+               substitute for removing it.
+            2. **It no longer worked, and worse, it worked misleadingly.** It
+               called `router.replace("/discover")`, and the tabs are now
+               guarded (`app/(tabs)/_layout.tsx`): an account that has not
+               finished onboarding or verification is bounced straight back out.
+               A dev button that appears to jump you into the app and silently
+               returns you is more confusing than no button.
+
+            To reach a tab during development, make `GET /me` in
+            `src/api/mock/handlers.ts` return a complete, verified, active
+            account — that exercises the real gate instead of going around it.
+          */}
         </View>
       </View>
     </SafeAreaView>
@@ -160,22 +168,4 @@ const styles = StyleSheet.create({
       default: {},
     }),
   } as const,
-  // TEMPORARY dev-only skip — remove with the button above.
-  devSkipBtn: {
-    marginTop: spacing[3.5],
-    alignSelf: "center",
-    paddingHorizontal: spacing[3.5],
-    paddingVertical: spacing[2],
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.premium.icon,
-    borderStyle: "dashed",
-    backgroundColor: colors.premium.surface,
-  },
-  devSkipText: {
-    fontSize: fontSize.caption,
-    fontWeight: fontWeight.bold,
-    color: colors.premium.textStrong,
-    letterSpacing: 0.3,
-  },
 });

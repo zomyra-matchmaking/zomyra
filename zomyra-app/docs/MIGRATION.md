@@ -1607,6 +1607,81 @@ rotating, so §9.2's concurrent-401 bug still reproduces.
 - **The typecheck baseline was hand-edited, not `--update`d**, when two of its three files moved —
   `--update` would have silently absorbed any genuinely new error along with the path change.
 
+#### Module 3 addendum — the gate is not the only way in (owner review, 2026-08-02)
+
+Raised by the owner immediately after the module closed, from the open-points list. Five fixes, and
+**the first two are the same bug wearing different clothes**: the gate only guarded the front door.
+
+**1 & 2 · Verification and account status are now enforced wherever content can appear.**
+
+Two ways past the gate, both **confirmed on the emulator, not reasoned about**:
+
+- A `pending` user tapped through §9.1's "Held" screen → `/matching` → the Discovery Mode picker
+  → **Discover**. FR-11 makes verification mandatory *before* matching. The gate corrected them on
+  the next cold start, but "blocked until the next launch" is not blocked.
+- `zomyra:///chats/<id>` — **exactly what Module 11 will issue from a push** — mounted the
+  conversation without `/` ever rendering. No version check, no `accountStatus`, no routing table.
+
+The fix is structural rather than another patched button: **`app/(tabs)/_layout.tsx` now runs the
+same gate**, extracted to `useLaunchGate` so the two cannot disagree. It costs no extra requests —
+both are RTK Query hooks reading the cache `/` already filled, or filling it themselves when `/`
+never ran. Verified: deep link to `/chats/riya` while `pending` → held screen; while `suspended` →
+blocker; **as a valid user → lands on the conversation**, which is the check that proves the guard
+does not over-block.
+
+`resolveRootDestination` returning `/discover` is treated as "nothing is wrong, render the tabs as
+they are" rather than a redirect target — otherwise a valid deep link would be bounced to Discover.
+
+The "Held" screen is now `src/components/verification/HeldVerification.tsx`: **no forward CTA at
+all**, and a "Check again" that re-reads `GET /me`. Re-checking is not re-submitting — FR-11 forbids
+firing a second verification attempt, not asking whether the first finished.
+
+**The `[DEV] Skip to Discover` chip is deleted** (owner-authorised). FR-2 excluded it from
+production anyway, and it had stopped working honestly: it called `router.replace("/discover")` and
+the guard now bounces it straight back. To reach a tab in development, make the `GET /me` mock
+return a complete, verified, active account — which exercises the real gate instead of going round it.
+
+**3 · `forceUpdate` can no longer brick a user who is already current.** `resolveUpdateRequirement`
+returned `"blocked"` on `forceUpdate` unconditionally, so a backend setting it broadly would have
+shown someone running `latestVersion` a non-dismissible screen whose only control links to the build
+they already have. Both blocking paths are now gated on there actually being a newer version. It
+also closes a second route to the same dead end: `minSupportedVersion > latestVersion` shipped by
+mistake.
+
+**4 · The optional-update prompt is capped at once per version, then quiet for a week.** FR-30 sets
+no frequency, which read literally means a modal on every cold start until the user updates. Keyed
+on `latestVersion` as well as time, so a genuinely new release prompts immediately rather than
+inheriting the previous one's cooldown — the cooldown suppresses repetition, not news. Needs the
+new **`appUpdate` slice, and it is persisted**: the prompt fires on cold start, so an in-memory
+cooldown would reset on exactly the launch it is meant to suppress. First addition to
+`PERSIST_WHITELIST` since Module 2, reasoned in place beside the others.
+
+**5 · A `/me` failure no longer bounces an authenticated user to Login.** It now shows
+"Something went wrong" with a **Try again** that refetches (NFR-7's "fail visibly, not silently").
+The old behaviour was wrong in a way that looked fine: the tokens are still valid and the user is
+still signed in, so a backend having a bad five minutes showed every one of them a sign-in screen as
+though their session had ended.
+
+**Reverted during this pass, and worth recording:** a `useIsFocused` guard on `app/index.tsx`,
+intended to stop the gate's `Redirect` overriding a deep link that arrives while `/me` is still in
+flight. **The race is real** — the deep-linked route is replaced by `/discover` a second later — but
+the fix could not be demonstrated, because `zomyra://` is owned by expo-dev-client in a dev build, so
+a cold-start deep link opens the launcher rather than the app. Reverting an unverifiable change was
+the safer call. **Left as a known item for Module 11**, which owns push routing and will be building
+against a release-profile build where the scheme belongs to the app and the case is finally testable.
+The *security* half is unaffected: the tabs guard checks the deep-linked route regardless of which
+navigation wins.
+
+⚠️ **Do not read "the emulator went blank" as a code failure.** Two of these fixes were briefly
+believed to have broken cold start; both times it was the emulator mid-bundle under load (15s
+bundles, `ImmutableStateInvariantMiddleware` warnings). Wait for `Running "main"` plus a real render
+before concluding anything — the same class of mistake as the Fast Refresh note above.
+
+**Verified after this pass:** lint 0 errors (the same 14 pre-existing warnings) ·
+`yarn typecheck:baseline` clean · `yarn.lock` unchanged · normal cold start routes correctly on
+**both** the iPhone 16 Plus simulator and the Android 16 emulator · the mock is byte-identical to
+its committed state.
+
 <!--
 Template:
 

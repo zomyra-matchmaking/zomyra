@@ -45,11 +45,98 @@
  * what `NAV_CLEARANCE` in the four tab screens is padding for — the same
  * arrangement as before, now with real tab semantics behind it.
  */
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 import { FloatingTabBar } from "@/src/components/nav/FloatingTabBar";
+import {
+  LaunchError,
+  LaunchPending,
+  UpdateRequired,
+} from "@/src/components/nav/LaunchScreens";
+import { useLaunchGate } from "@/src/components/nav/use-launch-gate";
+
+/**
+ * The destination `resolveRootDestination` returns when nothing is wrong.
+ * Anything else means this user does not belong in the tabs yet.
+ */
+const TABS_OK: string = "/discover";
+
+/**
+ * ⚠️ **The tabs are guarded, and this is not belt-and-braces — it is the only
+ * thing standing between an unverified or blocked account and real user
+ * content.** Two holes it closes, both confirmed on device rather than reasoned
+ * about:
+ *
+ * 1. **Deep links skip `app/index.tsx` entirely.** `zomyra:///chats/<id>` —
+ *    precisely what Module 11 will issue from a push notification — mounts the
+ *    conversation without `/` ever rendering, so the version check,
+ *    `accountStatus` and the whole §9.1 table were bypassed.
+ * 2. **Forward navigation inside a session.** A `pending` user tapped through
+ *    §9.1's "Held" verification screen → `/matching` → the Discovery Mode
+ *    picker → Discover. FR-11 makes verification mandatory *before* matching,
+ *    so that had to be blocked in the same session, not merely corrected on the
+ *    next cold start.
+ *
+ * The guard re-uses `useLaunchGate`, so it cannot disagree with the root gate,
+ * and it costs **no extra requests** — both queries are RTK Query hooks reading
+ * the cache entries `/` already filled (or filling them itself, on a deep-link
+ * cold start where `/` never ran).
+ */
+function TabsGuard() {
+  const gate = useLaunchGate();
+
+  /*
+   * ⚠️ **While resolving, cover the navigator — do not replace it.**
+   *
+   * Returning `<LaunchPending />` alone here unmounts `<Tabs>`, and remounting
+   * it starts at `initialRouteName`. The deep-linked route is simply lost:
+   * `zomyra:///chats/<id>` on a cold start showed the conversation for a frame
+   * and then slid to Discover, which is precisely the Module 11 push case this
+   * guard exists to protect. Caught on the emulator; the settled-state deep
+   * link had worked, which is what made it look fine.
+   *
+   * So the navigator stays mounted and keeps its route, and the loading state
+   * sits on top of it. The tab screens do mount underneath and may fire their
+   * own queries — for a blocked account those come back `403 account_*`, which
+   * `base-query` already routes to the blocker, so the outcome is right either
+   * way and nothing is ever visible.
+   *
+   * The other three states are terminal — they navigate away or block for the
+   * rest of the launch — so unmounting is correct there.
+   */
+  if (gate.status === "pending") {
+    return (
+      <>
+        <TabsNavigator />
+        <View style={StyleSheet.absoluteFill}>
+          <LaunchPending />
+        </View>
+      </>
+    );
+  }
+
+  if (gate.status === "update-required") return <UpdateRequired storeUrl={gate.storeUrl} />;
+  if (gate.status === "error") return <LaunchError onRetry={gate.retry} />;
+  if (gate.status === "unauthenticated") return <Redirect href="/login" />;
+
+  /*
+   * `destination` is where §9.1 says this user belongs. `/discover` is its
+   * "everything is in order" answer — and when that is the answer we must
+   * render the tabs *as they are*, not redirect to Discover, or a deep link to
+   * `/chats/<id>` would bounce a perfectly valid user off their own
+   * conversation. Any other destination is a real reroute.
+   */
+  if (gate.destination !== TABS_OK) return <Redirect href={gate.destination} />;
+
+  return <TabsNavigator />;
+}
 
 export default function TabsLayout() {
+  return <TabsGuard />;
+}
+
+function TabsNavigator() {
   return (
     <Tabs
       // Discover is the app's home: `GET /me`'s routing table sends an ordinary

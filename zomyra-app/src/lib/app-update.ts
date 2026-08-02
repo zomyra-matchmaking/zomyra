@@ -53,18 +53,59 @@ export function compareVersions(a: string, b: string): -1 | 0 | 1 {
 /**
  * The three-way decision, in FR-30's order.
  *
- * `forceUpdate` is honoured **as well as** the version arithmetic, not instead
- * of it: it is the backend's escape hatch for forcing an update without moving
- * `minSupportedVersion`, and treating it as advisory would make it useless.
+ * ⚠️ **Nothing here can block a client that is already on `latestVersion`.**
+ * Both blocking paths are gated on there being a newer build to go to, and that
+ * guard is the whole point rather than a detail. An "Update required" screen is
+ * non-dismissible and its only control is a store link; showing it to someone
+ * already running the newest version gives them a dead end with no action —
+ * force-quit, reopen, same screen. That is worse than any staleness it could
+ * prevent, and it is reachable two ways: a backend that sets `forceUpdate`
+ * broadly, or one that ships `minSupportedVersion > latestVersion` by mistake.
+ *
+ * `forceUpdate` is otherwise honoured **as well as** the version arithmetic,
+ * not instead of it — it is the backend's lever for forcing an update without
+ * moving `minSupportedVersion`, and treating it as advisory would make it
+ * useless.
  */
 export function resolveUpdateRequirement(
   current: string,
   response: VersionCheckResponse,
 ): UpdateRequirement {
+  const behindLatest = compareVersions(current, response.latestVersion) < 0;
+  if (!behindLatest) return "none";
+
   if (response.forceUpdate) return "blocked";
   if (compareVersions(current, response.minSupportedVersion) < 0) return "blocked";
-  if (compareVersions(current, response.latestVersion) < 0) return "optional";
-  return "none";
+  return "optional";
+}
+
+/** How long a dismissed "Update available" prompt stays dismissed. */
+export const UPDATE_PROMPT_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Whether the **dismissible** prompt should be shown this launch.
+ *
+ * FR-30 says an optional update is "shown, then the app continues loading
+ * normally" and stops there — it sets no frequency. Taken literally that is a
+ * modal on *every single cold start* until the user updates, which is nagging
+ * rather than informing, and trains people to dismiss it without reading.
+ *
+ * Owner decision (2026-08-02): **at most once per version, then quiet for a
+ * week.** Keyed on `latestVersion` as well as time so a genuinely new release
+ * prompts immediately instead of inheriting the previous one's cooldown — the
+ * cooldown suppresses repetition, not news.
+ *
+ * The blocking path deliberately does not consult this. A forced update is not
+ * a notification and has nothing to snooze.
+ */
+export function shouldShowUpdatePrompt(
+  latestVersion: string,
+  lastPrompt: { version: string | null; at: number | null },
+  now: number = Date.now(),
+): boolean {
+  if (lastPrompt.version !== latestVersion) return true;
+  if (lastPrompt.at === null) return true;
+  return now - lastPrompt.at >= UPDATE_PROMPT_COOLDOWN_MS;
 }
 
 /**
