@@ -100,9 +100,29 @@ export const UPDATE_PROMPT_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
  */
 export function shouldShowUpdatePrompt(
   latestVersion: string,
+  storeUrl: string | undefined,
   lastPrompt: { version: string | null; at: number | null },
   now: number = Date.now(),
 ): boolean {
+  /*
+   * ⚠️ **No store link, no prompt.** An optional update the user cannot act on
+   * is pure noise: the dialog would offer "Not now" and nothing else, so the
+   * only thing it can tell them is that they are out of date and stuck. Owner
+   * decision (2026-08-02).
+   *
+   * Note the asymmetry with the **blocking** screen, which still renders
+   * without a URL — there it hides its button but must go on blocking, because
+   * the client is genuinely below the minimum and letting it through would be
+   * worse than a dead-end message. Optional means optional; required means
+   * required, link or no link.
+   *
+   * Both cases are backend misconfigurations rather than expected states
+   * (see `docs/CONTRACT-QUESTIONS.md` — `updateUrl` should be guaranteed
+   * non-empty whenever the response is actionable), so this is a guard against
+   * a mistake, not a supported flow.
+   */
+  if (!storeUrl) return false;
+
   if (lastPrompt.version !== latestVersion) return true;
   if (lastPrompt.at === null) return true;
   return now - lastPrompt.at >= UPDATE_PROMPT_COOLDOWN_MS;

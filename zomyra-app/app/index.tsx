@@ -60,16 +60,21 @@ export default function RootGate() {
     gate.updateAvailable &&
     !dismissedThisLaunch &&
     gate.latestVersion !== null &&
-    shouldShowUpdatePrompt(gate.latestVersion, {
+    shouldShowUpdatePrompt(gate.latestVersion, gate.storeUrl, {
       version: lastPrompt.lastPromptedVersion,
       at: lastPrompt.lastPromptedAt,
     });
 
-  if (showPrompt && gate.latestVersion) {
+  // `storeUrl` is non-empty whenever `showPrompt` is true — that is the first
+  // thing `shouldShowUpdatePrompt` checks — so the dialog always has a real
+  // action to offer.
+  if (showPrompt && gate.latestVersion && gate.storeUrl) {
+    const storeUrl = gate.storeUrl;
+    const latestVersion = gate.latestVersion;
     const acknowledge = () => {
       // Recorded on answer, not on render, so a launch killed mid-prompt does
       // not burn the week.
-      dispatch(updatePromptAcknowledged({ version: gate.latestVersion as string }));
+      dispatch(updatePromptAcknowledged({ version: latestVersion }));
       setDismissedThisLaunch(true);
     };
 
@@ -83,16 +88,14 @@ export default function RootGate() {
           description="A newer version of Zomyra is available with the latest improvements."
         >
           <View style={styles.dialogActions}>
-            {gate.storeUrl ? (
-              <Button
-                label="Update"
-                onPress={() => {
-                  Linking.openURL(gate.storeUrl as string);
-                  acknowledge();
-                }}
-                fullWidth
-              />
-            ) : null}
+            <Button
+              label="Update"
+              onPress={() => {
+                Linking.openURL(storeUrl);
+                acknowledge();
+              }}
+              fullWidth
+            />
             <Button label="Not now" variant="ghost" onPress={acknowledge} fullWidth />
           </View>
         </Dialog>

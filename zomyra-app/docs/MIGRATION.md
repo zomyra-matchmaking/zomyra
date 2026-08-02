@@ -416,6 +416,8 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | O-17 | **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). **Module 3's half is decided (2026-08-02, owner): the shared default takes no Lottie.** It is token-driven, so no native dependency and no dev-client rebuild was spent, and `lottie-react-native` now lands with **treatment #5 in Module 7** — the branded logo animation, the one §13.4 says almost certainly needs supplied artwork — **batched with Module 4's Google Sign-In SDK** rather than paying for two rebuilds. `Loading.tsx`'s interior is isolated in one component so a Lottie swap does not touch call sites. **Still open for §13's later owners:** the owner has **Lottie JSON** intended as loading visuals; whenever a module reaches a shimmer or animation (§13), request the asset before building one — the same rule as brand assets in O-14/§10. See §13.4 for what to request and the reduce-motion fallback each asset needs. | ~~Module 3~~ **→ Module 7** (with the branded animation), then §13's owners | Product owner |
 
+| O-18 | **⚠️ Deferred verification from Module 3 — four flows that are built but NOT proven on a device.** Not decisions; **test debt**, recorded here because §4 is the list every module is told to read and a note buried in §6 would not be seen. **(a) The deep-link race, and it is the important one.** `app/index.tsx`'s `Redirect` can still override a deep link that lands while `GET /me` is in flight — the conversation opens and is replaced by Discover a second later. **This is Module 11's core path: a push notification opening a chat.** A `useIsFocused` fix was written and reverted because it cannot be demonstrated in a dev build (expo-dev-client owns `zomyra://`, so a cold deep link opens the launcher, not the app). **Verify on a `preview`-profile build, where the app owns the scheme — this is the first thing Module 11 should do, before writing routing code against a path nobody has watched work.** Note the *security* half is already covered: the tabs guard checks the deep-linked route whichever navigation wins, verified for `pending` and `suspended`. **(b)** The FR-28 delete dialog's **step 2** ("type DELETE") was never keyboard-tested — only step 1, which is the one that got the `ScrollView`. Step 2 is a plain `View` with a `TextInput`. **(c)** `personality-test`'s route path inside the Profile stack was never exercised. **(d)** `?entry=mismatch` and `?entry=photos` were never walked end to end; only `?entry=pending` was. | Module 11 for (a) · Module 6 for (b)/(d) · any module touching Profile for (c) | FE |
+
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
 
@@ -1662,13 +1664,22 @@ The old behaviour was wrong in a way that looked fine: the tokens are still vali
 still signed in, so a backend having a bad five minutes showed every one of them a sign-in screen as
 though their session had ended.
 
-**Reverted during this pass, and worth recording:** a `useIsFocused` guard on `app/index.tsx`,
+**One more, added on owner review: the optional prompt is not shown at all without a store URL.**
+A dismissible "Update available" whose only button is "Not now" tells the user nothing except that
+they are stuck. The **blocking** screen still renders without one — it hides its button but must go
+on blocking, because that client really is below the minimum. Optional means optional; required
+means required, link or no link. Both are backend misconfigurations rather than expected states,
+which is why `updateUrl`'s non-empty guarantee is an ask in `docs/CONTRACT-QUESTIONS.md`.
+
+**Reverted during this pass, and worth recording — now tracked as O-18(a):** a `useIsFocused` guard
+on `app/index.tsx`,
 intended to stop the gate's `Redirect` overriding a deep link that arrives while `/me` is still in
 flight. **The race is real** — the deep-linked route is replaced by `/discover` a second later — but
 the fix could not be demonstrated, because `zomyra://` is owned by expo-dev-client in a dev build, so
 a cold-start deep link opens the launcher rather than the app. Reverting an unverifiable change was
-the safer call. **Left as a known item for Module 11**, which owns push routing and will be building
-against a release-profile build where the scheme belongs to the app and the case is finally testable.
+the safer call. **Recorded as O-18(a)** — Module 11 owns push routing and should verify this on a `preview`-profile
+build *before* writing routing code, since the scheme belongs to the app there and the case is
+finally testable.
 The *security* half is unaffected: the tabs guard checks the deep-linked route regardless of which
 navigation wins.
 
