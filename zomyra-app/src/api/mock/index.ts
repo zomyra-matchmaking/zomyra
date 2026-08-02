@@ -68,4 +68,4 @@ export const mockBaseQuery: BaseQueryFn<
   };
 };
 
-export { expireAccessToken, clearSession } from "./session";
+export { expireAccessToken } from "./session";

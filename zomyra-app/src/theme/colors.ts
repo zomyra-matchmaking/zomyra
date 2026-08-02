@@ -71,8 +71,6 @@ export const colors = {
   text: {
     /** Headings and body copy. 17.74:1. */
     primary: palette.gray[900],
-    /** Supporting copy that is still fully readable. 7.56:1. */
-    secondary: palette.gray[600],
     /** Captions, metadata, placeholder labels. 4.83:1 — the AA floor. */
     muted: palette.gray[500],
     /**
@@ -82,8 +80,6 @@ export const colors = {
     disabled: palette.gray[400],
     /** Brand-coloured text and icons on a light background. 10.30:1. */
     brand: palette.purple[900],
-    /** Interactive brand text — links, inline actions. 6.35:1. */
-    link: palette.purple[600],
     /** Text on `surface.inverse`, `brand.default` or a photo scrim. */
     onBrand: palette.white,
   },
@@ -124,8 +120,6 @@ export const colors = {
   success: {
     /** Dots, fills and check icons — **not** text (2.54:1). */
     fill: palette.emerald[500],
-    /** Success copy. 5.48:1 — AA. */
-    text: palette.emerald[700],
     surface: palette.emerald[50],
   },
 
@@ -191,8 +185,6 @@ export const colors = {
   overlay: {
     /** Modal scrim. */
     scrim: alpha(palette.gray[900], 0.45),
-    /** Heavier scrim for full-screen takeovers. */
-    scrimStrong: alpha(palette.black, 0.62),
     /**
      * The black scrims are built from. Only ever used via `alpha()` — a bare
      * `overlay.base` is an opaque black rectangle.

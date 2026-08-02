@@ -82,10 +82,3 @@ export async function clearTokens(): Promise<void> {
     storage.secureRemove(REFRESH_TOKEN_KEY),
   ]);
 }
-
-/** Test seam: forces the next read to hit the keychain again. */
-export function resetTokenCache(): void {
-  cache = {};
-  loaded = false;
-  loading = null;
-}

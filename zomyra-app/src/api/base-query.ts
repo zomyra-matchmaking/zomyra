@@ -91,11 +91,6 @@ const transport: BaseQueryFn<string | FetchArgs, unknown, unknown, ZomyraExtraOp
  */
 let refreshInFlight: Promise<boolean> | null = null;
 
-/** Test seam — a new test must not inherit the previous one's refresh. */
-export function resetRefreshState(): void {
-  refreshInFlight = null;
-}
-
 type RefreshResponse = { accessToken: string; refreshToken: string };
 
 async function performRefresh(

@@ -51,7 +51,6 @@ function parseAppEnvironment(raw: string): AppEnvironment {
 export const APP_ENV: AppEnvironment = parseAppEnvironment(RAW_APP_ENV);
 
 export const IS_PRODUCTION = APP_ENV === "production";
-export const IS_STAGING = APP_ENV === "staging";
 
 /**
  * Every backend route lives under `/v1` (BE TDD §7.1), while the frontend TDD
@@ -134,12 +133,3 @@ export const USE_API_MOCKS: boolean = IS_PRODUCTION
  * 3s would turn a normal pending response into a spurious network error.
  */
 export const API_TIMEOUT_MS = 20_000;
-
-/**
- * One line describing what this build talks to, for the dev menu, a debug
- * screen, or a support question. Never shown to users in production.
- */
-export function describeApiTarget(): string {
-  if (USE_API_MOCKS) return `${APP_ENV} · in-process mocks`;
-  return `${APP_ENV} · ${API_BASE_URL}`;
-}

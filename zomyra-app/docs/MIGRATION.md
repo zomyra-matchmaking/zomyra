@@ -1315,6 +1315,80 @@ That converts a dead file into a live instruction at the exact place the next au
 and a further step advanced and wrote through to `stepIdx: 2`. AsyncStorage holds exactly one key,
 `persist:zomyra.root`.
 
+#### Modules 0–2 addendum — dead-code sweep (2026-08-02)
+
+Run at the owner's ask before Module 2 closes, prompted by `legacy-migration.ts` turning out to be
+carryable dead weight. Scope was Modules 0, 1 and 2's own output; later modules keep their own.
+
+**Method:** every `export` in `app/` and `src/` cross-referenced for external use (68 candidates,
+mostly false positives — types used inside their own file), plus a proper orphan-file pass and a
+dependency scan. The rule applied throughout: **delete what is speculative; keep what has a named
+future owner.** An unused thing with a module attached to it is a seam, not debt.
+
+**One finding was a bug, not dead code — and it is the reason the sweep was worth doing.**
+
+`src/auth/sign-out.ts` showed up as an orphan file. It was not surplus: **`Log out` never cleared the
+tokens.** `app/profile.tsx`'s handler reset the onboarding draft and navigated to `/login`, leaving
+the access and refresh tokens in the keychain, `session.status` still `authenticated`, and the RTK
+Query cache intact. Module 2 wrote the fix and never wired it. Now wired into both Log out and Delete
+account — the latter being the local half of API-27's *"client clears Redux/persisted state +
+SecureStore"*. **Deleting the file as "unused" would have deleted the fix and left the leak.**
+
+**Removed — superseded by Module 2's own work:**
+
+| | Why |
+|---|---|
+| `STORAGE_KEY`, `STORAGE_STEP_KEY` (`lib/onboarding/types.ts`) | Zustand-era AsyncStorage keys; redux-persist owns persistence now |
+| `VERIFICATION_STORAGE_KEY` (`lib/verification/types.ts`) | Same, and the verification slice is deliberately never persisted |
+
+**Removed — speculative:** `resetTokenCache`, `resetRefreshState` (test seams with no test runner —
+Module 12 owns testing and can re-add either in one line), `describeApiTarget`, `IS_STAGING`,
+`clearSession` (mock), and the `typography` aggregate in the theme, which nothing used because call
+sites import `fontSize` / `fontWeight` directly.
+
+**Removed — orphan file:** `src/components/discover/FilterOptionSheet.tsx`, 250 lines with no
+importer anywhere. Prototype-era, and Module 7 rewrites Filters against API-13 regardless. In git
+history if it is ever wanted.
+
+**Module 1's eight flagged tokens, resolved as its log asked.** It shipped them unreferenced with the
+instruction *"if a later module still has no use for one, delete it."* Three have since found use —
+`surface.media` (×1), `premium.textStrong` (×2), `border.onBrand` (×3). Four were deleted:
+`text.secondary`, `text.link`, `success.text`, `overlay.scrimStrong`.
+
+**`text.disabled` was deliberately kept** despite still being unreferenced, which is a departure
+worth stating. It encodes a decision rather than a value: gray-400 at **2.50:1**, below AA *on
+purpose*, because WCAG 1.4.3 exempts inactive components — it is the only sub-AA token allowed near
+text. Module 4 and 5's forms will certainly need a disabled treatment, and deleting it means someone
+later picks a grey without that reasoning attached. A token carrying an accessibility exemption is
+documentation, not dead weight.
+
+**Dependencies removed:** `date-fns`, `dayjs` (two date libraries, *neither* imported anywhere) and
+`@gorhom/bottom-sheet` (Module 1 rebuilt `BottomSheet` on RN `Modal`, leaving this unreferenced).
+All three are JS-only, so no native build surface changed.
+
+**Dependencies deliberately kept though unimported**, so the next scan does not re-litigate them:
+
+- `expo-image` — §3's baseline finding still stands, and **Module 6 owns it** (NFR-9/NFR-14's
+  `cacheKey` decoupled from rotating signed URLs).
+- `expo-dev-client` (C-2), `@expo/metro-runtime`, `@react-navigation/*`, `react-native-screens`,
+  `react-native-worklets`, `expo-linking`, `expo-system-ui` — peers and native deps that are
+  required without appearing in an import statement.
+- `expo-web-browser`, `react-native-webview` — Module 0 already ruled on both.
+- `expo-blur`, `expo-symbols`, `expo-camera` — **flagged, not removed.** Genuinely unimported, but
+  they are native modules: dropping them changes prebuild output and wants a native build to verify,
+  which is not a "quick scan" change. `expo-camera` in particular may be Module 6's. Worth a decision
+  when a native build is being made anyway.
+
+**Verified:** typecheck baseline clean, lint 0 errors, `yarn doctor` 18/18, **both platforms bundle
+at 3551 modules** (so the three dropped dependencies broke neither), and the Profile screen renders
+unchanged after the token removals.
+
+**The logout fix was proven against the filesystem, not the UI.** On Android, `shared_prefs/
+SecureStore.xml` held two AES-encrypted entries — `zomyra.auth.accessToken` and
+`zomyra.auth.refreshToken` — before logout. After tapping through the confirm dialog the same file
+is `<map />`: **zero keys, zero ciphertext.** Before this change those two entries survived logout
+indefinitely.
+
 <!--
 Template:
 

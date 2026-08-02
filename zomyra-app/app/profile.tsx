@@ -32,6 +32,7 @@ import { Animated, Easing, Image, KeyboardAvoidingView, Modal, ScrollView, Style
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FloatingNav } from "@/src/components/nav/FloatingNav";
+import { signOut } from "@/src/auth/sign-out";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 import { resetOnboarding } from "@/src/store/slices/onboarding-slice";
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
@@ -59,15 +60,24 @@ export default function ProfileScreen() {
   const [showLogout, setShowLogout] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
 
+  // `signOut` clears the keychain and, via the store listener, the RTK Query
+  // cache. Before Module 2 wired it, "Log out" only reset the onboarding draft
+  // and navigated — the access and refresh tokens stayed on the device and the
+  // session slice still said `authenticated` (NFR-2).
   const onLogout = () => {
     setShowLogout(false);
     reset();
+    void signOut(dispatch);
     router.replace("/login" as never);
   };
 
+  // Same token clearing. The rest of FR-28 — API-27, the reason picker, the
+  // grace window — is Module 12's; this only stops the tokens outliving the
+  // account locally.
   const onDeleteConfirmed = () => {
     setShowDelete(false);
     reset();
+    void signOut(dispatch);
     router.replace("/login" as never);
   };
 

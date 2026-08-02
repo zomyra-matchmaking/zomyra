@@ -9,7 +9,6 @@
 export { colors, shadows, alpha } from "./colors";
 export { radii, spacing } from "./layout";
 export {
-  typography,
   fontSize,
   fontWeight,
   lineHeight,

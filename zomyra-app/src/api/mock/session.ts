@@ -66,7 +66,3 @@ export function isAccessTokenValid(token: string | undefined): boolean {
 export function expireAccessToken(): void {
   if (session) session.accessToken = `mock-access-expired-${nextId()}`;
 }
-
-export function clearSession(): void {
-  session = null;
-}

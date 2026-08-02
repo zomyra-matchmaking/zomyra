@@ -137,6 +137,3 @@ export const defaultOnboardingState: OnboardingState = {
   bio: "",
   photos: [],
 };
-
-export const STORAGE_KEY = "zomyra.onboarding.v1";
-export const STORAGE_STEP_KEY = "zomyra.onboarding.step.v1";
