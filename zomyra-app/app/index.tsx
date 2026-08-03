@@ -17,6 +17,7 @@
  * is genuinely the front door's — FR-30's dismissible prompt, which is a
  * cold-start notification and would be absurd on a push-opened conversation.
  */
+import { useIsFocused } from "@react-navigation/native";
 import { Redirect } from "expo-router";
 import { useState } from "react";
 import { Linking, StyleSheet, View } from "react-native";
@@ -38,6 +39,33 @@ export default function RootGate() {
   const dispatch = useAppDispatch();
   const lastPrompt = useAppSelector((s) => s.appUpdate);
   const [dismissedThisLaunch, setDismissedThisLaunch] = useState(false);
+  const isFocused = useIsFocused();
+
+  /*
+   * ⚠️ **O-18(a) — the deep-link race, and this line is the whole fix.**
+   *
+   * This route resolves asynchronously (version check, then `GET /me`) and
+   * stays *mounted* underneath whatever a deep link opened on top of it. So
+   * when the gate finally answered, its `Redirect` fired regardless — the
+   * conversation a push notification opened appeared, then was replaced by
+   * Discover a second later. That is Module 11's core path.
+   *
+   * A route that is not focused has been superseded and has no business
+   * navigating. `useIsFocused` seeds its first value from
+   * `navigation.isFocused()`, so there is no frame where a normal launch
+   * renders blank while focus resolves.
+   *
+   * Module 3 wrote this guard and **reverted it for lack of evidence** — in a
+   * dev build expo-dev-client owns `zomyra://`, so a cold-start deep link opens
+   * the launcher instead of the app and neither the bug nor the fix could be
+   * seen. Module 4 built a scheme-owning `preview` and settled it; MIGRATION §4
+   * (O-18) records what was actually observed.
+   *
+   * The *security* half never depended on this: `app/(tabs)/_layout.tsx` runs
+   * the same gate against the deep-linked route, so an unverified or blocked
+   * account is stopped whichever navigation wins.
+   */
+  if (!isFocused) return null;
 
   if (gate.status === "update-required") return <UpdateRequired storeUrl={gate.storeUrl} />;
   if (gate.status === "pending") return <LaunchPending />;

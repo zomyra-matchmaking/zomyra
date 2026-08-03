@@ -12,6 +12,23 @@
 let counter = 0;
 const nextId = () => `${Date.now().toString(36)}-${(counter += 1)}`;
 
+/**
+ * Tokens this mock issues are recognisable, which is what lets it re-adopt one
+ * across a reload, and they **carry their own `userId`** so the re-adopted
+ * session names the right account rather than a placeholder. See the header of
+ * `accounts.ts` for why that matters. `~` is the delimiter because no mock
+ * `userId` contains one.
+ */
+const ACCESS_TOKEN_PREFIX = "mock-access~";
+
+const mintAccessToken = (userId: string) => `${ACCESS_TOKEN_PREFIX}${userId}~${nextId()}`;
+
+function userIdFromAccessToken(token: string): string | null {
+  if (!token.startsWith(ACCESS_TOKEN_PREFIX)) return null;
+  const [userId] = token.slice(ACCESS_TOKEN_PREFIX.length).split("~");
+  return userId || null;
+}
+
 type MockSession = {
   userId: string;
   accessToken: string;
@@ -26,7 +43,7 @@ let session: MockSession | null = null;
 export function issueSession(userId: string): { accessToken: string; refreshToken: string } {
   session = {
     userId,
-    accessToken: `mock-access-${nextId()}`,
+    accessToken: mintAccessToken(userId),
     refreshToken: `mock-refresh-${nextId()}`,
     revoked: new Set(),
   };
@@ -42,7 +59,7 @@ export function rotateSession(presented: string): RefreshOutcome {
     return { ok: false };
   }
   session.revoked.add(session.refreshToken);
-  session.accessToken = `mock-access-${nextId()}`;
+  session.accessToken = mintAccessToken(session.userId);
   session.refreshToken = `mock-refresh-${nextId()}`;
   return { ok: true, accessToken: session.accessToken, refreshToken: session.refreshToken };
 }
@@ -50,9 +67,6 @@ export function rotateSession(presented: string): RefreshOutcome {
 export function currentUserId(): string | null {
   return session?.userId ?? null;
 }
-
-/** Tokens this mock issues are recognisable, which is what lets it re-adopt one. */
-const ACCESS_TOKEN_PREFIX = "mock-access-";
 
 /**
  * Whether a bearer token is the one currently issued.
@@ -80,17 +94,23 @@ const ACCESS_TOKEN_PREFIX = "mock-access-";
  * a token it did not mint is still rejected, `expireAccessToken()` still forces
  * a refresh, and the refresh token stays single-use and rotating (§9.2), so the
  * concurrent-401 bug still reproduces here.
+ *
+ * **Module 4 made the adoption faithful.** It used to rebuild the session under
+ * a hardcoded `"mock-user"`, because the user id was not recoverable from the
+ * token. Now that the token carries it, a cold start resumes as *the same
+ * account* — without which signing in as the returning user and relaunching
+ * would come back as an incomplete signup, and neither FR-1a's Discover branch
+ * nor O-18(a)'s deep-link case could be reproduced across a restart.
  */
 export function isAccessTokenValid(token: string | undefined): boolean {
   if (!token) return false;
   if (session) return token === session.accessToken;
-  if (!token.startsWith(ACCESS_TOKEN_PREFIX)) return false;
 
-  // Cold start with a keychain token. The user id is not recoverable from the
-  // token — it was never encoded in it — so the adopted session takes the
-  // placeholder `GET /me` already falls back to.
+  const userId = userIdFromAccessToken(token);
+  if (!userId) return false;
+
   session = {
-    userId: "mock-user",
+    userId,
     accessToken: token,
     refreshToken: `mock-refresh-${nextId()}`,
     revoked: new Set(),
@@ -99,5 +119,8 @@ export function isAccessTokenValid(token: string | undefined): boolean {
 }
 
 export function expireAccessToken(): void {
-  if (session) session.accessToken = `mock-access-expired-${nextId()}`;
+  // Deliberately not a mintAccessToken() call: this must produce a token the
+  // *client* still presents but this module rejects, and one that cannot be
+  // re-adopted after a reload either.
+  if (session) session.accessToken = `mock-expired-${nextId()}`;
 }

@@ -31,6 +31,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useGetMeQuery } from "@/src/api";
+import { useRootRouteContext } from "@/src/components/nav/use-launch-gate";
 import { Button, Loading } from "@/src/components/ui";
 import { resolveRootDestination } from "@/src/lib/root-route";
 import { colors, fontSize, fontWeight, lineHeight, radii, spacing } from "@/src/theme";
@@ -40,13 +41,14 @@ export function HeldVerification() {
   // Same cache entry the gate reads, so "Check again" is a refetch rather than
   // a second subscription.
   const { isFetching, refetch } = useGetMeQuery();
+  const routeContext = useRootRouteContext();
 
   const checkAgain = async () => {
     const next = await refetch().unwrap().catch(() => null);
     // Only move if the answer actually changed — re-navigating to the screen we
     // are already on would remount it and look like a failure.
     if (!next) return;
-    const destination = resolveRootDestination(next);
+    const destination = resolveRootDestination(next, routeContext(next.userId));
     if (destination !== "/verify?entry=pending") router.replace(destination);
   };
 

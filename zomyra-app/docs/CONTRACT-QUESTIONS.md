@@ -5,7 +5,22 @@
 
 **Updated 2026-08-01 against FE v1.45 / BE v1.6 — items 1 and 3 are now
 answered** and are kept below only so the thread makes sense. **Items 0, 2, 4,
-5 and 6 are still open** and are what actually needs a reply.
+4a, 4b, 5 and 6 are still open** and are what actually needs a reply.
+
+**Module 4 added item 4b (2026-08-03): FR-2a's consent has no home in either
+document.** It is the only item here that is not merely a client convenience —
+see the item for why. **The owner has since decided it should move server-side
+(2026-08-03) and is taking the spec change to the TDDs**; 4b now carries the
+concrete shape to settle, including the point that it should be built to hold
+FR-11a's biometric consent as well.
+
+**Also new, and not a contract question but a joint one: the Google OAuth client
+IDs.** `POST /v1/auth/google` is deployed and validating as of 2026-08-03 (a
+bogus token gets `401 invalid_google_token`, where it got `503` the day before),
+which means the backend already has a client configured. **The app's
+`webClientId` must be that same client**, or every real sign-in fails on
+audience mismatch. Tracked as **O-19** in MIGRATION §4 with the full list of
+what has to be created.
 
 C-1 makes this repository frontend-only, so nothing here is a change we can
 make — each item is a **message to send**. Written to be forwarded as-is.
@@ -112,6 +127,14 @@ The client currently accepts either, which is exactly the sort of defensive
 guess that should not survive into production. Please pin it — `details` seems
 the natural home given the envelope.
 
+*Module 4 update (2026-08-03): both spellings are now **exercised** rather than
+merely tolerated — the mock emits `rate_limited` with the field beside `code`
+and `too_many_attempts` with it inside `details`, and both were confirmed on
+device to produce the same countdown. So the client will not break either way.
+It is still a guess, and the question still needs an answer: the moment the real
+API-1/API-2 land, one of those two branches becomes dead code that nobody will
+notice is dead.*
+
 ## 4a. `GET /me`'s cold-start table is missing a row — `profileComplete: true` + `verificationStatus: "unverified"`
 
 *Raised by Module 3 while implementing the table (2026-08-02). Almost certainly
@@ -147,6 +170,66 @@ If the answer is that `profileComplete` only flips after verification, then this
 row is genuinely unreachable and the table is complete as written — but then
 API-7's documented `{ profileComplete: true }` response is the thing that needs
 correcting.
+
+## 4b. Nothing records FR-2a's consent, and it is the one thing here that is not a client convenience
+
+*Raised by Module 4 while building the consent screen (2026-08-03).*
+
+FR-2a requires an explicit "I understand and agree" before onboarding collects
+religion, income and lifestyle data, **once per account, never again**. Neither
+TDD has anywhere to put that fact: there is no field on `POST /auth/otp/verify`,
+`POST /auth/google`, `GET /me` or `POST /profile`, and no endpoint of its own.
+
+The client therefore records it locally, keyed by `userId`, in a persisted
+Redux slice. That is correct MVP behaviour and it fails in the safe direction —
+a reinstall re-asks rather than silently assuming consent. Two things it cannot
+do, and only the backend can:
+
+1. **Survive a reinstall or a second device.** The user is asked again on each,
+   which is annoying rather than harmful, but it is visible.
+2. **Be produced later.** A consent record that exists only on one device is not
+   evidence of anything. For a product asking Indian users for religion, income
+   and lifestyle data, "when did this user consent, and to what version of the
+   notice" is a question that may eventually be asked by someone other than us.
+
+**⚠️ The sharpest version of the problem, and the reason this is not cosmetic
+(owner, 2026-08-03):** the client only *evaluates* consent while
+`profileComplete` is `false`, i.e. during onboarding. The moment onboarding
+finishes, nothing reads the local record again — so once the user is through,
+**there is no record anywhere, on any system, that consent was ever given.** It
+is not that the evidence is weak; after onboarding it does not exist.
+
+**Ask — decided in principle by the owner (2026-08-03), shape still to be
+settled between FE and BE:** move the record server-side. Concretely:
+
+1. **Store more than a boolean.** A timestamp **and a notice version**
+   (`sensitiveDataConsent: { version, acceptedAt }` or two flat columns). A
+   boolean cannot answer "consented to *what*", and it cannot express the one
+   case that will eventually happen: the notice changes materially — a category
+   is added — and existing users must be re-asked. With a version, re-asking is
+   a config change; with a boolean it is a migration.
+2. **Return it on `GET /me`.** That is where §9.1's routing table already reads
+   `profileComplete` and `verificationStatus`, and the client's consent row sits
+   in the same function. Returned there, the client's local slice disappears
+   entirely rather than becoming a second source of truth — which matters,
+   because two records of who consented can disagree.
+3. **Write it via its own small endpoint** (`POST /account/consent`, taking the
+   version) rather than as a field on API-7's submit. API-7 fires at the *end*
+   of Plot/Anchor/Love; consent is required *before* any of it, so folding it in
+   would record the consent after the data it was meant to gate had already been
+   collected.
+4. **⚠️ Design it to hold FR-11a too.** FE v1.45 keeps biometric consent
+   deliberately separate as a *user-facing step*, and Module 6 owns that screen —
+   but it will need exactly this record with a different key. One
+   `user_consents` table keyed by `(user_id, consent_type, version)` costs
+   nothing now and saves a second one-off column later. Deciding this while
+   there are no users is the whole reason to raise it now.
+
+**Client-side impact when it lands is small and worth stating**, so the shape is
+not chosen around a fear of client churn: `resolveRootDestination` swaps one
+context argument for a field it already receives, `useRootRouteContext` and the
+`consent` slice are deleted, and `consent` comes off `PERSIST_WHITELIST`. The
+consent *screen* does not change at all.
 
 ## 5. Is `nextCursor` opaque?
 

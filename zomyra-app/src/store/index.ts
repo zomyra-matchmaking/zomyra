@@ -25,6 +25,7 @@ import { api } from "@/src/api/api";
 
 import { appUpdateReducer } from "./slices/app-update-slice";
 import { chatReducer } from "./slices/chat-slice";
+import { consentReducer } from "./slices/consent-slice";
 import { discoverFiltersReducer } from "./slices/discover-filters-slice";
 import { discoveryModeReducer } from "./slices/discovery-mode-slice";
 import { entitlementReducer } from "./slices/entitlement-slice";
@@ -37,6 +38,7 @@ const rootReducer = combineReducers({
   [api.reducerPath]: api.reducer,
   appUpdate: appUpdateReducer,
   chat: chatReducer,
+  consent: consentReducer,
   discoverFilters: discoverFiltersReducer,
   discoveryMode: discoveryModeReducer,
   entitlement: entitlementReducer,
@@ -57,6 +59,11 @@ const rootReducer = combineReducers({
  *   only thing here that would be *useless* unpersisted rather than merely
  *   re-derivable: the prompt fires on cold start, so an in-memory cooldown
  *   would reset on exactly the launch it is meant to suppress.
+ * - `consent` — which accounts have accepted FR-2a's sensitive-data notice.
+ *   Like `appUpdate` it is not re-derivable: no endpoint records consent, so
+ *   losing it means re-asking a question the user has already answered. It is
+ *   keyed by `userId` and holds no personal data, so it survives a sign-out
+ *   deliberately — the same account signing back in has still consented.
  *
  * Not persisted, each for a stated reason:
  * - **tokens** — expo-secure-store only, never AsyncStorage (NFR-2, §4.3).
@@ -72,7 +79,13 @@ const rootReducer = combineReducers({
  * - **`api`** — RTK Query's cache is in-memory by design; persisting it whole
  *   is exactly the unbounded growth NFR-11 forbids.
  */
-const PERSIST_WHITELIST = ["onboarding", "discoveryMode", "discoverFilters", "appUpdate"];
+const PERSIST_WHITELIST = [
+  "onboarding",
+  "discoveryMode",
+  "discoverFilters",
+  "appUpdate",
+  "consent",
+];
 
 const persistedReducer = persistReducer(
   {

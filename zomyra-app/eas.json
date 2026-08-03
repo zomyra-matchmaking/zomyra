@@ -15,7 +15,9 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "mock"
+        "EXPO_PUBLIC_APP_ENV": "mock",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "426431032003-15glcint4vks1jpqm7ovalp1vk8u4kjl.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "426431032003-jd98hfugf0ilg4oa14bf0bdplkmeoagd.apps.googleusercontent.com"
       }
     },
     "development-simulator": {
@@ -32,15 +34,34 @@
       },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "staging",
-        "EXPO_PUBLIC_API_URL": "https://zomyra-staging.duckdns.org"
+        "EXPO_PUBLIC_API_URL": "https://zomyra-staging.duckdns.org",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "426431032003-15glcint4vks1jpqm7ovalp1vk8u4kjl.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "426431032003-jd98hfugf0ilg4oa14bf0bdplkmeoagd.apps.googleusercontent.com"
+      }
+    },
+    "preview-simulator": {
+      "extends": "preview",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview-mock": {
+      "extends": "preview",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "mock"
+      }
+    },
+    "preview-mock-simulator": {
+      "extends": "preview-mock",
+      "ios": {
+        "simulator": true
       }
     },
     "production": {
       "extends": "base",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "production",
-        "EXPO_PUBLIC_API_URL": ""
+        "EXPO_PUBLIC_APP_ENV": "production"
       }
     }
   }

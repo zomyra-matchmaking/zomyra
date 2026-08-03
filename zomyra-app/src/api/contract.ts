@@ -44,9 +44,45 @@ export type OtpRequestResponse = { otpSent: boolean; resendCooldownSeconds: numb
 /** API-2 request. */
 export type OtpVerifyBody = { phoneNumber: string; countryCode: string; otp: string };
 
+/**
+ * API-3 request. The `idToken` comes from the Google Sign-In SDK
+ * (`src/auth/google.ts`) and is the *only* field — no `serverAuthCode`, no
+ * access token, no profile.
+ */
+export type GoogleAuthBody = { idToken: string };
+
 export type AuthTokens = { accessToken: string; refreshToken: string };
 
-/** API-2 / API-3 response. */
+/**
+ * API-2 / API-3 response.
+ *
+ * ⚠️ **These two fields are not enough to route on, and that is the point.**
+ * FR-1a reads as "existing account → Discover, new account → Onboarding", but
+ * §9.1's table needs `verificationStatus` and `discoveryMode` as well, and
+ * neither is here. An existing account can be mid-verification or yet to pick a
+ * Discovery Mode, so branching on `profileComplete` at the auth screen would
+ * send a returning user to Discover that the tabs guard then bounces. Both auth
+ * screens therefore route to `/`, and `resolveRootDestination` answers from
+ * `GET /me`. See `src/lib/root-route.ts`.
+ *
+ * ⚠️ **`isNewAccount` is currently consumed by nothing, and that is deliberate —
+ * do not wire it up.** It is the obvious trigger for FR-2a's one-time consent
+ * screen, and it is the wrong one: FR-2a lets the user *decline*, which returns
+ * them to Welcome with the account already created. Sign in again and the flag
+ * reads `false`, so a client keyed on it would skip the notice and start
+ * collecting religion and income from someone who had explicitly refused. The
+ * gate keys on a persisted per-`userId` acknowledgement instead
+ * (`store/slices/consent-slice.ts`), which cannot be defeated that way.
+ *
+ * It stays on this type because **this file describes what the server sends**,
+ * not what the client happens to read — API-2 and API-3 both return it (FE §9.1,
+ * BE §14.1), and once O-11's schema is served and `yarn api:generate` replaces
+ * these hand-written types, it comes back regardless. Deleting it would only
+ * make the client's model of the response wrong.
+ *
+ * Anything that legitimately wants it — a `signup_started` vs `otp_verified`
+ * analytics split (BE §17) is the plausible one — should take it from here.
+ */
 export type AuthSessionResponse = AuthTokens & {
   isNewAccount: boolean;
   profileComplete: boolean;

@@ -133,6 +133,30 @@ function requestIdOf(meta: unknown): string | undefined {
 }
 
 /**
+ * Whether there is a live session for a failed refresh to *end*.
+ *
+ * ⚠️ **Without this, signing out deliberately reports itself as a forced
+ * logout** — found on the simulator in Module 4, on FR-2a's "Not now". The
+ * sequence is not obvious: `signOut` dispatches `signedOut`, the store listener
+ * answers it with `resetApiState()`, and any still-mounted `useGetMeQuery`
+ * subscription treats a cleared cache as a reason to **refetch**. That refetch
+ * has no token, 401s, finds no refresh token either, and the branch below fires
+ * `sessionExpired` — so the user lands on Welcome being told their session
+ * expired, when in fact they had just ended it themselves. That is precisely
+ * the distinction Module 2 added `expired` to preserve (NFR-15).
+ *
+ * `sessionExpired` means *a live session was terminated by the server*. A 401
+ * on a request that outlived its session is not that.
+ *
+ * Read structurally rather than as `RootState`: `src/store` imports `api`, so
+ * importing the type back here would be a cycle.
+ */
+function hasLiveSession(api: Parameters<ZomyraBaseQuery>[1]): boolean {
+  const state = api.getState() as { session?: { status?: string } } | undefined;
+  return state?.session?.status === "authenticated";
+}
+
+/**
  * The three codes BE v1.6 §9.9 returns for a non-active account.
  *
  * They are listed together and never distinguished: FE §8.1 specifies one
@@ -157,8 +181,11 @@ const baseQueryWithReauth: ZomyraBaseQuery = async (args, api, extraOptions) => 
       // NFR-15's force-logout path. Clearing the keychain and telling the store
       // is all this layer does — where that sends the user is Module 3's root
       // gate, not a decision for the network layer.
+      //
+      // The keychain is cleared either way; only the *announcement* is
+      // conditional. See {@link hasLiveSession}.
       await clearTokens();
-      api.dispatch(sessionExpired());
+      if (hasLiveSession(api)) api.dispatch(sessionExpired());
     }
   }
 

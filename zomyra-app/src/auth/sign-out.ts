@@ -13,9 +13,18 @@
 import type { AppDispatch } from "@/src/store";
 import { signedOut } from "@/src/store/slices/session-slice";
 
+import { forgetGoogleAccount } from "./google";
 import { clearTokens } from "./tokens";
 
 export async function signOut(dispatch: AppDispatch): Promise<void> {
   await clearTokens();
+  /*
+   * Google's SDK keeps its own cached account, entirely separate from our
+   * tokens. Left alone, "Log out" followed by "Continue with Google" silently
+   * re-signs in as the same person with no account picker — the shared-device
+   * case above, wearing a different hat. Best-effort by design; it never blocks
+   * the sign-out that has already happened.
+   */
+  await forgetGoogleAccount();
   dispatch(signedOut());
 }

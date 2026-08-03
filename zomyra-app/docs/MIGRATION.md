@@ -11,7 +11,7 @@ Append a "Module log" entry at the end of every module, in the same session that
 - Started: 2026-07-27
 - Codebase: `zomyra/zomyra-app` (Expo SDK 54, RN 0.81.5, React 19.1, expo-router v6)
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
-- Status: **Module 3 complete** (2026-08-02). §3's baseline still describes the untouched Emergent
+- Status: **Module 4 complete** (2026-08-03). §3's baseline still describes the untouched Emergent
   output and is kept as the historical reference point; §6 records what each module changed.
   ⚠️ **§3's "Data layer" subsection is now history too** — the 14-line `fakeNetwork` stub, the six
   Zustand stores and "no `fetch` call to any host" it records were all replaced in Module 2.
@@ -19,36 +19,47 @@ Append a "Module log" entry at the end of every module, in the same session that
   the 13 rival palettes and the four NFR-6a failures it records were all resolved in Module 1.
   ⚠️ **§3's "Navigation" subsection is now history too** — the flat 21-route `<Stack>`, the
   `router.push()` floating bar and the 1.8s splash redirect it records were all replaced in Module 3.
-- **Handoff state:** **Modules 0, 1 and 2 are merged** to `master`. **Module 3 is finished and
-  awaiting the owner:** its commit sits on `module/3-navigation` (branched from `2ffecb0`),
-  **committed but not pushed and with no PR open** — per C-6 the owner does both.
-  `git log master..module/3-navigation` shows what is pending.
-- **Verified green as of 2026-08-02:** `yarn doctor` 18/18 · `yarn lint` 0 errors (14 pre-existing
-  warnings) · `yarn typecheck:baseline` clean (the same 3 inherited errors, no new ones) · Metro
-  bundles 3563 modules for iOS and Android · the root gate's branches, the tab navigator and the
-  accountStatus blocker walked on the iPhone 16 Plus simulator and the Android 16 emulator.
+  ⚠️ **§3's "Google OAuth (a 'coming soon' toast)" and "FR-2a consent" rows are history** — both
+  were built in Module 4.
+- **Handoff state:** **Modules 0, 1, 2 and 3 are merged** to `master` (Module 3 as PR #4, merge
+  commit `198b700`). **Module 4 is finished and awaiting the owner:** its commit sits on
+  `module/4-auth` (branched from `198b700`), **committed but not pushed and with no PR open** — per
+  C-6 the owner does both. `git log master..module/4-auth` shows what is pending.
+- **Verified green as of 2026-08-03:** `yarn doctor` 18/18 · `yarn lint` 0 errors (the same 14
+  pre-existing warnings) · `yarn typecheck:baseline` clean (the same 3 inherited errors, no new
+  ones) · both auth paths, FR-2a's consent screen and all three OTP error branches walked on the
+  iPhone 16 simulator **and** the Android 16 emulator, on **release `preview` builds** rather than
+  only the dev client.
+- **Google Sign-In reaches Google's own sign-in page on both platforms** against staging, on
+  dev clients rebuilt with the owner's staging client IDs (2026-08-03). **It has not completed a
+  real sign-in** — that needs Google account credentials. **O-19's client-side half is done**; what
+  is left is the Android console client and confirming the backend validates against the same Web
+  client, neither of which is visible from here.
   ⚠️ `yarn lint` caches to **`.expo/cache/eslint`**. If it reports errors that `npx eslint app src
   --no-cache` does not, `rm -rf .expo/cache` before believing it — this cost time in Module 1.
-- **C-2 is now proven, not just configured.** The first EAS build ran on 2026-07-28
-  (`development-simulator`, build 1) and the app launched on an iPhone 16 Plus simulator against
-  Metro. See §6's "First build" entry. iOS *device* and Android builds remain unrun.
+- **C-2 is proven on every build type that matters now.** `development-simulator` since 2026-07-28;
+  Module 4 added **`preview` (Android APK) and `preview-simulator` (iOS)**, so the app has now been
+  run as a *release* binary that owns the `zomyra://` scheme on both platforms. iOS **device**
+  remains correctly unrun, blocked on the Apple account (O-10).
 - **Staging is live as of 2026-08-02** (`https://zomyra-staging.duckdns.org`) and the contract has
   been checked against it rather than against the documents — `/v1`, the error envelope,
-  `X-Request-Id` and API-5's shape all confirmed. **But phone auth is not deployed**, so no token can
-  be obtained and nothing authenticated is verifiable yet; the app stays on mocks. Endpoint map and
-  detail in §6's Module 2 addendum.
-- **Next up: Module 4 — Auth & session.** The sequence in §2 is being followed in order. Module 4
-  inherits a working root gate that already routes off API-2's outcome, and the shared loading
-  state for its submits (§13.3 — it **builds nothing** there). Two things in its screens are
-  currently wrong and are its to fix: `login.tsx` ships a `[DEV] Skip to Discover` chip that must
-  not reach production (FR-2), and `otp.tsx` routes to `/onboarding` unconditionally instead of
-  branching on API-2's `profileComplete` (FR-1a). **It should also batch the Google Sign-In SDK
-  with any other native addition** — see O-17, which Module 3 half-closed.
-  ⚠️ **Module 4 still cannot be verified against staging:** re-probed 2026-08-02, API-1/API-2 are
-  still `404` and `/v1/auth/google` still `503`s, so **no token can be obtained**. It stays on mocks.
+  `X-Request-Id` and API-5's shape all confirmed. **Re-probed 2026-08-03:** `POST /v1/auth/google`
+  now returns **`401 invalid_google_token`** for a bogus token, where it returned `503` a day
+  earlier — so **API-3 is deployed and validating**. API-1/API-2 are still `404` (on hold behind
+  LLP → DLT registration) and `/v1/docs-json` is still `404`. Endpoint map in §6's Module 2 addendum.
+- **Next up: Module 5 — Onboarding & profile schema.** The sequence in §2 is being followed in
+  order. It inherits a working consent gate immediately in front of the Onboarding stack, both
+  auth paths landing on `/` so §9.1 decides, and the shared loading state. **Read §12.3 and
+  §12.3a first** — FR-3b makes every choice list backend-driven, so `src/lib/onboarding/types.ts`'s
+  unions are *wrong by design* and the work is deletion rather than renaming. And **read the
+  redux-persist warning in `src/store/index.ts`**: Module 5 changes the `onboarding` slice's shape,
+  and the default behaviour on a version mismatch is a pass-through that fails at *submit* rather
+  than at load.
 - **Before starting the next module, read:** §1 (constraints), §2 (sequence), §11 (build internals),
-  §4 (open items), **§12 (spec-change history — check before starting any module)**, then §6's
-  Module 3 entry. §3 is history, not current state.
+  §4 (open items — **O-19 is new; its client-side half is done, but two owner/backend items on it
+  still gate a working Google sign-in**),
+  **§12 (spec-change history — check before starting any module)**, then §6's Module 4 entry.
+  §3 is history, not current state.
 
 ---
 
@@ -88,7 +99,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 1 | Design system & theming | **Complete** (2026-07-30) | Later modules rewrite most screens — tokens must exist first or the debt is re-created |
 | 2 | State & data layer | **Complete** (2026-07-31) | Every subsequent module plugs into it; nothing can reach the backend until it exists |
 | 3 | Navigation | **Complete** (2026-08-02) | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
-| 4 | Auth & session | Not started | First real API integration; unblocks every authenticated call |
+| 4 | Auth & session | **Complete** (2026-08-03) | First real API integration; unblocks every authenticated call. **+ FR-2a's consent screen + O-18(a) settled on a scheme-owning build** |
 | 5 | Onboarding & profile schema | Not started | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
@@ -414,9 +425,11 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-15 | **Fallback when a user's town isn't in the backend's `cities` table** — flagged as undecided by the spec itself (FE TDD v1.42 FR-3a). **Half-settled as of BE v1.4 (§12.2):** the client side is decided — `city` is a **closed set**, always a `cityId` from the backend's table, never free text. That was the part that would have changed the Discover filter and the matching query, so the client is unblocked. **What remains is a backend data-curation question:** how deep the curated list goes (every district town, or top N per state), and what a user does when their town isn't there. FE v1.42 states plainly that this is *"a backend data-curation gap, not a client one"*. | Module 5 (client unblocked) | BE + product |
 | O-16 | ~~Backend TDD v1.2 has no `state` field~~ **→ Closed by BE TDD v1.4** (2026-07-31, §12.2). Resolved differently from how this item framed it: there is **no `state` column on the profile** and `state` is **never submitted**. The backend's pre-existing `cities` table is exposed via **API-38 `GET /locations/cities`**, onboarding submits **`cityId`** (FK → `cities.id`, matching the `users.city_id` that already existed), and `/profile/me` returns `cityId, cityName, state` denormalized via join. FR-5's "same state" matching already worked through that table — v1.40's claim that it needed fixing was retracted in v1.41. | Module 5 | ✅ Closed |
 
-| O-17 | **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). **Module 3's half is decided (2026-08-02, owner): the shared default takes no Lottie.** It is token-driven, so no native dependency and no dev-client rebuild was spent, and `lottie-react-native` now lands with **treatment #5 in Module 7** — the branded logo animation, the one §13.4 says almost certainly needs supplied artwork — **batched with Module 4's Google Sign-In SDK** rather than paying for two rebuilds. `Loading.tsx`'s interior is isolated in one component so a Lottie swap does not touch call sites. **Still open for §13's later owners:** the owner has **Lottie JSON** intended as loading visuals; whenever a module reaches a shimmer or animation (§13), request the asset before building one — the same rule as brand assets in O-14/§10. See §13.4 for what to request and the reduce-motion fallback each asset needs. | ~~Module 3~~ **→ Module 7** (with the branded animation), then §13's owners | Product owner |
+| O-17 | **Module 4's half is now decided too (2026-08-03).** The native batch it was meant to gather turned out to be one addition and two removals: `+@react-native-google-signin/google-signin`, `−expo-blur`, `−expo-symbols`. **`expo-updates` deliberately did *not* ride along** and **`expo-camera` was kept** — reasoning in §6's Module 4 entry, and the short version is that "don't pay for two rebuilds" does not apply when two more native build events (`lottie-react-native` in Module 7, `expo-notifications` in Module 11) are already scheduled. **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). **Module 3's half is decided (2026-08-02, owner): the shared default takes no Lottie.** It is token-driven, so no native dependency and no dev-client rebuild was spent, and `lottie-react-native` now lands with **treatment #5 in Module 7** — the branded logo animation, the one §13.4 says almost certainly needs supplied artwork — **batched with Module 4's Google Sign-In SDK** rather than paying for two rebuilds. `Loading.tsx`'s interior is isolated in one component so a Lottie swap does not touch call sites. **Still open for §13's later owners:** the owner has **Lottie JSON** intended as loading visuals; whenever a module reaches a shimmer or animation (§13), request the asset before building one — the same rule as brand assets in O-14/§10. See §13.4 for what to request and the reduce-motion fallback each asset needs. | ~~Module 3~~ **→ Module 7** (with the branded animation), then §13's owners | Product owner |
 
-| O-18 | **⚠️ Deferred verification from Module 3 — four flows that are built but NOT proven on a device.** Not decisions; **test debt**, recorded here because §4 is the list every module is told to read and a note buried in §6 would not be seen. **(a) The deep-link race, and it is the important one.** `app/index.tsx`'s `Redirect` can still override a deep link that lands while `GET /me` is in flight — the conversation opens and is replaced by Discover a second later. **This is Module 11's core path: a push notification opening a chat.** A `useIsFocused` fix was written and reverted because it cannot be demonstrated in a dev build (expo-dev-client owns `zomyra://`, so a cold deep link opens the launcher, not the app). **Verify on a `preview`-profile build, where the app owns the scheme — this is the first thing Module 11 should do, before writing routing code against a path nobody has watched work.** Note the *security* half is already covered: the tabs guard checks the deep-linked route whichever navigation wins, verified for `pending` and `suspended`. **(b)** The FR-28 delete dialog's **step 2** ("type DELETE") was never keyboard-tested — only step 1, which is the one that got the `ScrollView`. Step 2 is a plain `View` with a `TextInput`. **(c)** `personality-test`'s route path inside the Profile stack was never exercised. **(d)** `?entry=mismatch` and `?entry=photos` were never walked end to end; only `?entry=pending` was. | Module 11 for (a) · Module 6 for (b)/(d) · any module touching Profile for (c) | FE |
+| O-18 | **⚠️ Deferred verification from Module 3.** Not decisions; **test debt**, recorded here because §4 is the list every module is told to read and a note buried in §6 would not be seen. **(a) CLOSED by Module 4 (2026-08-03) — and it closed as "not reproducible", not as "fixed".** Full evidence in §6's Module 4 entry; the short version is that the race could not be made to happen on either platform, on **either** a guarded or a deliberately-unguarded build, because on a deep-link launch `app/index.tsx` **never mounts** — which is exactly what Module 3's *other* note (the tabs-guard one) already said, and the two notes were in tension. The `useIsFocused` guard Module 3 reverted is **back in**, on the narrower grounds that it is provably free rather than that it fixes an observed bug. ⚠️ **The one thing (a) does leave for Module 11:** it was verified with `simctl openurl` / `adb am start`, which is a *URL* arriving, not a *notification* being tapped. `expo-notifications` delivers a cold-start tap through its own response listener, not necessarily through the same `Linking` path, so Module 11 must re-walk it once a real push exists. **(b)** The FR-28 delete dialog's **step 2** ("type DELETE") was never keyboard-tested — only step 1, which is the one that got the `ScrollView`. Step 2 is a plain `View` with a `TextInput`. ⚠️ Module 4 found a defect of exactly this shape on `otp.tsx` — the CTA sat entirely behind the Android keypad — so treat (b) as likely, not hypothetical. **(c)** `personality-test`'s route path inside the Profile stack was never exercised. **(d)** `?entry=mismatch` and `?entry=photos` were never walked end to end; only `?entry=pending` was. **(e) Added by Module 4 — `app/otp.tsx` with the keyboard open is unverified on iOS.** The keyboard handling on that screen was rewritten (`useKeyboardInset`) and proven in all four states on Android, but iOS **suppresses the software keyboard for `textContentType="oneTimeCode"` fields under simulator automation** — the field focuses and takes hardware-keyboard input without drawing a keypad, so the lifted state cannot be photographed. The *resting* state is verified on iOS, and the software keyboard was confirmed working on `phone.tsx`, so this is narrow: it is specifically this screen, keypad-up, on iOS. **First real iPhone or a manual simulator run should check it** (O-10 gates the former). | ~~Module 11 for (a)~~ **(a) closed** · Module 6 for (b)/(d) · any module touching Profile for (c) · **(e) whoever next runs iOS by hand** | FE |
+
+| O-19 | **Google OAuth client IDs — the client-side half is DONE (2026-08-03); what remains is two things the client cannot see.** ✅ **Wired:** the owner's staging pair is in `eas.json`'s `development` and `preview` profiles (and `.env.example` documents both), so the runtime half needs nothing further — `426431032003-15glcint4vks…` (**Web**, sent as `webClientId` on both platforms) and `426431032003-jd98hfugf0il…` (**iOS**, also reversed into the `Info.plist` URL scheme at build time). Their types were established rather than assumed: Google's own OAuth endpoint rejects the first with *"Custom scheme URIs are not allowed for **'WEB'** client type"* and accepts `com.googleusercontent.apps.<id>` for the second. ⚠️ **Staging only** — `eas.json`'s `production` profile is deliberately left without them so it cannot inherit staging's by accident. **Two items outstanding, and neither is visible client-side — a mismatch in either surfaces only as `invalid_google_token` on a real sign-in:** **(1) the Android console client**, which has to exist bound to package `com.zomyra.app` **plus SHA-1 `EF:AC:93:86:81:D7:00:AB:D6:27:C6:2F:17:1C:1F:39:79:2E:63:36`** — the **EAS** keystore's, not the local debug keystore's, which Module 4 confirmed differ the hard way (`INSTALL_FAILED_UPDATE_INCOMPATIBLE` when the EAS-signed APK met the locally-built one; re-checkable with `apksigner verify --print-certs` or `eas credentials`). Nothing goes *in* the app for Android — but without the client, sign-in fails with `DEVELOPER_ERROR` (code 10) *after* account selection, which is exactly past where Module 4 could test. **(2) Confirmation that `426431032003-15glcint…` is the same Web client the backend validates against.** The backend has *a* client configured — that is why `/v1/auth/google` returns `401 invalid_google_token` rather than `503` — but "a client is configured" and "it is this one" are different claims, and only the backend side can tell them apart. | ✅ Client-side done · **Android console client + backend audience confirmation** | Product owner + BE |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -1693,6 +1706,428 @@ before concluding anything — the same class of mistake as the Fast Refresh not
 **both** the iPhone 16 Plus simulator and the Android 16 emulator · the mock is byte-identical to
 its committed state.
 
+### Module 4 — Auth & session (completed 2026-08-03)
+
+**The framing that mattered:** this is the first module in the project's history that could verify
+anything *authenticated* against a real backend — API-3 started validating on the morning it began.
+It is also the first that ran the app as a **release binary** rather than a dev client, which is
+what made O-18(a) settleable at all.
+
+**Changed:**
+
+- **Google Sign-In is real (FR-1, §6.12, API-3).** The button was a `toast.show("coming soon")`.
+  `@react-native-google-signin/google-signin@16.1.4` produces an `idToken`, `POST /auth/google`
+  exchanges it, and the token pair lands on the keychain through **the same `onQueryStarted` path
+  as API-2** — factored into one `adoptSession()` so a fourth sign-in path could not land them
+  differently from the first three. No screen ever holds a token.
+- **The SDK is behind one function** (`src/auth/google.ts`) and **imported lazily**, which is not
+  tidiness: the package's `errorCodes` module calls `NativeModule.getConstants()` *at import time*,
+  so a static import crashes any binary built before the dependency existed — including the dev
+  client that was on the simulator. Lazy loading kept the whole app runnable throughout the module.
+- **§6.12's cancel branch is silent.** A dismissed consent sheet returns to Welcome with no error,
+  because no request was ever sent. Both spellings are handled — the `cancelled` response shape and
+  the thrown `SIGN_IN_CANCELLED`/`IN_PROGRESS` codes iOS uses instead.
+- **`app.config.js` is new, and `app.json` is untouched.** `npx expo install` wrote a bare
+  `"@react-native-google-signin/google-signin"` into the plugin list; that is the **Firebase** code
+  path of the plugin, which expects `google-services.json` / `GoogleService-Info.plist` — files
+  §2.1 gates behind O-2 — and fails prebuild. The plugin now takes `{ iosUrlScheme }`, **derived**
+  from the iOS client ID rather than configured separately (they are the same string in two orders;
+  asking for both invites a build whose `Info.plist` scheme belongs to a different client), and is
+  **omitted entirely when unconfigured** rather than given a placeholder. Verified in all three
+  states: absent, injected-and-correctly-reversed, and throwing a named error on a wrong-shaped value.
+- **FR-1a fixed, and kept in one place.** `otp.tsx:106` called `router.replace("/onboarding")`
+  unconditionally. Both auth screens now `replace("/")` and let `resolveRootDestination` answer.
+  **The reason is stronger than "avoid duplication":** API-2/API-3 return only `isNewAccount` and
+  `profileComplete`, while §9.1 also needs `verificationStatus` and `discoveryMode` — so a branch at
+  the auth screen would send a mid-verification returning user to Discover, and the tabs guard would
+  bounce them straight back out. The thinner copy would not merely duplicate the table, it would
+  **disagree** with it. **`isNewAccount` ends up consumed by nothing**, deliberately — see the
+  consent bullet below and the warning on `AuthSessionResponse`.
+- **FR-2a's consent screen exists** (`app/consent.tsx`), named categories and all — religion,
+  income, and diet/drinking/smoking, each by name, because "some personal information" satisfies the
+  layout and not the requirement. Explicit agree, privacy-policy link, and **declining signs out**:
+  the account already exists by then (API-2/API-3 issued tokens before this screen is reachable), so
+  leaving the tokens would put a signed-in user on Welcome and route them past the notice on the
+  next launch.
+- **Consent is a row in §9.1's table, not a screen the auth flow pushes.** `resolveRootDestination`
+  gained `/consent` between the `accountStatus` early return and `profileComplete` — so the tabs
+  guard enforces it too, and a deep link cannot skip it, which is the same hole Module 3's addendum
+  closed for verification.
+- **⚠️ `isNewAccount` alone is not enough for "once per account", and the hole is the case the
+  screen exists for.** Decline → sign in again → `isNewAccount: false` → straight into Onboarding,
+  collecting religion and income from someone who had just refused. So a **persisted `consent`
+  slice** records the acknowledgement per `userId`. Gated on `profileComplete` as well, so a
+  finished account can never see it.
+  **The consequence is that `isNewAccount` ends up consumed by nothing at all** —
+  `resolveRootDestination`'s consent row is `!profileComplete && !consentGiven`, and the flag
+  appears nowhere in `app/` or `src/` outside the mock that produces it. That is the design working,
+  not an oversight: the failure above is impossible *by construction* rather than by care, because
+  there is no code path that can read the flag and be misled by it. It stays on
+  `AuthSessionResponse` because that type describes **what the server sends** — API-2/API-3 both
+  return it, and O-11's codegen would restore it anyway — with a warning on the type telling the
+  next reader not to wire it up. Verified on device, same JS context, after the design was
+  questioned in review: decline → sign in again as the same identity, with the mock now returning
+  `isNewAccount: false`, still lands on `/consent`.
+- **The OTP errors Module 2 deferred**, and they are three different behaviours, not three
+  messages: `invalid_otp` → inline error, boxes cleared, **unlimited retry**; `otp_expired` → same,
+  **plus the resend cooldown is cleared immediately**, because a new code is the only way forward
+  and watching out a timer for a dead code is the wrong thing to make someone do;
+  `too_many_attempts` → `retryAfterSeconds` counted down with Verify disabled. **No client-side
+  lockout was invented** — §6.11 says unlimited retry, API-2 says `429` after five attempts, and
+  those only conflict if you miss whose rule it is: the server counts, the client honours.
+- **`rate_limited` is honoured on both screens**, and `phone.tsx` **says something when a request
+  fails at all** — it previously did nothing but decline to navigate, which is indistinguishable
+  from a dead button and is the exact failure NFR-7 forbids.
+- **`useCountdown`** (`src/hooks/`) is shared by the three timers. It counts **to a deadline** rather
+  than decrementing: `setInterval` drifts, and is throttled while backgrounded — so a user who
+  backgrounds the app for the whole 15-minute `too_many_attempts` window would otherwise return to a
+  counter that had barely moved.
+- **The resend cooldown is the server's number**, not a constant. API-1 returns
+  `resendCooldownSeconds`; `phone.tsx` passes it to `otp.tsx`, and a `rate_limited` resend replaces
+  it with `retryAfterSeconds`.
+- **NFR-15 / §6.13's forced-logout message finally has a reader.** Module 2 added `session.expired`
+  and Module 3 routed expired users to `/login`; nothing told them why. Welcome now shows a banner —
+  a banner rather than a toast, because it explains why they are looking at a sign-in screen they
+  did not ask for. It is copied into local state and *then* acknowledged, so the store flag is spent
+  while the message stays on screen; announced with `accessibilityRole="alert"`.
+- **`signOut` now clears Google's cached account too.** The SDK keeps its own, entirely separate
+  from our tokens: without this, "Log out" → "Continue with Google" silently re-signs in as the same
+  person with no account picker — FE §9.12's shared-device case wearing a different hat.
+  Best-effort; it never blocks a sign-out that has already happened.
+- **The mock grew a user directory** (`src/api/mock/accounts.ts`). It had one hardcoded incomplete
+  account, which can demonstrate exactly one side of FR-1a, cannot show "consent once per account"
+  at all, and makes O-18(a) untestable because the guard reroutes an incomplete account either way.
+  **`9000000000` is a fully onboarded, verified, Discovery-Mode-set returning user**; anything else
+  is a new signup. Module 3's suggestion — hand-edit `handlers.ts` — does not survive into a
+  `preview` build, whose bundle is baked at build time.
+- **Mock access tokens now carry their own `userId`.** `isAccessTokenValid`'s re-adoption used to
+  rebuild the session as a hardcoded `"mock-user"`, so cold-starting as the returning user came back
+  as an incomplete signup and neither FR-1a's Discover branch nor O-18(a) survived a restart.
+- **Reserved mock inputs make every §9.1 negative reachable** without a backend, since API-1/API-2
+  are `404` on staging: `9111111111` → `rate_limited`, `9222222222` → `sms_delivery_failed`,
+  OTP `000000` → `otp_expired`, OTP `111111` → `too_many_attempts`. **The two `retryAfterSeconds`
+  spellings are deliberately split between them** — `rate_limited` emits it beside `code`,
+  `too_many_attempts` inside `details` — so `normalizeError`'s defensive "accepts either" is
+  *exercised* rather than merely asserted (CONTRACT-QUESTIONS item 4).
+
+**Two defects found and fixed that were not on Module 4's list:**
+
+1. **⚠️ Signing out deliberately reported itself as a forced logout.** Found on the simulator on
+   FR-2a's "Not now": the user landed on Welcome being told *"your session expired"*. The sequence
+   is not obvious — `signOut` dispatches `signedOut`, the store listener answers with
+   `resetApiState()`, and a still-mounted `useGetMeQuery` subscription treats a cleared cache as a
+   reason to **refetch**; that refetch has no token, 401s, finds no refresh token either, and the
+   base query fires `sessionExpired`. Which destroys the exact distinction Module 2 created the flag
+   for. `base-query.ts` now only announces an expiry when there was a live session to expire; the
+   keychain is cleared either way.
+2. **⚠️ On Android the OTP screen's `Verify & Continue` was entirely behind the keypad.** You could
+   enter all six digits and had no way to submit without first dismissing the keyboard — on the
+   sign-in path. Cause is Module 3's `edgeToEdgeEnabled` finding again: the window is laid out
+   *behind* the IME so `KeyboardAvoidingView` must do the shrinking, and **it only reclaims part of
+   the keyboard's height** — measured on `phone.tsx`, a 600px correction for a 1055px keyboard.
+   `phone.tsx` survives that because its CTA sits directly under the input and had the slack to
+   give; this screen's sat below an unbounded `flex: 1` spacer, so the whole shortfall came off the
+   button. See the addendum below for how it was actually fixed — **the first two attempts were
+   wrong, and both were caught by measuring rather than by reasoning.**
+
+**O-18(a) — settled, and it closed the other way:**
+
+Module 3 recorded a real race — `app/index.tsx`'s `Redirect` overriding a deep link that lands while
+`GET /me` is in flight — wrote a `useIsFocused` guard, and reverted it because a dev build cannot
+demonstrate it (expo-dev-client owns `zomyra://`). Module 4 built the vehicle and ran it properly:
+
+| Build | iOS cold-start `zomyra:///chats/riya` | Android cold-start | Result |
+|---|---|---|---|
+| **Guarded** (`preview-mock-simulator` / `preview-mock`) | conversation opens, **8 frames over 8s byte-identical** | conversation opens, frames 4–10 identical | survives |
+| **Unguarded control** (guard deliberately removed, built for this) | identical — conversation opens and stays | — | survives |
+
+**So the race is not reproducible**, and the reason is the interesting part: on a deep-link launch
+`app/index.tsx` **never mounts**, so its `Redirect` never had the opportunity to fire. That is
+exactly what Module 3's *other* note already said — the tabs-guard note, *"mounts the conversation
+without `/` ever rendering"* — and the two notes in that log were in tension. The tabs-guard one is
+the accurate one.
+
+**The guard is kept anyway**, and the grounds have changed from "this fixes an observed bug" to
+"this is provably free": the guarded and unguarded builds behave identically, so it costs nothing,
+and it forecloses a real structural hazard if `/` ever does mount under a deep link. That is a
+narrower and more honest claim than Module 3 could make, which is why the reverted change is back.
+
+⚠️ **What this does *not* prove, and Module 11 owns it:** the test fired a **URL**
+(`simctl openurl` / `adb am start`), not a **notification tap**. `expo-notifications` delivers a
+cold-start tap through its own response listener, which is not necessarily the same `Linking` path.
+Re-walk it with a real push.
+
+**Verified — on-device, not reasoned about:**
+
+- `yarn lint` **0 errors** (the same 14 pre-existing warnings) · `yarn typecheck:baseline` clean
+  (the same 3 inherited errors) · `yarn doctor` **18/18** · npm was never run.
+- **Both platforms, on release `preview` builds**, not just the dev client: FR-1a's returning-account
+  branch (`9000000000` → straight to **Discover**, where before this module it went to Onboarding);
+  the new-account branch → **consent → Onboarding**; `rate_limited` with a live countdown and a
+  disabled CTA; `otp_expired` clearing the resend cooldown; `too_many_attempts` counting 14:58 with
+  Verify disabled.
+- **FR-2a's "shown once per account, never again" proven across a cold restart** — agree, force-stop,
+  relaunch, resumed at Onboarding with no second prompt.
+- **FR-2a walked through its permutations rather than its happy path** (the last three added after
+  the design was challenged in review). **Observed:** new account by phone → consent · new account
+  by Google → consent · agree → Onboarding · decline → signed out to Welcome · **decline then sign
+  in again in the same JS context, with the mock now returning `isNewAccount: false` → consent
+  again** · agree → force-stop → relaunch → Onboarding, no re-prompt · existing complete account →
+  Discover, consent never evaluated · **warm deep link to `zomyra:///chats/riya` while unconsented →
+  bounced, stays on consent** · **cold-start deep link while unconsented, on a scheme-owning
+  `preview` build → lands on consent and stays** (frames 3–8 identical). The last two matter because
+  they are the hole Module 3's addendum found for verification, re-checked for consent.
+  **Still reasoned rather than observed:** a non-`active` account reaching `/blocked` before consent
+  (the `accountStatus` early return precedes the consent row, and Module 3 observed that ordering),
+  and two different accounts on one device getting their own consent (`sensitiveDataUserIds`
+  `.includes(userId)` — correct by inspection, but a second identity was never signed in).
+- **NFR-15's message proven to appear once** — shown on a genuinely expired session (the mock token
+  format changed in this module, which invalidated the keychain token and produced a real forced
+  logout), gone on the next launch.
+- **The whole Google path walked end to end in mock mode** — button → SDK seam → API-3 → keychain →
+  gate → consent — so everything except the SDK's own call is exercised today.
+- **`POST /v1/auth/google` re-probed against staging**: `{"idToken":"bogus"}` → `401
+  invalid_google_token`. It also rejects unknown properties (`400 validation_error`), confirming the
+  body shape is exactly `{ idToken }`.
+
+**Still stubbed / deferred:**
+
+- **⚠️ Phone auth is written but UNVERIFIED against staging, and will stay that way for a while.**
+  API-1/API-2 return `404`; SMS delivery in India needs DLT registration, which needs the LLP, which
+  is the same chain as O-10. Everything in `phone.tsx`/`otp.tsx` — including all three error
+  branches — is proven against mocks and against nothing else. It is not "probably fine": the mock
+  was written from the same TDDs, so it cannot catch drift, for the same reason O-11 exists.
+- **⚠️ Google reaches Google's own sign-in page on both platforms but has never completed a real
+  sign-in.** The owner supplied the staging client IDs and everything up to the credential prompt is
+  verified (see the owner-review addendum). What remains needs a human to sign in with a Google
+  account — and that is also where a missing Android OAuth client, or a Web client the backend does
+  not actually validate against, would surface. **O-19's client-side half is done; those two are
+  not**, and neither can be checked from this repository.
+- **Sign-in costs one extra round trip, and the fix is recorded rather than taken.** Both auth
+  screens route to `/`, so the gate fetches `GET /me`; API-5 is already cached from the launch that
+  reached Welcome, so it is exactly one request and the shared loading state covers it. It could be
+  **zero** — if API-2/API-3 returned the same object `GET /me` returns, `adoptSession` could seed
+  the cache with `api.util.upsertQueryData("getMe", …)` and the gate would resolve without asking.
+  **Not requested (owner, 2026-08-03):** it optimises something that is not hurting, on endpoints
+  that are still `404`, and the decision wants real numbers from staging on real Indian mobile
+  networks. ⚠️ **If it is ever asked for, ask for `GET /me`'s whole object, not a few extra
+  fields** — two overlapping shapes for one user can disagree, which is the drift O-11 exists to
+  prevent while no schema is served. Note in `src/api/endpoints/auth.ts` beside where it would go.
+- **`expo-updates` did not ride along, deliberately.** `BUNDLE_UPDATE_ID` is still the literal
+  `"embedded"`, which FE §9 defines as correct for a build that has never had an OTA update — this
+  project's actual state. O-17's "don't pay for two rebuilds" argument **does not apply**, because
+  two more native build events are already scheduled (`lottie-react-native` in Module 7,
+  `expo-notifications` in Module 11), so this is not a last cheap moment. And it would have been
+  actively unhelpful here: an updates-enabled `preview` build can fetch an OTA at launch, which is a
+  second variable inside the one experiment O-18(a) existed to run. The one-line swap in
+  `src/config/app-headers.ts` still stands.
+- **The `too_many_attempts` lockout is per screen instance**, so navigating back and re-entering
+  clears the client-side countdown. Left as is on purpose: the server is the authority and will
+  reject the next attempt identically. Persisting it would be inventing a client lockout §6.11
+  explicitly does not specify.
+- **No dev affordance was added back to Welcome.** Any shortcut either goes *around* the gate — and
+  the tabs guard bounces it, which is why Module 3's chip had stopped working honestly — or *through*
+  it, in which case it is just signing in. `9000000000` is the honest lever, and it is documented in
+  the screen.
+- `setupListeners` still unwired. FR-11a's biometric consent is Module 6's and is deliberately
+  **not** folded into FR-2a's screen.
+
+**Inherited by next module:**
+
+- **Module 5 gets a consent gate immediately in front of the Onboarding stack.** It is a row in
+  `resolveRootDestination`, so it applies to the tabs guard too — an onboarding screen reached by
+  any route has already passed it.
+- **Both auth paths land on `/`.** Anything Module 5 adds to §9.1 is picked up by the auth flow for
+  free; nothing needs teaching about a new destination.
+- **`useRootRouteContext`** (`src/components/nav/use-launch-gate.ts`) supplies the client-side facts
+  §9.1 needs that `GET /me` does not carry. There are two callers now (the gate and
+  `HeldVerification`); add to it rather than selecting the slice again.
+- **`useCountdown` + `formatCountdown`** are general — Module 6's verification polling and Module
+  10's FR-29b activation window are the same shape.
+- **`useKeyboardInset`** (`src/hooks/`) — use it for any screen whose CTA is bottom-anchored behind
+  a spacer, which is the shape `KeyboardAvoidingView` fails on under `edgeToEdgeEnabled`. Its header
+  carries the measurements. ⚠️ **Never combine it with a `KeyboardAvoidingView` on the same
+  subtree** — both offset, and the content moves twice as far. FR-28's delete dialog (O-18(b)) is
+  the next likely candidate.
+- **The mock account directory is the lever for reaching any §9.1 state.** Module 5 will want
+  `profileComplete: false` (any number) and Module 6 the verification rows; both are one edit to
+  `accounts.ts` rather than to a handler.
+- **⚠️ Module 4 changed the mock access-token format** (`mock-access-…` → `mock-access~<userId>~…`).
+  Any device carrying a token from before this module force-logs-out once on first launch. Expected,
+  one-time, and it is what proved NFR-15's message on a real expiry.
+
+**Decisions made:**
+
+- **FR-1a is answered by §9.1, not at the auth screen** — because API-2/API-3's response is
+  genuinely insufficient, not merely redundant.
+- **FR-2a is a routing row, not a pushed screen**, so the tabs guard enforces it and a deep link
+  cannot skip it.
+- **Consent is recorded per `userId`, client-side, and persisted** — ⚠️ **and the owner has since
+  decided this moves to the backend (2026-08-03), so treat the slice as temporary.** The argument
+  that settled it is sharper than "a reinstall re-asks": the consent row is only evaluated while
+  `profileComplete` is `false`, so **after onboarding completes nothing reads the record again and
+  no system anywhere holds proof consent was given**. Shape being settled in CONTRACT-QUESTIONS 4b —
+  a timestamp *and a notice version* (a boolean cannot answer "consented to what", nor survive the
+  notice changing), returned on `GET /me`, written by its own endpoint rather than folded into
+  API-7 (which fires *after* the data consent was meant to gate), and **built to hold FR-11a's
+  biometric consent too** so Module 6 does not add a second one-off column. When it lands the client
+  change is small: the slice, `useRootRouteContext` and one `PERSIST_WHITELIST` entry are deleted and
+  `resolveRootDestination` reads a field it already receives. The consent screen itself is untouched.
+- **No client-side OTP lockout.** The server counts; the client honours what it is told.
+- **`expo-blur` and `expo-symbols` removed, `expo-camera` kept.** The first two are unimported with
+  no named future owner; `expo-camera` has one — FR-11/FR-12 need *guided* selfie capture with an
+  overlay, which `expo-image-picker`'s system camera hand-off cannot draw. Module 2's sweep rule
+  applied as written: delete what is speculative, keep what has an owner.
+- **Google client IDs are `EXPO_PUBLIC_*` and that is safe** — a client *ID* is public by
+  construction and ships in every app that uses Google Sign-In; the client *secret* is the backend's.
+  §11's "never for a secret" rule is respected, not bent.
+- **The mock exercises both `retryAfterSeconds` spellings** rather than picking one, so the
+  defensive guess is tested instead of merely tolerated.
+- **`isNewAccount` stays on `AuthSessionResponse` unconsumed, with a warning not to wire it up.**
+  Raised in review as dead weight, which is the right instinct and the wrong call here: `contract.ts`
+  describes **what the server sends**, not what the client reads, and O-11's codegen would restore
+  the field the moment a schema is served. Deleting it would make the client's model of API-2/API-3
+  wrong to save nothing. The comment claiming it *was* consumed has been corrected — that was a real
+  defect of the kind §12 exists to catch, and worse than a stale comment because it pointed the next
+  reader at exactly the trigger FR-2a must not use.
+
+#### Module 4 addendum — dead-code sweep of its own output (2026-08-03)
+
+Run on the owner's challenge — *"if things are not being used then we should remove it"* — over every
+export Module 4 added, using Module 2's rule: **delete what is speculative, keep what has a named
+owner.** Twenty-five exports checked for a real consumer.
+
+**One genuine piece of debris, removed:** `RETURNING_PHONE_NUMBER` was exported from
+`mock/accounts.ts` with no importer anywhere. It is used inside its own file and documented by value
+in the README and `login.tsx`, so the `export` bought nothing — the same "test seam with no test
+runner" Module 2 deleted several of. Now module-private.
+
+**One false comment, fixed:** `contract.ts` claimed `isNewAccount` was consumed by the consent
+screen. It is consumed by nothing. See the decision above.
+
+**Four types kept, and this is a convention rather than an exemption** — `MockAccount`,
+`MockIdentity`, `ResolvedAccount` (mock/accounts.ts) and `GoogleIdTokenResult` (auth/google.ts) name
+exported functions' signatures and have no importer. That is exactly how Modules 2 and 3 already
+export `RefreshOutcome`, `MockResponse` and `UpdateRequirement`, and how all nine slices export their
+`State` type while only one is imported. Unexporting only Module 4's would make the codebase *less*
+consistent, which is the opposite of the ask. **Everything else — all 20 remaining exports — has a
+real runtime consumer**, verified by grep rather than assumed.
+
+#### Module 4 addendum — `eas.json` was invalid, and had been since Module 0 (2026-08-03)
+
+Found by trying to build: `eas build` refused **every** profile with
+`"build.production.env.EXPO_PUBLIC_API_URL" is not allowed to be empty`. EAS validates the whole
+file, so one `"": ` anywhere fails all of it. Module 0 wrote that empty string as a placeholder and
+no build had been attempted since, so it sat undetected across three modules.
+
+The key is now simply **absent**, which is the correct expression of "not decided yet":
+`src/config/env.ts` already refuses to boot a production build with no host, and that guard should
+be the only thing saying so — an empty string in `eas.json` was a second, weaker statement of the
+same rule that happened to break the tool.
+
+**Four profiles added**, documented in the README since JSON takes no comments:
+
+| Profile | Why it exists |
+|---|---|
+| `preview-simulator` | `preview` for the iOS Simulator — **unsigned, so no Apple account** (O-10). The trick `development-simulator` already used, applied to the release profile |
+| `preview-mock` | `preview` against the in-process mocks |
+| `preview-mock-simulator` | the same for the Simulator |
+
+**Why a mock-serving release build is not as odd as it looks.** A `preview` build is the only kind
+where **the app owns `zomyra://`** — in a dev build expo-dev-client owns it, which is precisely why
+O-18(a) sat unverifiable for a whole module. But staging cannot issue a token (phone auth `404`,
+Google needs O-19), so a `preview` build against staging can only ever reach the sign-in screen, and
+**every deep-link test would end at `/login` whether the routing was right or wrong** — the bug and
+the fix would look identical, which is the trap Module 3 fell into. `preview-mock` is a
+scheme-owning build with a real session behind it. `env.ts` refuses `mock` in `production`, so it
+cannot leak into a store build.
+
+`preview-mock` deliberately **inherits** `EXPO_PUBLIC_API_URL` from `preview` rather than blanking
+it — `APP_ENV=mock` means mocks whether or not a host is configured (the rule Module 3 corrected),
+which is the same arrangement `.env` uses so that flipping one word switches hosts.
+
+#### Module 4 addendum — owner review: Google verified for real, and the keyboard fix redone (2026-08-03)
+
+Four points raised by the owner after the module closed. Two were questions, two were work.
+
+**1 · "Rebuild the dev client instead of working around it."** Correct, and done — new
+`development` (Android) and `development-simulator` (iOS) builds with the client IDs baked in, which
+is what made everything below possible. **The lazy `import()` in `src/auth/google.ts` was kept, but
+the stated reason was wrong and is now fixed in the file.** It was justified as "the dev client on
+the simulator predates this dependency", which is transitional and not a good enough reason. The
+durable one: C-2 makes every on-device run a dev-client build, every native addition invalidates
+every copy of it, and two more are already scheduled (Module 7, Module 11). A static import turns
+"your dev client is stale" into a **crash at launch** pointing at Google's error codes; the lazy one
+turns it into a Google button that says it is unavailable. Making it static again is a two-line
+change if that trade ever stops being worth it.
+
+**2 · Google Sign-In verified against the real backend, as far as it can be without credentials.**
+The owner supplied the staging pair; their types were **established, not assumed** (see O-19).
+Then, on the rebuilt dev clients pointed at `APP_ENV=staging`:
+
+| Checked | Result |
+|---|---|
+| `Info.plist` URL scheme | ✅ `com.googleusercontent.apps.426431032003-jd98hfugf0il…` present in the built binary — `app.config.js` reversed the ID correctly at build time |
+| iOS — tapping the button | ✅ Native `ASWebAuthenticationSession` prompt (*"Zomyra" Wants to Use "google.com" to Sign In*), both CTAs disabled behind the loading state |
+| iOS — Google's response | ✅ **`accounts.google.com` rendered "Sign in — to continue to `zomyra`"**, i.e. Google resolved the client ID to the registered project. A wrong or mismatched ID gives an error page here instead |
+| iOS — §6.12 cancel | ✅ Silent return to Welcome, no error, spinner cleared, buttons re-enabled |
+| Android — tapping the button | ✅ Native Play Services account flow opened: module linked, `hasPlayServices()` passed, no immediate `DEVELOPER_ERROR` |
+| Android — cancel | ✅ Returns to Welcome with no stuck loading state |
+
+⚠️ **What is still not proven, and why it is not mine to prove:** the final leg — a real Google
+account producing a real `idToken`, `POST /auth/google` returning `200`, and the token pair reaching
+the keychain — needs someone to actually sign in with Google credentials. Everything up to the
+credential prompt is verified on both platforms. **This is also where Android's missing OAuth client
+would surface** (`DEVELOPER_ERROR` arrives *after* account selection), so O-19 is not closed.
+
+**3 · The OTP keyboard fix, redone properly — and the first two attempts were both wrong.**
+
+The owner's ask was explicit: bring the CTA *above* the keyboard, not merely on screen. Worth
+recording the dead ends, because each looked right:
+
+| Attempt | Why it failed |
+|---|---|
+| `flexShrink: 1` on the spacer | **A no-op.** RN's `flex: 1` already expands to `flexGrow:1, flexShrink:1, flexBasis:0`. Discarded before building |
+| `maxHeight` cap on the spacer | Got the button on screen, but **un-anchored it from the bottom when there is no keyboard** — a resting-layout regression traded for the fix, which is not a fix |
+| **`useKeyboardInset`** (shipped) | Pads by the platform-reported keyboard height instead of relying on the KAV's partial reclaim. Bottom-anchored with no keyboard, lifted directly above one with |
+
+`KeyboardAvoidingView` is **removed from `otp.tsx` only**. The five screens Module 3 verified keep
+it — they work, and re-opening something settled on evidence to satisfy a symmetry argument is how
+regressions get introduced.
+
+**Two corrections the hook needed, both found by measuring:**
+
+- **Seed from `Keyboard.metrics()`.** Listeners report *transitions*, and this screen is pushed from
+  `phone.tsx` **with the keyboard already open** — so it mounted, never saw a `keyboardDidShow`, and
+  sat at an inset of 0. Which is the original bug, unchanged. Caught because dismissing and
+  re-raising the keyboard made the button jump into place.
+- **Add the navigation-bar inset on Android.** The keypad visually occupies 299dp and
+  `endCoordinates.height` reports 268dp; the missing ~31dp is the gesture bar, which edge-to-edge
+  draws *beneath*. Without it the CTA lands clipped on the keypad's edge. **iOS must not get this
+  correction** — there the reported height already includes the home indicator.
+- The screen takes `Math.max(keyboardInset, safeArea.bottom)`, not a sum: the two guard the same
+  edge and never both apply.
+
+**Verified on Android (emulator, dev client), all four states:** keyboard closed → CTA
+bottom-anchored clear of the gesture bar; keyboard raised in place → CTA lifts directly above the
+keypad; **pushed from `phone.tsx` with the keyboard already up → CTA correct on arrival** (the case
+that was broken); keyboard dismissed again → returns to bottom-anchored.
+
+⚠️ **iOS keyboard-open state on this screen is NOT visually verified**, and that is a real gap
+rather than an omission. iOS suppresses the software keyboard for `textContentType="oneTimeCode"`
+fields under simulator automation — the field focuses and accepts hardware-keyboard input, but no
+keypad is drawn, so there is nothing to photograph. The **resting** state is verified on iOS, and
+the phone screen's software keyboard was confirmed appearing there, so the mechanism works; what is
+untested is specifically this screen with a keypad up on iOS. Tracked as **O-18(e)**.
+
+**4 · Questions answered, recorded because the answers are load-bearing:**
+
+- *"FR-1a — what is the issue?"* Not that the branch was missing, but that **API-2/API-3 cannot
+  answer it**. See the `resolveRootDestination` header.
+- *"Why 'forced' logout?"* "Forced" = server-initiated (NFR-15's rejected refresh token), as opposed
+  to the user tapping Log out. The bug was the app labelling a **user-initiated** logout as
+  server-initiated — see defect 1 above. The word is the spec's, not a description of severity.
+
 <!--
 Template:
 
@@ -2366,7 +2801,9 @@ the same index, and built on the existing design tokens rather than introducing 
 
 ### 13.3 What each later module then owes
 
-- **Module 4** — consumes the shared default for auth submits; builds nothing.
+- **Module 4** — consumes the shared default for auth submits; builds nothing. ✅ **Done as
+  specified (2026-08-03):** `Button`'s `loading` prop carried every auth submit, and `LoadingScreen`
+  covers the consent screen's brief wait on `GET /me`. No second spinner was introduced.
 - **Module 5** — consumes it for the FR-3b catalogue fetch, plus the **city field's own
   loading/retry state** (FR-3a), which is field-level rather than screen-level and must not block
   the state screen behind it.

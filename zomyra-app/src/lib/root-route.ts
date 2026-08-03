@@ -14,6 +14,19 @@
  *    "checked after": a suspended user with `profileComplete: false` must reach
  *    the blocker, not Onboarding. Writing it as an early return rather than a
  *    fifth column is deliberate — a column can be reordered by accident.
+ * 3. **FR-2a's consent screen sits between the two** (Module 4). It comes after
+ *    `accountStatus` — there is no point consenting to data collection on a
+ *    banned account — and before `profileComplete`, because FR-2a places it
+ *    *"before the Onboarding stack begins"*.
+ *
+ * **Module 4 kept FR-1a here rather than at the auth screens.** API-2 and API-3
+ * return `isNewAccount` and `profileComplete`, which looks like enough to route
+ * on — but §9.1 also needs `verificationStatus` and `discoveryMode`, and
+ * neither is in that response. A returning user can be mid-verification or yet
+ * to pick a Discovery Mode, so an auth screen branching on `profileComplete`
+ * would send them to Discover and the tabs guard would bounce them back out.
+ * The auth screens navigate to `/` and this function answers, so there is one
+ * copy of the table and it reads the fields it actually needs.
  */
 import type { MeResponse } from "@/src/api";
 
@@ -24,6 +37,8 @@ import type { MeResponse } from "@/src/api";
 export type RootDestination =
   /** Any non-`active` `accountStatus`. Full-screen, non-dismissible. */
   | "/blocked"
+  /** FR-2a's one-time sensitive-data notice, before Onboarding can begin. */
+  | "/consent"
   /** Onboarding stack, still mid-flow. */
   | "/onboarding"
   /** Photos + verification stack. Carries an `entry` param, see below. */
@@ -35,7 +50,19 @@ export type RootDestination =
   /** An ordinary reopen. */
   | "/discover";
 
-export function resolveRootDestination(me: MeResponse): RootDestination {
+/** Client-side facts the table needs that `GET /me` does not carry. */
+export type RootRouteContext = {
+  /**
+   * Whether this `userId` has accepted FR-2a's sensitive-data notice. Client
+   * state, because no endpoint records it — see `store/slices/consent-slice.ts`.
+   */
+  sensitiveDataConsentGiven: boolean;
+};
+
+export function resolveRootDestination(
+  me: MeResponse,
+  context: RootRouteContext,
+): RootDestination {
   /*
    * O-4's resolution, and the reason it is an early return: any value other
    * than `active` — suspended, banned, or soft-deleted inside FR-28's grace
@@ -43,6 +70,19 @@ export function resolveRootDestination(me: MeResponse): RootDestination {
    * the three causes. Nothing below this line runs for a blocked account.
    */
   if (me.accountStatus !== "active") return "/blocked";
+
+  /*
+   * FR-2a, and the ordering is the requirement: *"immediately after a new
+   * account is created and **before the Onboarding stack begins**"*. Onboarding
+   * is where religion, income and the lifestyle fields are actually asked for,
+   * so consent has to gate the whole stack rather than the first screen of it.
+   *
+   * Gated on `profileComplete` as well as the acknowledgement, so it can never
+   * reappear for a finished account — including one onboarded before this
+   * client existed, which would otherwise have no acknowledgement recorded and
+   * be sent to consent on every launch.
+   */
+  if (!me.profileComplete && !context.sensitiveDataConsentGiven) return "/consent";
 
   if (!me.profileComplete) return "/onboarding";
 
