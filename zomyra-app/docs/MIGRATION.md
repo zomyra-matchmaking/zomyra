@@ -1,7 +1,7 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.46**, integrating against the contract in **Backend TDD v1.7**.
+**Frontend TDD v1.47**, integrating against the contract in **Backend TDD v1.8**.
 **Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
@@ -2954,6 +2954,35 @@ or vice versa. Backend stores it as `user_languages.other_text`, populated only 
 
 `languagesOther` needs no Module 2 change — it lands in API-7/API-24's request bodies, which Module 5
 builds.
+
+### 12.6 Frontend v1.46 → v1.47, Backend v1.7 → v1.8 (written 2026-08-04)
+
+**Not a spec change — a reconciliation pass.** Every other §12 entry records the docs moving and the
+code following. This one is the reverse: Modules 0–4 are built, and building them settled several
+clauses the documents left open or stated inaccurately. Those answers are now folded back, so the
+two sides stop disagreeing. **No new endpoints, no design decisions, nothing for a module to
+implement** — reading it should change nobody's plan.
+
+**Frontend v1.47 — four requirements corrected in place, each next to the requirement it belongs to:**
+
+| Where | What the doc said | What building it settled |
+|---|---|---|
+| **FR-2** | the `[DEV] Skip to Discover` chip "must be excluded from production builds" | **Removed outright.** Once the tab navigator gained its own gate, the chip navigated to Discover and was bounced straight back — more confusing than no button. The honest dev lever is making `GET /me` return a complete account |
+| **FR-30** | two outcomes, **no frequency** | Read literally it means a modal on **every cold start** until the user updates. Pinned: once per `latestVersion`, then quiet for a week; no dismissible prompt at all when `updateUrl` is empty; `forceUpdate` honoured **only when a newer version exists**, closing two ways to brick a current user |
+| **FR-1a** | "existing account routes directly to Discover" | Neither auth screen decides. API-2/API-3 return `isNewAccount` + `profileComplete`, but §8.1 also needs `verificationStatus` and `discoveryMode` — so branching there sends a mid-verification user to Discover for the tab gate to bounce. Both paths route to `/`. Also: **no client-side OTP attempt counter** (the server counts, §6.11 and API-2 only conflict if you miss whose rule it is), and the resend cooldown comes from API-1 |
+| **§8.1** | five routing rows | The sixth — `profileComplete: true` + `verificationStatus: "unverified"` — was missing, and it is the state of everyone between submitting API-7 and starting photos. Routes to the photos/verification step |
+
+**Backend v1.8 — observations only, no design changes.** C-1 makes the backend not ours to redesign;
+what is recorded is what the deployed server actually does, which is squarely a frontend finding:
+§7.1 gains the four error codes it returns but never enumerated (`unauthorized`, `not_found`,
+`service_unavailable`, `invalid_platform`); `/v1/docs-json` is still unserved, which is still the
+highest-value backend change (O-11); the 2026-08-03 deployment status is recorded because it governs
+what can be *verified* rather than merely written; and `retryAfterSeconds`' placement is still
+unpinned.
+
+**Both files sit beside their predecessors** (`…v1_47.docx`, `…v1.8.docx`) rather than overwriting
+them, and were edited in place — 10 changed lines in the FE doc, 4 in the BE doc, paragraph count
+unchanged in both, embedded diagrams untouched.
 
 ### 12.5 Frontend v1.45 → v1.46, Backend v1.6 → v1.7 (received 2026-08-01)
 
