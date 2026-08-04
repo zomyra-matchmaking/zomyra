@@ -1,7 +1,7 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.47**, integrating against the contract in **Backend TDD v1.8**.
+**Frontend TDD v1.48**, integrating against the contract in **Backend TDD v1.8**.
 **Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
@@ -3159,6 +3159,32 @@ or vice versa. Backend stores it as `user_languages.other_text`, populated only 
 
 `languagesOther` needs no Module 2 change — it lands in API-7/API-24's request bodies, which Module 5
 builds.
+
+### 12.7 Frontend v1.47 → v1.48 (written 2026-08-05)
+
+**The second half of §12.6's pass, and for the same reason.** v1.47 corrected four requirements in
+place but did not sweep the *other* places that said the old thing — §6.11 still read "existing
+accounts route directly to Discover" two pages after FR-1a said neither auth screen decides, and
+§3.1's screen table still advertised the `[DEV]` chip FR-2 had just recorded as deleted. A document
+that contradicts itself is worse than one that is merely out of date, because both halves look
+authoritative. This entry closes that, and folds in the NFR-16 work that landed after v1.47 was
+written. **Backend doc untouched — nothing here is a contract change.** No new endpoints, no design
+decisions, nothing for a module to implement.
+
+| Where | What the doc said | What it says now |
+|---|---|---|
+| **NFR-16** | "applied once at the authenticated root", scope covering "Discover, profile detail, photos, chat" | **Built 2026-08-05.** "The authenticated root" is the **tab shell**, so `/verify` and `/onboarding` are *not* covered — Modules 6 and 5 still owe them, and the requirement is not met until both land. Also records why the call sits in the layout and not the guard inside it (the guard early-returns, so the flag would flicker with the gate), that iOS is a deliberate no-op, and that the import is lazy for the same reason Google Sign-In's is |
+| **FR-2a** | "immediately after a new account is created … before the Onboarding stack begins" | Reads as a push from the auth screen; it is a **row in §9.1's routing resolution**, ordered `accountStatus` → consent → the table, additionally gated on `profileComplete` being false so a pre-API-40 account is not sent there forever. Accept **records first and only then navigates** — to `/`, not `/onboarding`; decline signs out, which is what "returns to Welcome" means once tokens exist |
+| **§6.11 / §6.12** | "existing accounts route directly to Discover"; "resend: disabled for 30 seconds"; "unlimited retry (no lockout count)" | Swept to match v1.47's FR-1a: the root resolver decides, the cooldown is API-1's `resendCooldownSeconds` (30 as *default*), and the missing lockout is a *client-side* one — the server counts and returns 429. §6.12 also gains what a Google build actually costs: a config-plugin build (never Expo Go), and one OAuth client per platform — Android keyed on package name **plus each signing key's SHA-1**, or `DEVELOPER_ERROR` after the account picker |
+| **§3 / §3.1** | inventory of Auth / Onboarding / tab stacks; `[DEV] skip button excluded from production` | Names the three root screens the inventory never listed — **Consent, the `accountStatus` blocker, Update required** — none of which belongs to a stack or a tab, and drops the `[DEV]` mention v1.47 already superseded |
+| **§4.3** | two explicit exclusions from redux-persist | Records that it is built as an **opt-in whitelist** (four slices), so everything added later is excluded by default rather than by a rule per slice |
+| **§6.14 / §9** | OTA staleness handled via `expo-updates`, `checkAutomatically: ON_LOAD` | `expo-updates` is **deliberately not installed** (it carries `runtimeVersion` policy with no owner before the first store build), so `X-Bundle-Update-Id` sends the literal `embedded` the convention already defines. FR-30's native check is unaffected |
+| **API-2** | "after 5 wrong attempts, 15-minute lockout" | Those numbers are the **server's**, never encoded client-side; `retryAfterSeconds` is read from either position, since the envelope still does not pin which (O-11's neighbour, CONTRACT-QUESTIONS §4) |
+| **§13** | Jest + RNTL + Maestro, Detox deferred | **None of it is installed** as of Module 4. The section stays the *intended* tooling; what exists is C-7's per-module manual sheet (`docs/TEST-CASES.md`), which the tooling should eventually automate starting with §13.2's priorities |
+
+**`…v1_48.docx` sits beside its predecessor** rather than overwriting it, edited in place: 16
+changed paragraphs, paragraph and run counts unchanged, no table rows added or removed, embedded
+diagrams untouched, every part re-validated as well-formed XML.
 
 ### 12.6 Frontend v1.46 → v1.47, Backend v1.7 → v1.8 (written 2026-08-04)
 

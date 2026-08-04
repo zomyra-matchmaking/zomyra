@@ -1,6 +1,6 @@
 /**
  * NFR-16 — block screenshots and screen recording across the authenticated
- * shell (FE v1.46 §12.5).
+ * shell (NFR-16 — added FE v1.46 §2, scope corrected FE v1.48).
  *
  * ## What it actually achieves, per platform
  *
