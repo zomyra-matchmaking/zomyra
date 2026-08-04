@@ -1,7 +1,7 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.48**, integrating against the contract in **Backend TDD v1.8**.
+**Frontend TDD v1.48**, integrating against the contract in **Backend TDD v1.9**.
 **Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
@@ -436,7 +436,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
 | O-10 | **Store accounts → Organization, registered once the LLP and D-U-N-S exist. Final (2026-07-28).** Long-form rationale, critical path and the parallel owner track are in **§2.2a** — the detail outgrew a table cell. | Before the §2.1 gate | Product owner |
 | O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
-| O-8 | **Backend base URL + OpenAPI spec — HALF CLOSED (2026-08-02).** ✅ **Base URL exists and is live:** `https://zomyra-staging.duckdns.org`, wired into `eas.json`'s `preview` profile and `.env`, and verified end to end from the simulator. ⚠️ **The schema is still not served** — `/v1/docs-json` returns 404, so `yarn api:generate` cannot run and O-11 stays unmitigated. ⚠️ **The surface is partial:** API-1/API-2 phone auth are undeployed and API-3 returns 503, so **no token can be obtained** and nothing authenticated is verifiable yet. Endpoint map in §6's Module 2 addendum. Superseded detail below. **Backend base URL + OpenAPI spec.** Previously unchanged as of 2026-07-31 — Module 2 looked for a URL to probe and found none: there is no base URL anywhere in this repo, the TDDs, or this document, so there was nothing to test reachability against. Module 2 shipped the mock transport behind the base query as planned, and switching to a live host is now genuinely a one-line `.env` change (`EXPO_PUBLIC_API_URL`). Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
+| O-8 | **Re-probed 2026-08-05 (§12.8): the deployed surface is narrower than BE §14 reads** — `/auth/google`, `/me` and `/app/version-check` are live; `/consents` (API-40), `/onboarding/options` (API-39), `/locations/cities` (API-38) and both OTP endpoints return 404. Module 5 must re-probe before relying on API-38/API-39. **Backend base URL + OpenAPI spec — HALF CLOSED (2026-08-02).** ✅ **Base URL exists and is live:** `https://zomyra-staging.duckdns.org`, wired into `eas.json`'s `preview` profile and `.env`, and verified end to end from the simulator. ⚠️ **The schema is still not served** — `/v1/docs-json` returns 404, so `yarn api:generate` cannot run and O-11 stays unmitigated. ⚠️ **The surface is partial:** API-1/API-2 phone auth are undeployed and API-3 returns 503, so **no token can be obtained** and nothing authenticated is verifiable yet. Endpoint map in §6's Module 2 addendum. Superseded detail below. **Backend base URL + OpenAPI spec.** Previously unchanged as of 2026-07-31 — Module 2 looked for a URL to probe and found none: there is no base URL anywhere in this repo, the TDDs, or this document, so there was nothing to test reachability against. Module 2 shipped the mock transport behind the base query as planned, and switching to a live host is now genuinely a one-line `.env` change (`EXPO_PUBLIC_API_URL`). Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
 | O-11 | **Mechanism shipped in Module 2; the asks are sent-ready but not yet sent.** `openapi-config.ts` + `yarn api:generate` are in place, so the moment a schema is served, generated types replace the hand-written ones in `src/api/contract.ts` and drift becomes a compile error. The concrete questions for the backend — O-3, O-4, O-16, plus three found while building (where `retryAfterSeconds` lives, whether `nextCursor` is opaque, and a prototype-side `discoveryMode` enum mismatch) — are written up ready to forward in **`docs/CONTRACT-QUESTIONS.md`**. C-1 means sending them is the owner's step. **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
 
 | O-12 | ~~Is web still a target?~~ **→ No. Web is out of scope** (2026-07-28, owner). Removed in Module 0: the `expo.web` config block, the `yarn web` script, `react-dom` + `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts`, `favicon.png`, and the RN-Web font-injection block in `app/_layout.tsx`. `platforms: ["ios", "android"]` now declares this in config, and `expo export --platform web` refuses. **Consequence for Module 2:** the `import.meta` workaround in `onboarding-store.ts` was a *web-bundle* problem only — it is no longer a constraint on the persistence design. | Module 0 | ✅ Decided |
@@ -3159,6 +3159,34 @@ or vice versa. Backend stores it as `user_languages.other_text`, populated only 
 
 `languagesOther` needs no Module 2 change — it lands in API-7/API-24's request bodies, which Module 5
 builds.
+
+### 12.8 Backend v1.8 → v1.9 (written 2026-08-05)
+
+**The backend half of the same sweep, and observations only.** C-1 keeps the backend out of our
+hands to redesign; what changed is the document's account of what the running server does and of
+what the client actually sends. Nothing here is a design decision and nothing is owed by a module.
+
+The pass began as a re-read of BE v1.8 against Modules 0–4 and turned up something a re-read alone
+would not have: **§14 describes a surface substantially wider than what is deployed.** Every path was
+re-probed on 2026-08-05, and `404 not_found` vs `401 unauthorized` separates "not routed" from
+"routed, no token" cleanly enough to be evidence.
+
+| BE § | What the doc implied | What is true on 2026-08-05 |
+|---|---|---|
+| §14 (deployment) | the endpoint table reads as the contract in force | **Live:** `POST /v1/auth/google`, `GET /v1/me` (401 unauthenticated), `GET /v1/app/version-check` (well-formed FR-30 payload). **Not routed (404):** `POST /v1/consents`, `GET /v1/onboarding/options`, `GET /v1/locations/cities`, and both OTP endpoints |
+| §14.2b (API-40) | specified, and the client is built against it | **Not deployed.** FR-2a is exercised against mocks only — including its "a failed record does not advance" behaviour, which is therefore unverified |
+| §6.1 `user_consents` | `platform` and `app_version` come from the `X-App-Version` header | `X-App-Version` carries a bare version string, and **no client request carries a platform header at all**. The column needs a body field, a new standard header, or to be nullable |
+| §7.1 headers | both standard headers are sent | Confirmed sent since Module 2 — but `X-Bundle-Update-Id` is always the literal `embedded`, and will be until the client installs `expo-updates` |
+| §7.1 envelope | `retryAfterSeconds` placement unpinned | Still unpinned. Also records that `not_found` is the client's only signal for a specified-but-undeployed route |
+| §12.7 open items | assumptions awaiting review | `/v1/docs-json` still 404 — an unmet dependency rather than an assumption, and still the highest-value backend change (O-11) |
+
+The API-40 finding is the one that matters for planning: Module 4 shipped a consent flow whose
+server side does not exist yet, which is fine as built and not fine as assumed. **Module 5 should
+re-probe before relying on API-38/API-39** — both are Onboarding's, both are 404 today.
+
+`ZOMYRA_Backend_TDD_v1.9.docx` sits beside `…v1.8.docx`. Eight changed paragraphs, edited in place:
+paragraph and run counts unchanged, no table rows touched, diagrams untouched, every XML part
+re-parsed after writing.
 
 ### 12.7 Frontend v1.47 → v1.48 (written 2026-08-05)
 
