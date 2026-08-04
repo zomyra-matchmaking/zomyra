@@ -112,6 +112,26 @@ leak into a store build.
 Sign in on a `preview-mock` build with **`9000000000`** and any six digits except the reserved
 ones for a fully onboarded, verified account (`src/api/mock/accounts.ts`).
 
+**The rest of the §9.1 routing table has a fixture each**, so every destination is reachable by
+signing in rather than by editing a handler — which a `preview` build cannot do, since its bundle
+is baked at build time:
+
+| Number | Account | Lands on |
+|---|---|---|
+| `9000000000` | onboarded, verified, mode set | `/discover` |
+| `9000000001` | consented, still incomplete | `/onboarding` |
+| `9000000002` | complete, `unverified` | `/verify?entry=photos` |
+| `9000000003` | complete, `pending` | `/verify?entry=pending` |
+| `9000000004` | complete, `mismatch` | `/verify?entry=mismatch` |
+| `9000000005` | verified, no Discovery Mode | `/discovery-mode` |
+| `9000000006` | **suspended**, and incomplete + unconsented with it | `/blocked` |
+| `9000000007` | **banned**, otherwise a perfect Discover account | `/blocked` |
+| `9000000008` | **deleted** (FR-28 grace window) | `/blocked` |
+| anything else | new signup | `/consent` |
+
+The last three are the O-4 early return under test: `9000000006` and `9000000007` contradict the
+rest of the table from opposite ends, so reaching the blocker can only be `accountStatus` winning.
+
 `preview-mock` inherits `EXPO_PUBLIC_API_URL` from `preview` and does not override it. That is
 deliberate and safe: `EXPO_PUBLIC_APP_ENV=mock` means mocks *whether or not* a host is also
 configured — the rule Module 3 corrected, and the same arrangement the local `.env` uses so one

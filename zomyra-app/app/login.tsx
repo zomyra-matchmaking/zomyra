@@ -167,10 +167,13 @@ export default function Login() {
             case it is just signing in.
 
             So sign in. In mock mode `9000000000` is a fully onboarded, verified
-            account and lands on Discover; any other number is a new signup and
-            lands on consent → onboarding. See `src/api/mock/accounts.ts` for
-            the rest, including the reserved OTP codes that reach `otp_expired`
-            and `too_many_attempts`.
+            account and lands on Discover; any unseeded number is a new signup
+            and lands on consent → onboarding. `9000000001`–`9000000008` seed one
+            account per remaining row of the §9.1 routing table — onboarding, the
+            three verification entries, the Discovery Mode picker, and the three
+            blocked statuses. See `src/api/mock/accounts.ts` for which is which,
+            and for the reserved OTP codes that reach `otp_expired` and
+            `too_many_attempts`.
           */}
         </View>
       </View>

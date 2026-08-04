@@ -25,6 +25,14 @@ Append a "Module log" entry at the end of every module, in the same session that
   commit `198b700`). **Module 4 is finished and awaiting the owner:** its commit sits on
   `module/4-auth` (branched from `198b700`), **committed but not pushed and with no PR open** — per
   C-6 the owner does both. `git log master..module/4-auth` shows what is pending.
+- **A verification-only pass ran on 2026-08-04** (§6's Module 4 permutation-matrix addendum). It
+  added no features: it seeded one mock fixture per §9.1 row so every destination is reachable by
+  signing in, walked the routing table on both platforms, and **closed the reported "unverified user
+  lands on Discover" symptom as not reproducible** — the leak hypothesis is contradicted on three
+  independent grounds, not merely unconfirmed. **O-20 was rewritten**: Module 4 built the mechanism,
+  and what remains open is legal ownership of the consent copy.
+  ⚠️ **Both devices were left carrying `preview-mock` builds, not the dev clients** — reinstall
+  those before doing Module 5 work against Metro.
 - **Verified green as of 2026-08-03:** `yarn doctor` 18/18 · `yarn lint` 0 errors (the same 14
   pre-existing warnings) · `yarn typecheck:baseline` clean (the same 3 inherited errors, no new
   ones) · both auth paths, FR-2a's consent screen and all three OTP error branches walked on the
@@ -431,7 +439,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | O-19 | **Google OAuth client IDs — the client-side half is DONE (2026-08-03); what remains is two things the client cannot see.** ✅ **Wired:** the owner's staging pair is in `eas.json`'s `development` and `preview` profiles (and `.env.example` documents both), so the runtime half needs nothing further — `426431032003-15glcint4vks…` (**Web**, sent as `webClientId` on both platforms) and `426431032003-jd98hfugf0il…` (**iOS**, also reversed into the `Info.plist` URL scheme at build time). Their types were established rather than assumed: Google's own OAuth endpoint rejects the first with *"Custom scheme URIs are not allowed for **'WEB'** client type"* and accepts `com.googleusercontent.apps.<id>` for the second. ⚠️ **Staging only** — `eas.json`'s `production` profile is deliberately left without them so it cannot inherit staging's by accident. **Two items outstanding, and neither is visible client-side — a mismatch in either surfaces only as `invalid_google_token` on a real sign-in:** **(1) the Android console client**, which has to exist bound to package `com.zomyra.app` **plus SHA-1 `EF:AC:93:86:81:D7:00:AB:D6:27:C6:2F:17:1C:1F:39:79:2E:63:36`** — the **EAS** keystore's, not the local debug keystore's, which Module 4 confirmed differ the hard way (`INSTALL_FAILED_UPDATE_INCOMPATIBLE` when the EAS-signed APK met the locally-built one; re-checkable with `apksigner verify --print-certs` or `eas credentials`). Nothing goes *in* the app for Android — but without the client, sign-in fails with `DEVELOPER_ERROR` (code 10) *after* account selection, which is exactly past where Module 4 could test. **(2) Confirmation that `426431032003-15glcint…` is the same Web client the backend validates against.** The backend has *a* client configured — that is why `/v1/auth/google` returns `401 invalid_google_token` rather than `503` — but "a client is configured" and "it is this one" are different claims, and only the backend side can tell them apart. | ✅ Client-side done · **Android console client + backend audience confirmation** | Product owner + BE |
 
-| O-20 | **Consent text versioning — who owns the copy.** API-40 takes `version` — explicitly *"the version of the consent text/notice the client actually displayed"*. BE v1.7 §12.7 leaves the versioning process itself open: who owns the copy, what triggers a bump. **The client cannot invent this**, and a wrong value makes the consent log evidentially worthless — which is the whole reason the table exists. Needed before **Module 4** builds FR-2a. Minimum viable answer: a constant in the client paired with the exact copy it renders, bumped by whoever owns the legal text. | **Module 4** | Product owner + legal |
+| O-20 | **Consent text versioning — the mechanism is built; what is open is ownership of the copy.** ✅ **Engineering's half is done (Module 4).** `SENSITIVE_DATA_CONSENT_VERSION` in `src/lib/consent.ts` is the constant, it sits beside a statement of what version 1 says, and the file states the bump rule: adding a category, changing a use, or changing who data is shared with is a bump; a typo or clarity re-word is not. `app/consent.tsx` renders that copy and API-40 sends that number, so the value and the text cannot drift apart in the client. ⚠️ **What is genuinely still open is not a frontend task and cannot be closed by one:** (a) **who owns the sensitive-data copy** — the version-1 text was written by the frontend to satisfy FR-2a's requirement that the categories be named plainly, and **has never been through legal review**; (b) **who approves a bump**, since bumping is what makes every prior acceptance older than the current notice and therefore identifies who must be re-asked. Until (a) happens the consent log records agreement to unreviewed wording, which is the evidential weakness the table exists to prevent — the log is well-formed, but only as good as the copy it points at. **If legal changes the wording materially, the constant goes to 2 in the same commit**, which is a one-line change the file already documents. FR-11a's biometric equivalent is deliberately not defined yet — **Module 6 owns it** and should set it the same way, beside its own copy. | ~~Module 4~~ **Legal review — before the consent screen ships to real users** | Product owner + legal |
 | O-21 | **`ip_address` on consent rows at hard-delete** — BE v1.7 flags it as undecided: purged with the rest of the user's PII at FR-28's hard delete, or retained as a legitimate compliance interest in proving consent was obtained. **Backend-side and legal, no client work either way** — recorded so it isn't mistaken for a frontend gap. | Backend | BE + legal |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
@@ -2173,6 +2181,121 @@ untested is specifically this screen with a keypad up on iOS. Tracked as **O-18(
 - *"Why 'forced' logout?"* "Forced" = server-initiated (NFR-15's rejected refresh token), as opposed
   to the user tapping Log out. The bug was the app labelling a **user-initiated** logout as
   server-initiated — see defect 1 above. The word is the spec's, not a description of severity.
+
+#### Module 4 addendum — the §9.1 permutation matrix, and the Discover-leak report closed (2026-08-04)
+
+A verification-only session: no feature work, one fixture change, one doc fix. It set out to walk
+`resolveRootDestination`'s rows across three entry conditions on both platforms, and to reproduce a
+symptom the owner had reported — **an unverified user landing on Discover after a JS-context loss**.
+
+**The fixture change that made the rest possible.** `mock/accounts.ts` had exactly two of the eight
+destinations reachable by signing in: `/discover` (the seeded returning account) and `/consent` (any
+unseeded number). The other six needed hand-editing the file between runs, which a `preview` build
+cannot do. It now seeds **one identity per row** — `9000000001`–`9000000008`, tabulated in the README
+and named in `login.tsx`. **Two are deliberately self-contradictory** and that is their job:
+`9000000006` is suspended *and* incomplete *and* unconsented, so the table's own order would send it
+to `/consent`; `9000000007` is the returning account with one field changed, so everything else about it
+says `/discover`. Reaching the blocker from either end can only be O-4's early return winning.
+
+**`9000000001` also closes the gap Task 3 flagged** — `profileComplete: false` with `sensitive_data`
+already on file. It is the only fixture that is still *inside* the window where the consent row is
+evaluated and must nonetheless be skipped, so FR-2a's *"accepted once, never re-asked"* is now
+demonstrable **across a cold start** rather than only within a session. The returning account skips
+the screen too, but trivially — `profileComplete: true` short-circuits the row before `consents` is
+read, so it proves the gate, not the record. **The underlying mock limitation is unchanged and was
+not chased**: a consent recorded at *runtime* still dies with the JS context, because the directory
+is module-scoped and the keychain token is not.
+
+**Two things had to be established before any of the matrix could be walked, and both cost time:**
+
+| Finding | Consequence |
+|---|---|
+| **Cold-start deep links are not testable on a dev client, on *either* platform.** iOS hands `zomyra://` to the dev launcher; Android resolves it to `DevLauncherActivity`. The `/--/` path convention does not work through `expo-development-client/?url=` either — the launcher treats the whole string as the Metro URL and fails to load | Re-confirms why `preview-mock` exists. Both profiles were rebuilt for this session and are the only vehicle for the deep-link column |
+| **`TabsGuard`'s *pending* branch is unreachable on any launch that starts at `/`.** By the time the tabs mount, `app/index.tsx` has already filled both RTK Query cache entries, so the guard resolves on its first render and `<TabsNavigator/>` is never rendered underneath `<LaunchPending/>` | The "navigator mounted under the overlay" window — the whole substance of the leak hypothesis — exists **only** on a cold-start deep link into a tab. That is why the symptom is rare, and it is also why it can only be hunted on a scheme-owning build |
+
+**Task 2 — the Discover leak: not reproduced, and the hypothesis is contradicted rather than merely
+unconfirmed.** The `preview-mock` builds were deliberately built with `MOCK_LATENCY_MS = 4000`
+instead of 250, which widens the gate's window to ~10s (two sequential requests, `GET /me` being
+`skip`ped until the version check resolves). Signed in as `9000000002` — complete, `unverified`,
+i.e. exactly the account in the report — then force-stopped and cold-started into
+`zomyra:///chats/riya`:
+
+| Platform | Method | Result |
+|---|---|---|
+| **iOS** | 26 frames across the full window | splash → `LaunchPending` → `/verify?entry=photos`. Discover never appears, and neither does the conversation |
+| **Android** | 60 frames, captured on-device at reduced framebuffer so `screencap` could keep up, then classified programmatically | 4 distinct frame signatures, peak `nonwhite=0.096 / dark=0.004` |
+
+The Android frames were classified rather than eyeballed because the emulator's spinner animates,
+making almost every frame byte-distinct. **The classifier was calibrated against a real Discover
+frame on the same device: `nonwhite=0.380 / dark=0.147`** — and that was a Discover whose hero photo
+had not even loaded yet, i.e. the *easiest* Discover to miss. Nothing in the capture comes near it.
+
+Three independent reasons the hypothesis does not hold, beyond the frames:
+
+- **The overlay is opaque and full-bleed.** `LaunchPending`'s root is a `SafeAreaView` with
+  `flex: 1` and `backgroundColor: colors.background`, which is `palette.white` — `#FFFFFF`, no
+  alpha — inside `<View style={StyleSheet.absoluteFill}>`, rendered *after* `<TabsNavigator/>` in the
+  same fragment.
+- **Android `elevation` does not defeat it.** `FloatingTabBar`'s bar carries `elevation: 8` and
+  Discover's cards 3–6, which is the obvious way a covered view could punch through. It does not
+  apply here: Z-ordering resolves **among siblings within a parent**, and those views are nested
+  inside the navigator's subtree, not siblings of the overlay.
+- **`/discover` is unreachable for this account by construction.** All **128** combinations of
+  `accountStatus` × consent × `profileComplete` × `verificationStatus` × `discoveryMode` were run
+  through the real `resolveRootDestination`; exactly **2** return `/discover`, and both require
+  `active` + `profileComplete` + `verified` + a non-null `discoveryMode`.
+
+**So the report is most likely a visual artefact, and the likeliest candidate is a stale RTK Query
+cache rather than a rendering fault** — a `Me` response fetched while the fixture said one thing,
+still in cache after a Fast Refresh that rebuilt the mock directory to say another. That is a
+development-only condition (a full JS-context loss clears the cache and re-fetches, which is what
+every cold start above did) and it is **not** a defect in the guard. ⚠️ **What this does not rule
+out:** a sub-frame flash shorter than the sampling interval. Neither platform was captured at true
+frame rate — no `ffmpeg` on this machine to decompose a `screenrecord` — so the honest claim is
+"nothing visible across a 10s stressed window at ~2.5 fps (iOS) and ~7 fps (Android)", not
+"provably never a single frame". Given the owner described *seeing* it, that residue is small.
+
+**The exhaustive function-level sweep, and what it is and is not.** 128 combinations, asserting the
+properties rather than re-encoding the implementation: the blocker beats every other field; an
+active-incomplete-unconsented account always reaches `/consent`; a complete profile is *never* sent
+to `/consent`; `/discover` requires all four conditions; every combination resolves to a known
+destination and every documented destination is reachable. All pass. **This proves the table's
+shape, not its wiring** — that `GET /me` actually reaches it, and that each destination string
+resolves to a screen that renders, is what the device work below is for.
+
+**Walked on device.** Both platforms are `preview-mock` release builds unless noted:
+
+| Row | Fixture | iOS | Android |
+|---|---|---|---|
+| `verified` + mode → `/discover` | `9000000000` | sign-in ✅ · cold start ✅ | sign-in ✅ |
+| consented + incomplete → `/onboarding` | `9000000001` | sign-in ✅ · cold start ✅ **(no consent re-prompt)** | — |
+| complete + `unverified` → `/verify?entry=photos` | `9000000002` | sign-in ✅ · cold start ✅ · **cold deep link ✅** | sign-in ✅ · **cold deep link ✅** |
+| `suspended` + incomplete + unconsented → `/blocked` | `9000000006` | sign-in ✅ · **cold deep link ✅** | — |
+| `verified` + no mode → `/discovery-mode` | `9000000005` | sign-in ✅ | — |
+
+⚠️ **Not walked on device, and left as test debt rather than claimed:** `/verify?entry=pending` and
+`/verify?entry=mismatch` (same route, different `entry` param — **already tracked as O-18(d)**, and
+this session did not clear it); `banned` and `deleted` as distinct fixtures from `suspended` (they
+reach the same undifferentiated screen and the sweep covers the branch); and most rows on **Android**,
+where only the two above were driven through the UI. The warm in-session-navigation column was not
+walked as a separate axis: with a warm cache `TabsGuard` resolves on first render, so it exercises
+the same `Redirect` the deep-link tests already land on.
+
+**Two incidental confirmations, neither of which was the point:**
+
+- **`useKeyboardInset` still holds on Android.** The OTP screen was driven with the keypad up on
+  every Android sign-in, and `Verify & Continue` sat above the keypad each time — the defect Module 4
+  fixed. O-18(e), the *iOS* keypad-up state on that screen, remains open and was not addressed.
+- **`simctl keychain <device> reset` is the clean way to switch identities**, and it produces a
+  Welcome screen with **no** forced-logout banner — correct, since wiping the keychain externally
+  leaves no live session to expire. Independent re-confirmation of defect 1's fix.
+  ⚠️ Worth knowing: **`simctl uninstall` does *not* clear the session** — the SecureStore item
+  survives an app uninstall on the simulator, so a reinstall comes back signed in.
+
+**State left on the machines, since it is not in the repo:** both simulators/emulators now carry the
+`preview-mock` builds (with the 4s stress latency baked in), **not** the dev clients the handoff
+describes. `MOCK_LATENCY_MS` is back to **250** in the source — the 4000 value existed only in those
+two binaries. Reinstall the dev clients before doing Module 5 work against Metro.
 
 <!--
 Template:
