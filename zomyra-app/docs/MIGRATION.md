@@ -31,8 +31,20 @@ Append a "Module log" entry at the end of every module, in the same session that
   lands on Discover" symptom as not reproducible** — the leak hypothesis is contradicted on three
   independent grounds, not merely unconfirmed. **O-20 was rewritten**: Module 4 built the mechanism,
   and what remains open is legal ownership of the consent copy.
-  ⚠️ **Both devices were left carrying `preview-mock` builds, not the dev clients** — reinstall
-  those before doing Module 5 work against Metro.
+  ~~⚠️ **Both devices were left carrying `preview-mock` builds, not the dev clients** — reinstall
+  those before doing Module 5 work against Metro.~~ ✅ **Done 2026-08-05 — both devices now carry
+  dev clients that include `expo-screen-capture`**, so Module 5 can start against Metro without a
+  rebuild. The 2026-08-03 clients predated NFR-16's dependency and were correctly invalidated by it
+  (C-2). **iOS** — EAS `development-simulator`, installed on the iPhone 16 simulator; its
+  `Info.plist` carries `exp+zomyra` and the reversed Google iOS client scheme, so the config plugin
+  demonstrably ran. **Android** — built **locally** (`./gradlew assembleDebug`) rather than waiting
+  out an EAS queue that was still cold after ~30 minutes; autolinking lists `expo-screen-capture
+  (8.0.9)`, which is direct proof the native module is in the binary.
+  ⚠️ **The Android dev client is signed with the local debug keystore, not the EAS one.** An EAS
+  `development` build was also queued and may finish later — **uninstall before installing it**, or
+  it fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, the same trap Module 4 hit. This also means
+  this particular APK's SHA-1 is **not** the one O-19's Android console client must be registered
+  against; that remains the EAS keystore's.
 - **Verified green as of 2026-08-03:** `yarn doctor` 18/18 · `yarn lint` 0 errors (the same 14
   pre-existing warnings) · `yarn typecheck:baseline` clean (the same 3 inherited errors, no new
   ones) · both auth paths, FR-2a's consent screen and all three OTP error branches walked on the
