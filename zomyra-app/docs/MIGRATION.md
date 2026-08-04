@@ -3216,6 +3216,14 @@ and the Onboarding stack). FR-11a's → **Module 6**. Endpoint count → **40**.
 
 #### (2) NFR-16 — screenshot and screen-recording blocking
 
+> ✅ **BUILT by the Module 3 follow-up (2026-08-05).** Everything below is the analysis that
+> preceded the work and is kept as the record of *why* it was shaped this way — but the
+> forward-looking parts are now history: `expo-screen-capture` (`~8.0.9`) **is installed**,
+> `src/hooks/use-screen-capture-block.ts` exists, and `app/(tabs)/_layout.tsx` calls it.
+> **It was not batched with Lottie** — that trade is re-decided at the end of this section.
+> Implementation, the Android verification evidence, and the two surfaces it does *not* cover
+> are in §6's "Module 3 follow-up" entry.
+
 New requirement, and broader than it first reads: capture is blocked across the **whole
 authenticated app shell** — Discover, profile detail, photos, chat — not just Verification. Applied
 **once at the authenticated root**, not per screen, via **`expo-screen-capture`**.
@@ -3235,13 +3243,23 @@ not be described to users or stakeholders as if screenshots are prevented there.
 - ⚠️ **"Module 3 owns it" is where it *belongs*, not who will do it — Module 3 is complete and
   merged (PR #4).** The change lands in the shell Module 3 built, but it needs an explicit owner or
   it belongs to nobody. Cheapest home is whichever module next pays for a native rebuild.
+  ✅ **Resolved:** a **Module 3 follow-up branch** took it (2026-08-05), which is the "explicit
+  owner" this asked for — landing exactly where predicted, in `app/(tabs)/_layout.tsx`.
 - **Module 2 already supplied the gate.** NFR-16 must be off in dev/staging so QA and store-screenshot
   workflows aren't broken, and `src/config/env.ts` already exports **`IS_PRODUCTION`**. No new config.
+  ✅ **Held true** — `IS_PRODUCTION` was used unchanged and NFR-16 added no configuration.
 
-**But it is another native dependency.** `expo-screen-capture` is not installed, so under C-2 it
-forces a **dev-client rebuild** — the same cost O-17 flags for Lottie. **These should be batched:**
-if Module 3 takes both the screen-capture block and a Lottie-based loading primitive, that is one
-rebuild instead of two.
+**But it is another native dependency**, so under C-2 it forces a **dev-client rebuild** — the same
+cost O-17 flags for Lottie, which is why batching the two was the standing recommendation.
+
+> ⚠️ **The batching recommendation was overridden, deliberately, on 2026-08-05.** NFR-16 was taken
+> on its own rather than held for `lottie-react-native` in Module 7. The reasoning: it had no owner
+> and holding it risked it having none for another week-plus; Module 7 is not imminent; and O-17 had
+> already rejected batch-for-batching's-sake once, on the grounds that two further native build
+> events (Lottie in Module 7, `expo-notifications` in Module 11) are scheduled anyway — so "don't
+> pay twice" was never really available. **The cost was one extra dev-client rebuild**, paid
+> 2026-08-05. Lottie still lands in Module 7 and still needs its own rebuild; nothing about O-17
+> changed except that NFR-16 is no longer part of that batch.
 
 #### What this does to the finished modules
 
@@ -3250,5 +3268,5 @@ rebuild instead of two.
 | **0 · Build foundation** | No change |
 | **1 · Design system** | No change |
 | **2 · State & data layer** | **One correction, applied here.** `MeResponse` was missing the new `consents` array; added, with a `Consent` / `ConsentType` type carrying the differing re-ask rules and the O-20 warning at the point of use. `IS_PRODUCTION` needed no change — it already covers NFR-16's gating |
-| **3 · Navigation** | ⚠️ **Owes NFR-16, and it is merged — so this is a follow-up, not something Module 3 will pick up.** "Once at the authenticated root" is the shell Module 3 built (`app/(tabs)/_layout.tsx`), and `IS_PRODUCTION` already gates it, so the change itself is small. **It needs an owner and a native rebuild**: `expo-screen-capture` is not installed, so under C-2 it costs a dev-client build — batch it with `lottie-react-native` (O-17, Module 7) rather than paying twice. Nothing else in v1.46/v1.7 touches Module 3 |
+| **3 · Navigation** | ✅ **NFR-16 owed, and now DELIVERED by a Module 3 follow-up branch (2026-08-05).** It landed exactly where this row predicted — "once at the authenticated root" is the shell Module 3 built, so `app/(tabs)/_layout.tsx` calls `useScreenCaptureBlock()`, gated on the `IS_PRODUCTION` that already existed. `expo-screen-capture@~8.0.9` is installed and the dev-client rebuild it forces was paid rather than batched with Lottie (reasoning above; O-17 and Module 7 are unaffected). **Two authenticated surfaces remain uncovered** — `/verify` and `/onboarding`, which the gate *replaces* the tabs to reach — leaving **Module 6** and **Module 5** to extend it. Nothing else in v1.46/v1.7 touches Module 3 |
 | **4 · Auth & session** | **Reworked, applied 2026-08-04.** FR-2a was built one revision early: it recorded consent in a **persisted client-side slice**, because no endpoint existed. API-40 replaced that wholesale — the slice, `useRootRouteContext` and one `PERSIST_WHITELIST` entry are deleted, `resolveRootDestination` reads `GET /me`'s `consents`, and the screen calls `POST /consents` on accept and **does not navigate if it fails** (proceeding would put the user in Onboarding handing over religion and income with no record, which is the exact gap v1.7 closed). Detail in §6's Module 4 addendum |
