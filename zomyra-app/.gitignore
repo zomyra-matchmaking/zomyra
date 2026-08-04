@@ -44,10 +44,3 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
-
-# Cross-module regression sheet (docs/TEST-CASES.md).
-# Deliberately untracked per owner decision — see MIGRATION.md C-7.
-# Nothing imports it, so Metro never bundles it either way (FE TDD §13.3);
-# untracked-ness is about repo hygiene, not bundle size. To start tracking it,
-# delete these two lines and commit the file.
-docs/TEST-CASES.md
