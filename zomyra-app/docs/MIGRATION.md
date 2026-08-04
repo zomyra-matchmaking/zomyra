@@ -436,7 +436,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | O-17 | **Module 4's half is now decided too (2026-08-03).** The native batch it was meant to gather turned out to be one addition and two removals: `+@react-native-google-signin/google-signin`, `−expo-blur`, `−expo-symbols`. **`expo-updates` deliberately did *not* ride along** and **`expo-camera` was kept** — reasoning in §6's Module 4 entry, and the short version is that "don't pay for two rebuilds" does not apply when two more native build events (`lottie-react-native` in Module 7, `expo-notifications` in Module 11) are already scheduled. **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). **Module 3's half is decided (2026-08-02, owner): the shared default takes no Lottie.** It is token-driven, so no native dependency and no dev-client rebuild was spent, and `lottie-react-native` now lands with **treatment #5 in Module 7** — the branded logo animation, the one §13.4 says almost certainly needs supplied artwork — **batched with Module 4's Google Sign-In SDK** rather than paying for two rebuilds. `Loading.tsx`'s interior is isolated in one component so a Lottie swap does not touch call sites. **Still open for §13's later owners:** the owner has **Lottie JSON** intended as loading visuals; whenever a module reaches a shimmer or animation (§13), request the asset before building one — the same rule as brand assets in O-14/§10. See §13.4 for what to request and the reduce-motion fallback each asset needs. | ~~Module 3~~ **→ Module 7** (with the branded animation), then §13's owners | Product owner |
 
-| O-18 | **⚠️ Deferred verification from Module 3.** Not decisions; **test debt**, recorded here because §4 is the list every module is told to read and a note buried in §6 would not be seen. **(a) CLOSED by Module 4 (2026-08-03) — and it closed as "not reproducible", not as "fixed".** Full evidence in §6's Module 4 entry; the short version is that the race could not be made to happen on either platform, on **either** a guarded or a deliberately-unguarded build, because on a deep-link launch `app/index.tsx` **never mounts** — which is exactly what Module 3's *other* note (the tabs-guard one) already said, and the two notes were in tension. The `useIsFocused` guard Module 3 reverted is **back in**, on the narrower grounds that it is provably free rather than that it fixes an observed bug. ⚠️ **The one thing (a) does leave for Module 11:** it was verified with `simctl openurl` / `adb am start`, which is a *URL* arriving, not a *notification* being tapped. `expo-notifications` delivers a cold-start tap through its own response listener, not necessarily through the same `Linking` path, so Module 11 must re-walk it once a real push exists. **(b)** The FR-28 delete dialog's **step 2** ("type DELETE") was never keyboard-tested — only step 1, which is the one that got the `ScrollView`. Step 2 is a plain `View` with a `TextInput`. ⚠️ Module 4 found a defect of exactly this shape on `otp.tsx` — the CTA sat entirely behind the Android keypad — so treat (b) as likely, not hypothetical. **(c)** `personality-test`'s route path inside the Profile stack was never exercised. **(d)** `?entry=mismatch` and `?entry=photos` were never walked end to end; only `?entry=pending` was. **(e) Added by Module 4 — `app/otp.tsx` with the keyboard open is unverified on iOS.** The keyboard handling on that screen was rewritten (`useKeyboardInset`) and proven in all four states on Android, but iOS **suppresses the software keyboard for `textContentType="oneTimeCode"` fields under simulator automation** — the field focuses and takes hardware-keyboard input without drawing a keypad, so the lifted state cannot be photographed. The *resting* state is verified on iOS, and the software keyboard was confirmed working on `phone.tsx`, so this is narrow: it is specifically this screen, keypad-up, on iOS. **First real iPhone or a manual simulator run should check it** (O-10 gates the former). | ~~Module 11 for (a)~~ **(a) closed** · Module 6 for (b)/(d) · any module touching Profile for (c) · **(e) whoever next runs iOS by hand** | FE |
+| O-18 | **⚠️ Deferred verification from Module 3.** Not decisions; **test debt**, recorded here because §4 is the list every module is told to read and a note buried in §6 would not be seen. **(a) CLOSED by Module 4 (2026-08-03) — and it closed as "not reproducible", not as "fixed".** Full evidence in §6's Module 4 entry; the short version is that the race could not be made to happen on either platform, on **either** a guarded or a deliberately-unguarded build, because on a deep-link launch `app/index.tsx` **never mounts** — which is exactly what Module 3's *other* note (the tabs-guard one) already said, and the two notes were in tension. The `useIsFocused` guard Module 3 reverted is **back in**, on the narrower grounds that it is provably free rather than that it fixes an observed bug. ⚠️ **The one thing (a) does leave for Module 11:** it was verified with `simctl openurl` / `adb am start`, which is a *URL* arriving, not a *notification* being tapped. `expo-notifications` delivers a cold-start tap through its own response listener, not necessarily through the same `Linking` path, so Module 11 must re-walk it once a real push exists. **(b) CLOSED by the Module 3 follow-up (2026-08-05) — verified, no defect.** The FR-28 delete dialog's **step 2** ("type DELETE") was never keyboard-tested — only step 1, which is the one that got the `ScrollView`. Step 2 is a plain `View` with a `TextInput`, and Module 4 found a defect of exactly this shape on `otp.tsx` (CTA behind the Android keypad), so it was treated as likely. Walked keypad-up on the Android emulator: the input, the "Delete my account" button and Back all lift clear — the dialog is too short to pin anything behind a spacer. Evidence in §6's Module 3 follow-up entry. **(c) CLOSED by the same pass — verified, no defect.** `personality-test`'s route path inside the Profile stack was never exercised; navigated it, renders correctly (quiz 1/12), tab bar correctly hidden on the pushed screen, Back restores it. **(d)** `?entry=mismatch` and `?entry=photos` were never walked end to end; only `?entry=pending` was. **(e) Added by Module 4 — `app/otp.tsx` with the keyboard open is unverified on iOS.** The keyboard handling on that screen was rewritten (`useKeyboardInset`) and proven in all four states on Android, but iOS **suppresses the software keyboard for `textContentType="oneTimeCode"` fields under simulator automation** — the field focuses and takes hardware-keyboard input without drawing a keypad, so the lifted state cannot be photographed. The *resting* state is verified on iOS, and the software keyboard was confirmed working on `phone.tsx`, so this is narrow: it is specifically this screen, keypad-up, on iOS. **First real iPhone or a manual simulator run should check it** (O-10 gates the former). | ~~Module 11 for (a)~~ **(a) closed** · ~~Module 6 for (b)~~ **(b) closed** · Module 6 for (d) · ~~any module touching Profile for (c)~~ **(c) closed** · **(e) whoever next runs iOS by hand** | FE |
 
 | O-19 | **Google OAuth client IDs — the client-side half is DONE (2026-08-03); what remains is two things the client cannot see.** ✅ **Wired:** the owner's staging pair is in `eas.json`'s `development` and `preview` profiles (and `.env.example` documents both), so the runtime half needs nothing further — `426431032003-15glcint4vks…` (**Web**, sent as `webClientId` on both platforms) and `426431032003-jd98hfugf0il…` (**iOS**, also reversed into the `Info.plist` URL scheme at build time). Their types were established rather than assumed: Google's own OAuth endpoint rejects the first with *"Custom scheme URIs are not allowed for **'WEB'** client type"* and accepts `com.googleusercontent.apps.<id>` for the second. ⚠️ **Staging only** — `eas.json`'s `production` profile is deliberately left without them so it cannot inherit staging's by accident. **Two items outstanding, and neither is visible client-side — a mismatch in either surfaces only as `invalid_google_token` on a real sign-in:** **(1) the Android console client**, which has to exist bound to package `com.zomyra.app` **plus SHA-1 `EF:AC:93:86:81:D7:00:AB:D6:27:C6:2F:17:1C:1F:39:79:2E:63:36`** — the **EAS** keystore's, not the local debug keystore's, which Module 4 confirmed differ the hard way (`INSTALL_FAILED_UPDATE_INCOMPATIBLE` when the EAS-signed APK met the locally-built one; re-checkable with `apksigner verify --print-certs` or `eas credentials`). Nothing goes *in* the app for Android — but without the client, sign-in fails with `DEVELOPER_ERROR` (code 10) *after* account selection, which is exactly past where Module 4 could test. **(2) Confirmation that `426431032003-15glcint…` is the same Web client the backend validates against.** The backend has *a* client configured — that is why `/v1/auth/google` returns `401 invalid_google_token` rather than `503` — but "a client is configured" and "it is this one" are different claims, and only the backend side can tell them apart. | ✅ Client-side done · **Android console client + backend audience confirmation** | Product owner + BE |
 
@@ -1717,6 +1717,75 @@ before concluding anything — the same class of mistake as the Fast Refresh not
 `yarn typecheck:baseline` clean · `yarn.lock` unchanged · normal cold start routes correctly on
 **both** the iPhone 16 Plus simulator and the Android 16 emulator · the mock is byte-identical to
 its committed state.
+
+#### Module 3 follow-up — keyboard re-measure + NFR-16 (2026-08-05)
+
+A follow-up pass for the test debt Module 3 left open plus one deliverable it never owned. **Branched
+from `module/4-auth`, not `master`** — Task 1 needs Module 4's `src/hooks/use-keyboard-inset.ts`, which
+had not merged yet — and run on the **Android 16 emulator against a locally-built debug client**, since
+the keyboard question is an Android-first one and NFR-16's only real behaviour is Android's.
+
+**Task 1 — the five surviving `KeyboardAvoidingView` screens, re-measured against Module 4's finding.**
+Module 4 established that KAV under-reclaims on this project's `edgeToEdgeEnabled` Android config (~455px
+short on a 1055px keypad) and that `otp.tsx` failed *because* of it. The open question was whether the
+same shortfall clips anything on `phone.tsx`, the chat composer, `edit-profile.tsx`, `profile.tsx`, or
+`OnboardingShell.tsx`. Walked each keyboard-open on device: **all five are clear.** `phone.tsx`'s Send
+OTP sits high with the footer above the keypad; `edit-profile`'s Done is in the header and its last
+field lands ~20px above the keys; the chat composer rides above the keypad; `OnboardingShell`'s Continue
+is fully clear — and because its header/scroll/footer are flex siblings, that result **generalises to all
+~17 onboarding screens** rather than being one screen's luck. The delete dialog's step 1 was already
+fixed in Module 3. **Decision: keep KAV on all five, do *not* broaden `useKeyboardInset`.** What made
+`otp.tsx` fail — a bottom-pinned CTA behind a full-height `flex:1` spacer, so the entire shortfall came
+off the button — is a layout none of these five share. Swapping working screens would be re-opening
+something already settled on evidence, and the two approaches must never coexist on one subtree (both
+offset; content moves twice as far). **The KAV-vs-inset split is now fully resolved** — no screen is
+left unmeasured.
+
+**Task 2 — O-18(b), the FR-28 delete dialog's step 2 ("type DELETE").** The concern was real: step 2 is
+a plain `View` + `TextInput` that never got the `ScrollView` step 1 did, and Module 4 found exactly this
+shape fail on `otp.tsx`. Walked keypad-up on device: **clean.** The input, the "Delete my account"
+button, and Back all lift above the keypad — the dialog is short enough that nothing is pinned behind a
+spacer. **O-18(b) closes as verified, no defect.**
+
+**Task 4 — O-18(c), the `personality-test` route inside the Profile stack.** Never previously exercised.
+Navigated to it: renders correctly (quiz 1/12), the tab bar is correctly hidden on the pushed screen,
+and Back returns to the Profile root with the bar restored. **O-18(c) closes as verified, no defect.**
+
+**Task 3 — NFR-16 screen-capture blocking (FE v1.46 §12.5), taken now rather than deferred.** The choice
+was batch it with `lottie-react-native` in Module 7 or take it here. Taken here: it had no owner, Module 7
+is a week-plus out, O-17 already rejected batch-for-batch's-sake reasoning, and the work is small. Added
+`expo-screen-capture` (`~8.0.9`), a new `src/hooks/use-screen-capture-block.ts`, and one call in
+`app/(tabs)/_layout.tsx`.
+- **Applied once at the authenticated shell, in `TabsLayout` not `TabsGuard`.** `TabsGuard` returns
+  early for every non-`ready` gate state, so placing the block there would make it flicker with the
+  gate; in `TabsLayout` it covers the whole time the shell is mounted, **including root-stack screens
+  pushed over the tabs** (`/premium`, Module 7's Match), which leave the tabs mounted underneath.
+- **Platform-honest.** Android genuinely blocks via `FLAG_SECURE`; iOS *cannot* prevent capture (detect
+  only), and MVP pairs that detection with no behaviour, so the hook is a deliberate no-op on iOS rather
+  than a listener that fires nothing.
+- **Gated on `IS_PRODUCTION`.** `FLAG_SECURE` blacks out `adb screencap` too, so leaving it on in dev
+  would destroy QA evidence, the store-screenshot workflow, and every screenshot this log is built from.
+- **Lazy `import()`**, the same C-2 convention as `src/auth/google.ts`: a stale dev client predating the
+  dependency degrades to the feature being absent rather than crashing (unreachable in a production build).
+- **⚠️ Two authenticated surfaces it does *not* cover**, because the gate *replaces* the tabs to reach
+  them: `/verify` (the biometric selfie — the single most sensitive screen) and `/onboarding` (religion,
+  income). **Module 6 should extend it to Verification, Module 5 to Onboarding** — the hook is idempotent
+  per mount and safe to call again.
+
+**Verified on Android**, with the gate temporarily forced on (that override has been reverted). Signed in
+as the seeded RETURNING account `9000000000`, which routes to `/discover`, then took three independent
+readings: (1) `dumpsys window` reports `SECURE` in the MainActivity window flags — the flag
+`preventScreenCaptureAsync()` sets; (2) `adb screencap` — the same pipeline screenshots and recorders
+use — came back **fully black** save the OS status bar, which is a separate non-secure window; (3) the
+accessibility tree, which `FLAG_SECURE` does *not* redact, showed the real Discover content ("Riya, 28",
+the tab bar), proving the black frame is a blocked capture and not a crash or blank screen.
+
+**Still open after this pass:** O-18(d) (`?entry=mismatch` / `?entry=photos` never walked end to end) and
+O-18(e) (`otp.tsx` keypad-up on iOS) remain, both for their existing owners; nothing here touched them.
+
+**Verified after this pass:** lint 0 errors (the same 14 pre-existing warnings) · `yarn typecheck:baseline`
+clean (3 known baseline errors, no regressions) · the only dependency delta is `+expo-screen-capture`,
+present in `yarn.lock` · no other file outside the three above is touched.
 
 ### Module 4 — Auth & session (completed 2026-08-03)
 

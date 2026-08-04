@@ -55,6 +55,7 @@ import {
   UpdateRequired,
 } from "@/src/components/nav/LaunchScreens";
 import { useLaunchGate } from "@/src/components/nav/use-launch-gate";
+import { useScreenCaptureBlock } from "@/src/hooks/use-screen-capture-block";
 
 /**
  * The destination `resolveRootDestination` returns when nothing is wrong.
@@ -133,6 +134,28 @@ function TabsGuard() {
 }
 
 export default function TabsLayout() {
+  /*
+   * NFR-16 — screenshot / screen-recording blocking, **applied once here rather
+   * than per screen**, which is what FE v1.46 §12.5 asks for and why it names
+   * this file: this is the authenticated shell.
+   *
+   * It sits in `TabsLayout` rather than inside `TabsGuard` deliberately —
+   * `TabsGuard` returns early for every non-`ready` state, so the block would
+   * come and go with the gate. Here it covers the whole time the shell is
+   * mounted, including screens pushed *over* the tabs on the root stack
+   * (`/premium`, and Module 7's Match screen), because those leave the tabs
+   * mounted underneath.
+   *
+   * ⚠️ **Two authenticated surfaces it therefore does NOT cover**, because the
+   * gate *replaces* the tabs to reach them rather than pushing over them:
+   * `/verify` — which is the biometric selfie, i.e. the single most sensitive
+   * screen in the app — and `/onboarding`, where religion and income are
+   * entered. **Module 6 should extend it to Verification** (it already owns
+   * FR-11a's consent) and Module 5 to Onboarding. Calling the hook again there
+   * is safe: it is idempotent per mount and releases on unmount.
+   */
+  useScreenCaptureBlock();
+
   return <TabsGuard />;
 }
 
