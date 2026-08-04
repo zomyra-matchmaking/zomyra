@@ -134,6 +134,19 @@ export function resolveAccount(identity: MockIdentity): ResolvedAccount {
  * returning null: a token re-adopted from the keychain after a reload may name
  * a signup this JS context never saw, and a real backend would still have that
  * user — it just would not have finished onboarding either.
+ *
+ * ⚠️ **This is why a *newly recorded* consent does not survive a cold start in
+ * mock mode, and it is a limitation of the mock rather than a client bug.** The
+ * directory above is module-scoped, so a restart rebuilds it; the client's token
+ * is in the keychain and does not. `usr-3` therefore comes back as a *fresh*
+ * account with `consents: []` and the FR-2a screen shows again. Against a real
+ * backend the row is in Postgres and the screen is skipped — which is the whole
+ * point of API-40 and the one part of it a mock cannot demonstrate.
+ *
+ * What *is* demonstrable here: recording a consent and being routed onward
+ * within the session (the `Me` invalidation round trip), and the skip path via
+ * {@link RETURNING_PHONE_NUMBER}, whose consents are seeded above and so survive
+ * a reload the same way the rest of that fixture does.
  */
 export function accountByUserId(userId: string): MockAccount {
   const found = byUserId.get(userId);
@@ -141,6 +154,16 @@ export function accountByUserId(userId: string): MockAccount {
   const account = freshAccount(userId);
   byUserId.set(userId, account);
   return account;
+}
+
+/**
+ * API-40's write half. **Append, never replace** — BE §6.1's `user_consents` is
+ * append-only and `GET /me` projects the max version per type, so a mock that
+ * overwrote would hide the one bug worth catching here: a client that records
+ * version 2 and then reads back version 1.
+ */
+export function recordConsent(userId: string, consent: Consent): void {
+  accountByUserId(userId).consents.push(consent);
 }
 
 /** API-6's response, projected from a record rather than hardcoded. */
@@ -153,6 +176,18 @@ export function meResponse(account: MockAccount): MeResponse {
     discoveryMode: account.discoveryMode,
     accountStatus: account.accountStatus,
     isPremium: false,
-    consents: account.consents,
+    /*
+     * ⚠️ **Copied, not handed out by reference — this was a real crash.**
+     *
+     * Returning `account.consents` directly put the mock's *own* array into the
+     * RTK Query cache, and Immer freezes cached state in development. The next
+     * `POST /consents` then tried to `push` onto a frozen array and threw
+     * `cannot add a new property`, surfacing as an error on the consent screen.
+     *
+     * The general rule this is an instance of: **a mock stands in for a server,
+     * and a server never hands a caller a live reference to its own storage.**
+     * Any handler returning a mutable structure from this file should copy it.
+     */
+    consents: [...account.consents],
   };
 }

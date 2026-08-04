@@ -19,6 +19,7 @@ import {
   googleIdentity,
   meResponse,
   phoneIdentity,
+  recordConsent,
   resolveAccount,
 } from "./accounts";
 import { issueSession, isAccessTokenValid, currentUserId, rotateSession } from "./session";
@@ -204,6 +205,28 @@ const handlers: Record<string, Handler> = {
     ok: true,
     data: meResponse(accountByUserId(currentUserId() ?? "mock-user")),
   }),
+
+  // ---- API-40 · POST /consents ----------------------------------------------
+  // Append-only server-side (BE §6.1 `user_consents`), and the mock models that
+  // rather than flipping a flag: it pushes onto the account's array, so the
+  // *next* `GET /me` reports the consent and `resolveRootDestination` stops
+  // returning `/consent`. That round trip is the behaviour under test — a mock
+  // that mutated nothing would let the screen navigate on a lie.
+  "POST /consents": (req) => {
+    const { consentType, version } = (req.body ?? {}) as {
+      consentType?: string;
+      version?: number;
+    };
+    if (
+      (consentType !== "sensitive_data" && consentType !== "biometric") ||
+      typeof version !== "number"
+    ) {
+      return fail(400, "validation_error", "consentType and version are required.");
+    }
+    const acceptedAt = new Date().toISOString();
+    recordConsent(currentUserId() ?? "mock-user", { consentType, version, acceptedAt });
+    return { ok: true, data: { recorded: true, acceptedAt } };
+  },
 
   // ---- API-34 · GET /counts -------------------------------------------------
   "GET /counts": () => ({

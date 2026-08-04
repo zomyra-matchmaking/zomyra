@@ -29,32 +29,9 @@ import {
   UPDATE_REQUIREMENT_ON_ERROR,
   type UpdateRequirement,
 } from "@/src/lib/app-update";
-import {
-  resolveRootDestination,
-  type RootDestination,
-  type RootRouteContext,
-} from "@/src/lib/root-route";
+import { resolveRootDestination, type RootDestination } from "@/src/lib/root-route";
 import { useAppSelector } from "@/src/store/hooks";
 import { isIOS } from "@/src/utils/platform";
-
-/**
- * The client-side half of §9.1's inputs, for anything calling
- * {@link resolveRootDestination}.
- *
- * It exists because there is now more than one caller — this hook and
- * `HeldVerification`'s "Check again" — and the table takes a fact
- * (`GET /me` does not report FR-2a consent) that each would otherwise look up
- * for itself. One lookup, so the two cannot answer differently.
- *
- * Takes the `userId` rather than reading it, because it is only known once
- * `GET /me` has resolved and a hook cannot be called conditionally on that.
- */
-export function useRootRouteContext(): (userId: string) => RootRouteContext {
-  const consentedUserIds = useAppSelector((s) => s.consent.sensitiveDataUserIds);
-  return (userId: string) => ({
-    sensitiveDataConsentGiven: consentedUserIds.includes(userId),
-  });
-}
 
 /** API-5 takes the store this build came from, not the OS it happens to run on. */
 const PLATFORM = isIOS ? "ios" : "android";
@@ -86,7 +63,6 @@ export type LaunchGate =
 
 export function useLaunchGate(): LaunchGate {
   const sessionStatus = useAppSelector((s) => s.session.status);
-  const routeContext = useRootRouteContext();
 
   // ---- 1 · Version check (FR-30) -----------------------------------------
   const version = useCheckAppVersionQuery({ platform: PLATFORM });
@@ -128,7 +104,7 @@ export function useLaunchGate(): LaunchGate {
 
   return {
     status: "ready",
-    destination: resolveRootDestination(me.data, routeContext(me.data.userId)),
+    destination: resolveRootDestination(me.data),
     updateAvailable: requirement === "optional",
     latestVersion: version.data?.latestVersion ?? null,
     storeUrl: version.data?.updateUrl,

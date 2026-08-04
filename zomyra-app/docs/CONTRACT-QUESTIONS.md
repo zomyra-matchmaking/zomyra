@@ -1,18 +1,16 @@
 # Contract questions for the backend
 
 **Status:** open, raised by the frontend at the end of Module 2 (2026-07-31).
-**Audience:** whoever is building the Zomyra backend from Backend TDD v1.6.
+**Audience:** whoever is building the Zomyra backend from Backend TDD v1.7.
 
-**Updated 2026-08-01 against FE v1.45 / BE v1.6 — items 1 and 3 are now
+**Updated 2026-08-04 against FE v1.46 / BE v1.7. Items 1, 3 and 4b are
 answered** and are kept below only so the thread makes sense. **Items 0, 2, 4,
-4a, 4b, 5 and 6 are still open** and are what actually needs a reply.
+4a, 5 and 6 are still open** and are what actually needs a reply.
 
-**Module 4 added item 4b (2026-08-03): FR-2a's consent has no home in either
-document.** It is the only item here that is not merely a client convenience —
-see the item for why. **The owner has since decided it should move server-side
-(2026-08-03) and is taking the spec change to the TDDs**; 4b now carries the
-concrete shape to settle, including the point that it should be built to hold
-FR-11a's biometric consent as well.
+**4b closed well:** the owner took it to the TDDs and **API-40 `POST /consents`**
+landed, wired in Module 4. It stores a version rather than a boolean, writes via
+its own endpoint rather than API-7, and shares one `user_consents` table with
+FR-11a — all three of the things that would have been expensive to retrofit.
 
 **Also new, and not a contract question but a joint one: the Google OAuth client
 IDs.** `POST /v1/auth/google` is deployed and validating as of 2026-08-03 (a
@@ -171,9 +169,20 @@ row is genuinely unreachable and the table is complete as written — but then
 API-7's documented `{ profileComplete: true }` response is the thing that needs
 correcting.
 
-## 4b. Nothing records FR-2a's consent, and it is the one thing here that is not a client convenience
+## 4b. Nothing records FR-2a's consent — ✅ **ANSWERED by FE v1.46 / BE v1.7, no action needed**
 
-*Raised by Module 4 while building the consent screen (2026-08-03).*
+*Raised by Module 4 while building the consent screen (2026-08-03); **answered
+2026-08-04** by **API-40 `POST /consents`** plus a `consents` array on `GET /me`.
+Kept below so the thread makes sense.*
+
+**What landed matches the ask closely**, including the two points that were
+easy to get wrong: it stores a **version**, not a boolean, and the record is
+written by **its own endpoint** rather than folded into API-7 — so a user who
+accepts and then abandons onboarding is still recorded. It also holds
+**FR-11a's biometric consent** on the same `user_consents` table, which is what
+stops Module 6 adding a second one-off column. **What remains open is not this
+question but O-20** — who owns and approves the consent *copy* the `version`
+refers to.
 
 FR-2a requires an explicit "I understand and agree" before onboarding collects
 religion, income and lifestyle data, **once per account, never again**. Neither

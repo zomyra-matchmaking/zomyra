@@ -70,9 +70,10 @@ export type AuthTokens = { accessToken: string; refreshToken: string };
  * screen, and it is the wrong one: FR-2a lets the user *decline*, which returns
  * them to Welcome with the account already created. Sign in again and the flag
  * reads `false`, so a client keyed on it would skip the notice and start
- * collecting religion and income from someone who had explicitly refused. The
- * gate keys on a persisted per-`userId` acknowledgement instead
- * (`store/slices/consent-slice.ts`), which cannot be defeated that way.
+ * collecting religion and income from someone who had explicitly refused. Since
+ * FE v1.46 the gate keys on **`GET /me`'s `consents` array** (API-40) instead,
+ * which cannot be defeated that way — a declined consent was never recorded, so
+ * the array stays empty however many times the account is signed into.
  *
  * It stays on this type because **this file describes what the server sends**,
  * not what the client happens to read — API-2 and API-3 both return it (FE §9.1,
@@ -163,8 +164,9 @@ export type ConsentType = "sensitive_data" | "biometric";
  *   covered by the acceptance just given.
  *
  * `version` is *the version of the consent text the client actually displayed*
- * — so the client cannot invent it. See O-18: that versioning process is still
- * unresolved, and Module 4 needs it pinned before FR-2a can be built honestly.
+ * — so the client cannot invent it. `SENSITIVE_DATA_CONSENT_VERSION` in
+ * `src/lib/consent.ts` is that number for FR-2a, defined beside the copy it
+ * describes. **O-20** is what is still open: who owns and approves that copy.
  */
 export type Consent = {
   consentType: ConsentType;

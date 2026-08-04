@@ -44,11 +44,11 @@ import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useGetMeQuery } from "@/src/api";
+import { errorMessage, useRecordConsentMutation } from "@/src/api";
 import { signOut } from "@/src/auth/sign-out";
-import { Button, LoadingScreen, Touchable } from "@/src/components/ui";
+import { Button, Touchable } from "@/src/components/ui";
+import { SENSITIVE_DATA_CONSENT_VERSION } from "@/src/lib/consent";
 import { useAppDispatch } from "@/src/store/hooks";
-import { sensitiveDataConsentGiven } from "@/src/store/slices/consent-slice";
 import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 
 /**
@@ -78,30 +78,47 @@ export default function ConsentScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [declining, setDeclining] = useState(false);
-  /*
-   * Already in the RTK Query cache — the gate had to resolve `GET /me` to send
-   * anyone here — so this subscribes rather than refetches. It is needed for
-   * the `userId`: consent is recorded per account, and API-2/API-3's response
-   * does not carry one.
-   */
-  const me = useGetMeQuery();
+  const [error, setError] = useState<string | null>(null);
+  const [recordConsent, { isLoading: recording }] = useRecordConsentMutation();
 
-  if (!me.data) return <LoadingScreen label="Loading" />;
-  const userId = me.data.userId;
+  const agree = async () => {
+    if (recording || declining) return;
+    setError(null);
 
-  const agree = () => {
-    dispatch(sensitiveDataConsentGiven({ userId }));
+    /*
+     * ⚠️ **Navigation waits on the record, and that ordering is the point.**
+     *
+     * Before FE v1.46 this screen was only a client-side gate — BE v1.7 records
+     * that the consent columns "were never actually written by anything", so
+     * nothing could prove consent had been obtained. Proceeding on a failed
+     * API-40 call would put that back: the user would be in Onboarding handing
+     * over religion and income with no record anywhere that they had agreed.
+     *
+     * So a failure keeps them here with a retry (NFR-7's "fail visibly"). The
+     * `version` is the version of *the copy above* — see `lib/consent.ts`.
+     */
+    const result = await recordConsent({
+      consentType: "sensitive_data",
+      version: SENSITIVE_DATA_CONSENT_VERSION,
+    });
+
+    if (result.error) {
+      setError(errorMessage(result.error));
+      return;
+    }
+
     /*
      * Back to the gate rather than straight to `/onboarding`. §9.1's table is
-     * the single place that decides where a user belongs, and with consent now
-     * recorded it will say Onboarding on its own. Hardcoding it here would be a
-     * second copy of the row above this one.
+     * the single place that decides where a user belongs, and the mutation
+     * invalidates `Me`, so the refetched `consents` array makes it say
+     * Onboarding on its own. Hardcoding it here would be a second copy of the
+     * row above this one — and one that could disagree with the server.
      */
     router.replace("/");
   };
 
   const decline = async () => {
-    if (declining) return;
+    if (declining || recording) return;
     setDeclining(true);
     await signOut(dispatch);
     router.replace("/login");
@@ -153,9 +170,16 @@ export default function ConsentScreen() {
       </ScrollView>
 
       <View style={styles.actions}>
+        {error ? (
+          <Text testID="consent-error" style={styles.error} accessibilityRole="alert">
+            {error}
+          </Text>
+        ) : null}
         <Button
           testID="consent-agree"
           label="I understand and agree"
+          loading={recording}
+          disabled={declining}
           onPress={agree}
           fullWidth
         />
@@ -164,6 +188,7 @@ export default function ConsentScreen() {
           label="Not now"
           variant="ghost"
           loading={declining}
+          disabled={recording}
           onPress={decline}
           fullWidth
         />
@@ -234,6 +259,13 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     lineHeight: 20,
     color: colors.brand.default,
+    textAlign: "center",
+  },
+  error: {
+    fontSize: fontSize.caption,
+    lineHeight: 18,
+    color: colors.danger.default,
+    fontWeight: fontWeight.semibold,
     textAlign: "center",
   },
   // Anchored outside the ScrollView: the agree action must be visible without

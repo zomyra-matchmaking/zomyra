@@ -11,7 +11,7 @@ Append a "Module log" entry at the end of every module, in the same session that
 - Started: 2026-07-27
 - Codebase: `zomyra/zomyra-app` (Expo SDK 54, RN 0.81.5, React 19.1, expo-router v6)
   — renamed from `frontend/` on 2026-07-27, along with the app identity (see §8)
-- Status: **Module 4 complete** (2026-08-03). §3's baseline still describes the untouched Emergent
+- Status: **Module 4 complete** (2026-08-03; **reworked 2026-08-04 for FE v1.46 / BE v1.7's API-40**). §3's baseline still describes the untouched Emergent
   output and is kept as the historical reference point; §6 records what each module changed.
   ⚠️ **§3's "Data layer" subsection is now history too** — the 14-line `fakeNetwork` stub, the six
   Zustand stores and "no `fetch` call to any host" it records were all replaced in Module 2.
@@ -431,8 +431,8 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | O-19 | **Google OAuth client IDs — the client-side half is DONE (2026-08-03); what remains is two things the client cannot see.** ✅ **Wired:** the owner's staging pair is in `eas.json`'s `development` and `preview` profiles (and `.env.example` documents both), so the runtime half needs nothing further — `426431032003-15glcint4vks…` (**Web**, sent as `webClientId` on both platforms) and `426431032003-jd98hfugf0il…` (**iOS**, also reversed into the `Info.plist` URL scheme at build time). Their types were established rather than assumed: Google's own OAuth endpoint rejects the first with *"Custom scheme URIs are not allowed for **'WEB'** client type"* and accepts `com.googleusercontent.apps.<id>` for the second. ⚠️ **Staging only** — `eas.json`'s `production` profile is deliberately left without them so it cannot inherit staging's by accident. **Two items outstanding, and neither is visible client-side — a mismatch in either surfaces only as `invalid_google_token` on a real sign-in:** **(1) the Android console client**, which has to exist bound to package `com.zomyra.app` **plus SHA-1 `EF:AC:93:86:81:D7:00:AB:D6:27:C6:2F:17:1C:1F:39:79:2E:63:36`** — the **EAS** keystore's, not the local debug keystore's, which Module 4 confirmed differ the hard way (`INSTALL_FAILED_UPDATE_INCOMPATIBLE` when the EAS-signed APK met the locally-built one; re-checkable with `apksigner verify --print-certs` or `eas credentials`). Nothing goes *in* the app for Android — but without the client, sign-in fails with `DEVELOPER_ERROR` (code 10) *after* account selection, which is exactly past where Module 4 could test. **(2) Confirmation that `426431032003-15glcint…` is the same Web client the backend validates against.** The backend has *a* client configured — that is why `/v1/auth/google` returns `401 invalid_google_token` rather than `503` — but "a client is configured" and "it is this one" are different claims, and only the backend side can tell them apart. | ✅ Client-side done · **Android console client + backend audience confirmation** | Product owner + BE |
 
-| O-18 | **Consent text versioning is unresolved, and the client is required to send it.** API-40 takes `version` — explicitly *"the version of the consent text/notice the client actually displayed"*. BE v1.7 §12.7 leaves the versioning process itself open: who owns the copy, what triggers a bump. **The client cannot invent this**, and a wrong value makes the consent log evidentially worthless — which is the whole reason the table exists. Needed before **Module 4** builds FR-2a. Minimum viable answer: a constant in the client paired with the exact copy it renders, bumped by whoever owns the legal text. | **Module 4** | Product owner + legal |
-| O-19 | **`ip_address` on consent rows at hard-delete** — BE v1.7 flags it as undecided: purged with the rest of the user's PII at FR-28's hard delete, or retained as a legitimate compliance interest in proving consent was obtained. **Backend-side and legal, no client work either way** — recorded so it isn't mistaken for a frontend gap. | Backend | BE + legal |
+| O-20 | **Consent text versioning — who owns the copy.** API-40 takes `version` — explicitly *"the version of the consent text/notice the client actually displayed"*. BE v1.7 §12.7 leaves the versioning process itself open: who owns the copy, what triggers a bump. **The client cannot invent this**, and a wrong value makes the consent log evidentially worthless — which is the whole reason the table exists. Needed before **Module 4** builds FR-2a. Minimum viable answer: a constant in the client paired with the exact copy it renders, bumped by whoever owns the legal text. | **Module 4** | Product owner + legal |
+| O-21 | **`ip_address` on consent rows at hard-delete** — BE v1.7 flags it as undecided: purged with the rest of the user's PII at FR-28's hard delete, or retained as a legitimate compliance interest in proving consent was obtained. **Backend-side and legal, no client work either way** — recorded so it isn't mistaken for a frontend gap. | Backend | BE + legal |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -1746,7 +1746,9 @@ what made O-18(a) settleable at all.
   bounce them straight back out. The thinner copy would not merely duplicate the table, it would
   **disagree** with it. **`isNewAccount` ends up consumed by nothing**, deliberately — see the
   consent bullet below and the warning on `AuthSessionResponse`.
-- **FR-2a's consent screen exists** (`app/consent.tsx`), named categories and all — religion,
+- **FR-2a's consent screen exists** (`app/consent.tsx`), named categories and all — ⚠️ **its
+  consent *record* was reworked onto API-40 on 2026-08-04; see the addendum. The screen itself did
+  not change.** Originally — religion,
   income, and diet/drinking/smoking, each by name, because "some personal information" satisfies the
   layout and not the requirement. Explicit agree, privacy-policy link, and **declining signs out**:
   the account already exists by then (API-2/API-3 issued tokens before this screen is reachable), so
@@ -1965,17 +1967,12 @@ Re-walk it with a real push.
   genuinely insufficient, not merely redundant.
 - **FR-2a is a routing row, not a pushed screen**, so the tabs guard enforces it and a deep link
   cannot skip it.
-- **Consent is recorded per `userId`, client-side, and persisted** — ⚠️ **and the owner has since
-  decided this moves to the backend (2026-08-03), so treat the slice as temporary.** The argument
-  that settled it is sharper than "a reinstall re-asks": the consent row is only evaluated while
-  `profileComplete` is `false`, so **after onboarding completes nothing reads the record again and
-  no system anywhere holds proof consent was given**. Shape being settled in CONTRACT-QUESTIONS 4b —
-  a timestamp *and a notice version* (a boolean cannot answer "consented to what", nor survive the
-  notice changing), returned on `GET /me`, written by its own endpoint rather than folded into
-  API-7 (which fires *after* the data consent was meant to gate), and **built to hold FR-11a's
-  biometric consent too** so Module 6 does not add a second one-off column. When it lands the client
-  change is small: the slice, `useRootRouteContext` and one `PERSIST_WHITELIST` entry are deleted and
-  `resolveRootDestination` reads a field it already receives. The consent screen itself is untouched.
+- ~~**Consent is recorded per `userId`, client-side, and persisted**~~ — **superseded 2026-08-04.**
+  The owner took it to the TDDs, FE v1.46 / BE v1.7 answered with **API-40**, and the local slice was
+  deleted rather than kept alongside the server record. See the API-40 addendum below. The argument
+  that settled it is worth keeping: the consent row is only evaluated while `profileComplete` is
+  `false`, so **after onboarding completed nothing read the record again and no system anywhere held
+  proof consent was given**. Not "a reinstall re-asks" — no evidence at all.
 - **No client-side OTP lockout.** The server counts; the client honours what it is told.
 - **`expo-blur` and `expo-symbols` removed, `expo-camera` kept.** The first two are unimported with
   no named future owner; `expo-camera` has one — FR-11/FR-12 need *guided* selfie capture with an
@@ -1993,6 +1990,52 @@ Re-walk it with a real push.
   wrong to save nothing. The comment claiming it *was* consumed has been corrected — that was a real
   defect of the kind §12 exists to catch, and worse than a stale comment because it pointed the next
   reader at exactly the trigger FR-2a must not use.
+
+#### Module 4 addendum — API-40 wired, and the consent slice deleted (2026-08-04)
+
+FR-2a was built one spec revision early. FE v1.46 / BE v1.7 (§12.5) turned consent into a durable
+server record, so the client-side design Module 4 shipped — a persisted per-`userId` slice, chosen
+because no endpoint existed — was replaced rather than kept alongside it. **Two records of who
+consented can disagree, and only one of them is evidence.**
+
+**Changed:**
+
+- **`POST /consents` (API-40)** — `src/api/endpoints/consent.ts`, plus a mock. It **invalidates
+  `Me`**, which is the entire mechanism: `GET /me`'s `consents` array is the source of truth, so the
+  refetch is what makes `resolveRootDestination` stop returning `/consent`.
+- **The routing table reads the server again.** `resolveRootDestination(me)` is a pure function of
+  `GET /me` once more — the `RootRouteContext` parameter, `useRootRouteContext`, the `consent` slice
+  and its `PERSIST_WHITELIST` entry are all deleted.
+- **`SENSITIVE_DATA_CONSENT_VERSION`** lives in `src/lib/consent.ts`, **beside a description of what
+  version 1 says**, because API-40's `version` is a property of *the copy the client displayed* —
+  not of the API or the build. The file states the bump rule: a category added or a use changed is a
+  bump; a typo fix is not.
+- **⚠️ Accepting does not navigate if the call fails.** It shows the error and stays. Proceeding
+  would put the user into Onboarding handing over religion and income with no record that they had
+  agreed — which is precisely the gap BE v1.7 exists to close, reintroduced client-side.
+- **`hasConsent()` is deliberately not a general helper.** FR-2a is "recorded once, never re-asked",
+  so presence is the whole question. **FR-11a is a different rule** — Module 6 re-asks on every fresh
+  Verification entry — and a comment on the helper says so, because reusing it as though absence
+  were the only trigger is the obvious mistake.
+
+**A real bug the on-device test caught, which no amount of reading would have:**
+
+`meResponse()` returned the mock account's `consents` array **by reference**. RTK Query froze it in
+the cache (Immer, dev builds), so the next `POST /consents` tried to `push` onto a frozen array and
+threw `cannot add a new property` — surfacing as an error on the consent screen at exactly the
+moment the user pressed accept. Fixed by copying. The general rule, now written in the file: **a
+mock stands in for a server, and a server never hands a caller a live reference to its own storage.**
+
+**Verified on the Android emulator:** accept → spinner, decline correctly disabled → record → `Me`
+invalidated → routed to Onboarding. Cold start with consent not yet recorded → `/consent`.
+
+⚠️ **One specified behaviour the mock cannot demonstrate.** FR-2a's new sentence — *"a user resuming
+onboarding after a reinstall or reopen isn't re-shown a screen they've already accepted"* — needs the
+record to outlive the process. The mock's account directory is module-scoped and rebuilt on every JS
+context, so a **freshly recorded** consent is forgotten on restart and the screen shows again. That
+is the mock, not the client: the seeded returning account's consents *do* survive, and the
+record→invalidate→route path was verified within the session. Genuine confirmation needs the real
+backend, and it is written up beside `accountByUserId` so nobody reads it as a client bug.
 
 #### Module 4 addendum — dead-code sweep of its own output (2026-08-03)
 
@@ -2944,7 +2987,7 @@ stricter default *because tightening and loosening it are equally small changes 
 **Ownership:** FR-2a's screen and the API-40 call → **Module 4** (it sits between account creation
 and the Onboarding stack). FR-11a's → **Module 6**. Endpoint count → **40**.
 
-> **O-18 blocks the honest version of this.** API-40's `version` is *the version of the consent text
+> **O-20 is what remains open here.** API-40's `version` is *the version of the consent text
 > the client displayed*, and that versioning process is explicitly unresolved in BE §12.7. A wrong
 > value makes the consent log evidentially worthless, which is the entire reason the table exists.
 > Pin it before Module 4 builds FR-2a.
@@ -2967,7 +3010,9 @@ not be described to users or stakeholders as if screenshots are prevented there.
 
 **Two things it lands on cleanly:**
 
-- **Module 3 owns it** — "once at the authenticated root" is exactly the shell Module 3 builds.
+- ⚠️ **"Module 3 owns it" is where it *belongs*, not who will do it — Module 3 is complete and
+  merged (PR #4).** The change lands in the shell Module 3 built, but it needs an explicit owner or
+  it belongs to nobody. Cheapest home is whichever module next pays for a native rebuild.
 - **Module 2 already supplied the gate.** NFR-16 must be off in dev/staging so QA and store-screenshot
   workflows aren't broken, and `src/config/env.ts` already exports **`IS_PRODUCTION`**. No new config.
 
@@ -2982,4 +3027,6 @@ rebuild instead of two.
 |---|---|
 | **0 · Build foundation** | No change |
 | **1 · Design system** | No change |
-| **2 · State & data layer** | **One correction, applied here.** `MeResponse` was missing the new `consents` array; added, with a `Consent` / `ConsentType` type carrying the differing re-ask rules and the O-18 warning at the point of use. `IS_PRODUCTION` needed no change — it already covers NFR-16's gating |
+| **2 · State & data layer** | **One correction, applied here.** `MeResponse` was missing the new `consents` array; added, with a `Consent` / `ConsentType` type carrying the differing re-ask rules and the O-20 warning at the point of use. `IS_PRODUCTION` needed no change — it already covers NFR-16's gating |
+| **3 · Navigation** | ⚠️ **Owes NFR-16, and it is merged — so this is a follow-up, not something Module 3 will pick up.** "Once at the authenticated root" is the shell Module 3 built (`app/(tabs)/_layout.tsx`), and `IS_PRODUCTION` already gates it, so the change itself is small. **It needs an owner and a native rebuild**: `expo-screen-capture` is not installed, so under C-2 it costs a dev-client build — batch it with `lottie-react-native` (O-17, Module 7) rather than paying twice. Nothing else in v1.46/v1.7 touches Module 3 |
+| **4 · Auth & session** | **Reworked, applied 2026-08-04.** FR-2a was built one revision early: it recorded consent in a **persisted client-side slice**, because no endpoint existed. API-40 replaced that wholesale — the slice, `useRootRouteContext` and one `PERSIST_WHITELIST` entry are deleted, `resolveRootDestination` reads `GET /me`'s `consents`, and the screen calls `POST /consents` on accept and **does not navigate if it fails** (proceeding would put the user in Onboarding handing over religion and income with no record, which is the exact gap v1.7 closed). Detail in §6's Module 4 addendum |

@@ -30,6 +30,11 @@ export { useCheckAppVersionQuery, useGetMeQuery, useLazyGetMeQuery } from "./end
 export { useGetDiscoverFeedQuery } from "./endpoints/discover";
 export { useGetCountsQuery } from "./endpoints/counts";
 export {
+  useRecordConsentMutation,
+  type RecordConsentBody,
+  type RecordConsentResponse,
+} from "./endpoints/consent";
+export {
   useSubmitVerificationMutation,
   verificationOutcome,
   type VerificationOutcome,
