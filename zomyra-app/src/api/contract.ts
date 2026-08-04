@@ -135,6 +135,42 @@ export type MeResponse = {
   discoveryMode: DiscoveryMode | null;
   firstName: string;
   accountStatus: AccountStatus;
+  /** API-40, added FE v1.46 / BE v1.7 — see `Consent` below. */
+  consents: Consent[];
+};
+
+export type ConsentType = "sensitive_data" | "biometric";
+
+/**
+ * FE §9.1 / API-40 (FE v1.46, BE v1.7 §14.2b — MIGRATION §12.5).
+ *
+ * **The server is the source of truth for what has been accepted** — the client
+ * reads this off `GET /me` rather than keeping its own local record, so a
+ * reinstall or a resumed onboarding doesn't re-show a screen already accepted.
+ *
+ * One entry per `consentType`, carrying its **max** version. The underlying
+ * table is append-only (BE §6.1 `user_consents`): every acceptance inserts a
+ * row and nothing is ever updated in place, so this is a projection, not the
+ * whole history.
+ *
+ * **The two types have different re-ask rules** — this is the part that is easy
+ * to get wrong:
+ * - `sensitive_data` (FR-2a) — recorded **once, never re-asked**. There is no
+ *   repeat entry point into that screen.
+ * - `biometric` (FR-11a) — re-asked and re-recorded **every time Verification
+ *   is entered from a fresh Onboarding-stack-mount**, but **not** on an FR-12
+ *   in-flow mismatch retry within the same continuous attempt, which stays
+ *   covered by the acceptance just given.
+ *
+ * `version` is *the version of the consent text the client actually displayed*
+ * — so the client cannot invent it. See O-18: that versioning process is still
+ * unresolved, and Module 4 needs it pinned before FR-2a can be built honestly.
+ */
+export type Consent = {
+  consentType: ConsentType;
+  version: number;
+  /** ISO 8601 timestamp. */
+  acceptedAt: string;
 };
 
 /**

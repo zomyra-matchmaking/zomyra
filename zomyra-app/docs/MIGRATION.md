@@ -1,7 +1,7 @@
 # Zomyra Frontend Migration Log
 
 Living record of the migration from the Emergent-generated prototype to an app aligned with
-**Frontend TDD v1.45**, integrating against the contract in **Backend TDD v1.6**.
+**Frontend TDD v1.46**, integrating against the contract in **Backend TDD v1.7**.
 **Spec-change history is in §12** — the TDDs are living documents; check it before starting a module.
 
 **How to use this file.** It is the handoff between work sessions. Starting a module should
@@ -430,6 +430,9 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-18 | **⚠️ Deferred verification from Module 3.** Not decisions; **test debt**, recorded here because §4 is the list every module is told to read and a note buried in §6 would not be seen. **(a) CLOSED by Module 4 (2026-08-03) — and it closed as "not reproducible", not as "fixed".** Full evidence in §6's Module 4 entry; the short version is that the race could not be made to happen on either platform, on **either** a guarded or a deliberately-unguarded build, because on a deep-link launch `app/index.tsx` **never mounts** — which is exactly what Module 3's *other* note (the tabs-guard one) already said, and the two notes were in tension. The `useIsFocused` guard Module 3 reverted is **back in**, on the narrower grounds that it is provably free rather than that it fixes an observed bug. ⚠️ **The one thing (a) does leave for Module 11:** it was verified with `simctl openurl` / `adb am start`, which is a *URL* arriving, not a *notification* being tapped. `expo-notifications` delivers a cold-start tap through its own response listener, not necessarily through the same `Linking` path, so Module 11 must re-walk it once a real push exists. **(b)** The FR-28 delete dialog's **step 2** ("type DELETE") was never keyboard-tested — only step 1, which is the one that got the `ScrollView`. Step 2 is a plain `View` with a `TextInput`. ⚠️ Module 4 found a defect of exactly this shape on `otp.tsx` — the CTA sat entirely behind the Android keypad — so treat (b) as likely, not hypothetical. **(c)** `personality-test`'s route path inside the Profile stack was never exercised. **(d)** `?entry=mismatch` and `?entry=photos` were never walked end to end; only `?entry=pending` was. **(e) Added by Module 4 — `app/otp.tsx` with the keyboard open is unverified on iOS.** The keyboard handling on that screen was rewritten (`useKeyboardInset`) and proven in all four states on Android, but iOS **suppresses the software keyboard for `textContentType="oneTimeCode"` fields under simulator automation** — the field focuses and takes hardware-keyboard input without drawing a keypad, so the lifted state cannot be photographed. The *resting* state is verified on iOS, and the software keyboard was confirmed working on `phone.tsx`, so this is narrow: it is specifically this screen, keypad-up, on iOS. **First real iPhone or a manual simulator run should check it** (O-10 gates the former). | ~~Module 11 for (a)~~ **(a) closed** · Module 6 for (b)/(d) · any module touching Profile for (c) · **(e) whoever next runs iOS by hand** | FE |
 
 | O-19 | **Google OAuth client IDs — the client-side half is DONE (2026-08-03); what remains is two things the client cannot see.** ✅ **Wired:** the owner's staging pair is in `eas.json`'s `development` and `preview` profiles (and `.env.example` documents both), so the runtime half needs nothing further — `426431032003-15glcint4vks…` (**Web**, sent as `webClientId` on both platforms) and `426431032003-jd98hfugf0il…` (**iOS**, also reversed into the `Info.plist` URL scheme at build time). Their types were established rather than assumed: Google's own OAuth endpoint rejects the first with *"Custom scheme URIs are not allowed for **'WEB'** client type"* and accepts `com.googleusercontent.apps.<id>` for the second. ⚠️ **Staging only** — `eas.json`'s `production` profile is deliberately left without them so it cannot inherit staging's by accident. **Two items outstanding, and neither is visible client-side — a mismatch in either surfaces only as `invalid_google_token` on a real sign-in:** **(1) the Android console client**, which has to exist bound to package `com.zomyra.app` **plus SHA-1 `EF:AC:93:86:81:D7:00:AB:D6:27:C6:2F:17:1C:1F:39:79:2E:63:36`** — the **EAS** keystore's, not the local debug keystore's, which Module 4 confirmed differ the hard way (`INSTALL_FAILED_UPDATE_INCOMPATIBLE` when the EAS-signed APK met the locally-built one; re-checkable with `apksigner verify --print-certs` or `eas credentials`). Nothing goes *in* the app for Android — but without the client, sign-in fails with `DEVELOPER_ERROR` (code 10) *after* account selection, which is exactly past where Module 4 could test. **(2) Confirmation that `426431032003-15glcint…` is the same Web client the backend validates against.** The backend has *a* client configured — that is why `/v1/auth/google` returns `401 invalid_google_token` rather than `503` — but "a client is configured" and "it is this one" are different claims, and only the backend side can tell them apart. | ✅ Client-side done · **Android console client + backend audience confirmation** | Product owner + BE |
+
+| O-18 | **Consent text versioning is unresolved, and the client is required to send it.** API-40 takes `version` — explicitly *"the version of the consent text/notice the client actually displayed"*. BE v1.7 §12.7 leaves the versioning process itself open: who owns the copy, what triggers a bump. **The client cannot invent this**, and a wrong value makes the consent log evidentially worthless — which is the whole reason the table exists. Needed before **Module 4** builds FR-2a. Minimum viable answer: a constant in the client paired with the exact copy it renders, bumped by whoever owns the legal text. | **Module 4** | Product owner + legal |
+| O-19 | **`ip_address` on consent rows at hard-delete** — BE v1.7 flags it as undecided: purged with the rest of the user's PII at FR-28's hard delete, or retained as a legitimate compliance interest in proving consent was obtained. **Backend-side and legal, no client work either way** — recorded so it isn't mistaken for a frontend gap. | Backend | BE + legal |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -2908,3 +2911,75 @@ or vice versa. Backend stores it as `user_languages.other_text`, populated only 
 
 `languagesOther` needs no Module 2 change — it lands in API-7/API-24's request bodies, which Module 5
 builds.
+
+### 12.5 Frontend v1.45 → v1.46, Backend v1.6 → v1.7 (received 2026-08-01)
+
+Two additions. One closes a gap that had been quietly broken since the first backend draft; the
+other is an entirely new non-functional requirement with a native dependency attached.
+
+#### (1) API-40 `POST /consents` — consent becomes a durable record
+
+FR-2a and FR-11a were **only ever a client-side navigation gate**. BE v1.7 is blunt about the
+consequence: the `users.sensitive_data_consent_at` / `biometric_consent_at` columns added in an
+earlier revision "were never actually written by anything and never read back via `GET /me`."
+Nothing, anywhere, could prove consent had been obtained.
+
+**Now:** `POST /consents { consentType, version }` fires **immediately on each accept action** —
+deliberately *not* batched into API-7's end-of-onboarding submit, because a user who accepts and
+then abandons onboarding still needs the record. `GET /me` gains a **`consents` array**, and the
+client reads that rather than keeping its own local record, so a reinstall or a resumed flow doesn't
+re-show an already-accepted screen. Server-side it is an append-only `user_consents` table; the
+array is a projection of max version per type.
+
+**The re-ask rules differ per type, and this is the easy thing to get wrong:**
+
+| Type | Rule |
+|---|---|
+| `sensitive_data` (FR-2a) | Recorded **once, never re-asked** — there is no repeat entry point |
+| `biometric` (FR-11a) | Re-asked **every time Verification is entered from a fresh Onboarding-stack-mount** — but **not** on an FR-12 in-flow mismatch retry in the same continuous attempt |
+
+Both docs flag the second as a deliberate product decision pending legal review, chosen as the
+stricter default *because tightening and loosening it are equally small changes later*.
+
+**Ownership:** FR-2a's screen and the API-40 call → **Module 4** (it sits between account creation
+and the Onboarding stack). FR-11a's → **Module 6**. Endpoint count → **40**.
+
+> **O-18 blocks the honest version of this.** API-40's `version` is *the version of the consent text
+> the client displayed*, and that versioning process is explicitly unresolved in BE §12.7. A wrong
+> value makes the consent log evidentially worthless, which is the entire reason the table exists.
+> Pin it before Module 4 builds FR-2a.
+
+#### (2) NFR-16 — screenshot and screen-recording blocking
+
+New requirement, and broader than it first reads: capture is blocked across the **whole
+authenticated app shell** — Discover, profile detail, photos, chat — not just Verification. Applied
+**once at the authenticated root**, not per screen, via **`expo-screen-capture`**.
+
+**Platform asymmetry no app can engineer around**, stated plainly in the spec:
+
+- **Android** genuinely blocks it (`FLAG_SECURE` — captures render black).
+- **iOS has no such API.** An app can only be *notified* after a screenshot or during a recording.
+  For MVP, a detected iOS capture triggers **no reactive behaviour at all** — no warning, no report,
+  no notification to the other party. Detection is a hook for later, not a feature now.
+
+Worth being clear-eyed: on iOS this requirement is **not enforceable**, only observable. It should
+not be described to users or stakeholders as if screenshots are prevented there.
+
+**Two things it lands on cleanly:**
+
+- **Module 3 owns it** — "once at the authenticated root" is exactly the shell Module 3 builds.
+- **Module 2 already supplied the gate.** NFR-16 must be off in dev/staging so QA and store-screenshot
+  workflows aren't broken, and `src/config/env.ts` already exports **`IS_PRODUCTION`**. No new config.
+
+**But it is another native dependency.** `expo-screen-capture` is not installed, so under C-2 it
+forces a **dev-client rebuild** — the same cost O-17 flags for Lottie. **These should be batched:**
+if Module 3 takes both the screen-capture block and a Lottie-based loading primitive, that is one
+rebuild instead of two.
+
+#### What this does to the finished modules
+
+| Module | Verdict |
+|---|---|
+| **0 · Build foundation** | No change |
+| **1 · Design system** | No change |
+| **2 · State & data layer** | **One correction, applied here.** `MeResponse` was missing the new `consents` array; added, with a `Consent` / `ConsentType` type carrying the differing re-ask rules and the O-18 warning at the point of use. `IS_PRODUCTION` needed no change — it already covers NFR-16's gating |

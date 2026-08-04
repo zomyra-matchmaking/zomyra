@@ -36,7 +36,13 @@
  * without it, cold-starting as the returning user would resolve to an
  * incomplete account and undo the very thing this file is for.
  */
-import type { AccountStatus, DiscoveryMode, MeResponse, VerificationStatus } from "../contract";
+import type {
+  AccountStatus,
+  Consent,
+  DiscoveryMode,
+  MeResponse,
+  VerificationStatus,
+} from "../contract";
 
 /**
  * Sign in with this number to get the fully set-up returning account:
@@ -54,6 +60,11 @@ export type MockAccount = {
   verificationStatus: VerificationStatus;
   discoveryMode: DiscoveryMode | null;
   accountStatus: AccountStatus;
+  /**
+   * API-40. Server-side truth for what has been accepted, which is why the
+   * client reads it off `GET /me` instead of tracking it locally (§12.5).
+   */
+  consents: Consent[];
 };
 
 /** `phone:<number>` or `google:<sub>` — the two identity kinds API-3's note keeps apart. */
@@ -69,6 +80,15 @@ const RETURNING: MockAccount = {
   verificationStatus: "verified",
   discoveryMode: "all",
   accountStatus: "active",
+  /**
+   * Both on file: a fully set-up user reached Discover, so they cleared FR-2a
+   * and FR-11a on the way. This is what makes the mock exercise the *skip*
+   * path — neither consent screen should re-appear for this account.
+   */
+  consents: [
+    { consentType: "sensitive_data", version: 1, acceptedAt: "2026-07-01T09:15:00.000Z" },
+    { consentType: "biometric", version: 1, acceptedAt: "2026-07-01T09:22:00.000Z" },
+  ],
 };
 
 function freshAccount(userId: string): MockAccount {
@@ -79,6 +99,8 @@ function freshAccount(userId: string): MockAccount {
     verificationStatus: "unverified",
     discoveryMode: null,
     accountStatus: "active",
+    /** Nothing accepted yet — FR-2a has not been shown at this point. */
+    consents: [],
   };
 }
 
@@ -131,5 +153,6 @@ export function meResponse(account: MockAccount): MeResponse {
     discoveryMode: account.discoveryMode,
     accountStatus: account.accountStatus,
     isPremium: false,
+    consents: account.consents,
   };
 }
