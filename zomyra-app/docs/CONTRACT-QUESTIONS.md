@@ -278,3 +278,158 @@ Quick yes/no on assumptions the client already encodes:
 `all | compatibility | lifestyle | marriage_goals` for `discoveryMode` (API-25,
 API-12, `GET /me`). The prototype's spelling is wrong on both sides of the
 contract. Ours to fix — Modules 5 and 7 — with no backend action needed.
+
+> ✅ **CLOSED by Module 5 (2026-08-05).** `CompatibilityDimension` is now an **alias of
+> `DiscoveryMode`** in `contract.ts` rather than an independent declaration, and the three mock
+> profiles' `scores` keys were renamed with it. The mapping was not guessed: `discover.tsx` already
+> rendered `personality` as *"Compatibility"* and `priorities` as *"Marriage Goals"*, so the labels
+> were correct and only the keys were wrong. Nothing is owed to Module 7 here beyond retiring the
+> alias if it rewrites Discover's call sites.
+
+---
+
+## 8. Who owns `quizVersion`? — ✅ **answered: the backend** (raised and decided 2026-08-05)
+
+> **Decision (owner, 2026-08-05): `quizVersion` is owned by the backend.** The client does not get
+> to number the question set. Question 1 below is therefore settled — API-33 issues the version and
+> the client echoes back whatever it received. Questions 2 and 3 are still open and are what the
+> backend needs to answer.
+>
+> **What this obliges Module 6 (or whoever builds API-33) to do**, and why it cannot be done now:
+> `SCALE_QUESTIONS` is still a client-side constant in `src/lib/onboarding/scales.ts` because API-33
+> is not built and returns nothing to echo. `QUIZ_VERSION = 1` in `src/lib/onboarding/submit.ts` is
+> a **stopgap standing in for a value that is not ours**, and it is wrong by construction — it is a
+> number this client invented. When API-33 lands, the constant is deleted, the questions and their
+> version both come from the response, and `buildSubmitBody` echoes the served version.
+>
+> ⚠️ **Until then every draft submitted carries a `quizVersion` the backend never issued.** If the
+> real version of the set in `scales.ts` is not `1`, answers already stored against it are
+> mis-versioned — which is question 2, and why it wants answering before real users submit rather
+> than after.
+
+### Original question
+
+API-7's `love.quizVersion` is *the version of the FR-14 question set the client displayed* — the
+same discipline as API-40's consent `version`, and for the same reason: an answer scored against the
+wrong question set is worse than a missing one, because nothing looks wrong.
+
+**The client currently asserts `1`**, defined as `QUIZ_VERSION` beside `SCALE_QUESTIONS` in
+`src/lib/onboarding/submit.ts`, with the bump rule written next to it. That is this client's own
+numbering and **nobody has agreed to it.**
+
+The conflict is foreseeable rather than hypothetical: **API-33 serves the compatibility quiz** (BE
+§14.2), and a served question set will carry its own version. At that point there are two numbering
+schemes for one thing.
+
+**What we need:**
+
+1. Is `quizVersion` the backend's to issue via API-33, with the client echoing whatever it received?
+   (This is the sane answer, and matches how every other catalogue works under FR-3b.)
+2. If so — what is the version of the question set currently in `scales.ts`, so the client's `1` can
+   be corrected before any real answer is stored against it?
+3. Does the backend reject a `quizVersion` it does not recognise, or accept and record it? The first
+   turns a drift into a visible `400`; the second stores answers nobody can score later.
+
+### 8a. Restated in plain language, and one further owner question (2026-08-05)
+
+The owner asked for the outstanding part in relayable terms. It is two questions:
+
+> **The setup.** The compatibility quiz is 12 questions. An answer is only a number per question —
+> "7" means nothing unless you know *which* question was number 7. So each submit carries
+> `quizVersion`: a label saying which version of the question set the user actually saw, so answers
+> can never be scored against a set they weren't given. The app currently sends `1`, **a number the
+> frontend made up**, because API-33 (which will serve the quiz) doesn't exist yet and the 12
+> questions are still hardcoded in the app.
+>
+> **Q1 — what number should the app send today?** If the 12 questions now in
+> `src/lib/onboarding/scales.ts` already exist on the backend with a version number, tell us it. If
+> they don't exist there yet, tell us what number to use and treat it as fixed.
+>
+> **Q2 — what does the API do with a `quizVersion` it doesn't recognise?** Reject with `400`, so a
+> mismatch is found in testing? Or accept and store, so answers get saved against a version nobody
+> can score and it surfaces only when matching runs? We'd prefer reject.
+
+**And the owner's own question back to the backend, which is a fair one:**
+
+> **Is `quizVersion` needed at all?** The questions are already backend-driven (FR-3b, and API-33
+> once it exists), so the backend knows what it served. Could the **API version** carry that
+> information instead — i.e. a question set change is an API version change — rather than a separate
+> number travelling in every submit body?
+
+The honest answer from the client side is that these solve different problems, and it is worth the
+backend saying which it wants: an API version says *what the server offers now*, while
+`quizVersion` says *what this stored row was answered against* — the second is the one you need
+years later to rescore an old answer, and it has to be persisted with the answers. If the backend
+prefers one number for both, that is fine and the client simply echoes whatever field carries it;
+what does not work is neither being persisted alongside the answers. **This needs a decision before
+API-33 is designed.**
+
+---
+
+## 9. `fitness` needs a catalogue category and an API-7 field (owner-confirmed, 2026-08-05)
+
+**Confirmed by the owner: "How often do you exercise or stay physically active?" belongs in Plot.**
+Module 5 removed the screen because the field exists in neither contract — there is no `fitness`
+category in API-39 and no `plot.fitness` in API-7, so the question could be asked but the answer
+could not be stored. That was the right call for a client that cannot invent either half, and it is
+now a backend ask rather than a product decision.
+
+**What the backend needs to add, and then the screen is ~10 lines:**
+
+1. A `fitness` category in **API-39**, `{ key, label }` like every other, with whatever values
+   product wants ("daily", "few_times_a_week", "occasionally", "rarely" — the backend's to name).
+2. A `fitness: string` field on **API-7**'s `plot` object, carrying the key.
+3. ~~Whether it is required or optional.~~ ✅ **Answered by the owner, 2026-08-05: required.** No
+   exception to make — it joins the other Plot fields in `isSubmittable`.
+
+**The client has now built its half against the mock** (`src/api/mock/catalogue.ts` carries a
+`fitness` category using the prototype's own six labels; `fitness` is in `OptionCategoryKey`,
+`OnboardingState`, `OnboardingPlot`, `REQUIRED_PLOT_KEYS`, `buildSubmitBody` and one screen in
+`app/onboarding.tsx`, plus a row in Edit Profile). So items 1 and 2 are the only outstanding work,
+and they are the backend's.
+
+⚠️ **Until they land, `plot.fitness` goes out to a server that has no column for it.** Whether that
+is silently dropped or a `400 validation_error` depends on how strict API-7's validator is — worth
+knowing, because a strict validator makes *every* submit fail the moment `.env` points at staging.
+The mock accepts it. The client's keys (`daily`, `3_5_weekly`, `1_2_weekly`, `few_monthly`,
+`rarely`, `never`) are invented like every other mock key and will be replaced by whatever API-39
+serves; nothing is conditional on their spelling.
+
+**The other ten deleted fields are not this.** `relocation` and the nine `pref*` fields were
+declared in the prototype's state and **never rendered on any screen** — dead state, not deleted
+questions. Anchor's seven real questions (age range, match location, children, interfaith, smoker
+comfort, household, relocation-after-marriage) are all present and all catalogue-driven. No ask is
+needed for them.
+
+---
+
+## 10. Where does Edit Profile get the user's **state** from? (raised by Module 5, 2026-08-05)
+
+Edit Profile's city picker has the same shape as onboarding's: **API-38 is scoped by state**, so a
+state must be known before there is a city list to show. During onboarding the draft holds it. After
+submit the draft is destroyed (NFR-12) and `state` was never sent to the server (O-16, deliberately
+— `cityId` implies it via the `cities` table).
+
+So a returning user opening Edit Profile has a `cityId` and no way to look up the list it came from.
+Today the picker simply starts at the state step, which is correct but re-asks something the server
+already knows.
+
+**Owner's note, 2026-08-05:** during onboarding the state *is* in hand, so the picker works; the
+loading gap while API-38 fetches is now covered by a spinner overlay in the sheet rather than an
+empty list. That closes the UX half. The contract half below is still open, and only bites the
+returning user whose draft is gone.
+
+**Either of these fixes it; the backend's call which:**
+
+1. **API-23 (`GET /profile/me`) returns the city's `state` key** alongside `cityId` — cheapest, and
+   it is a join the backend already has.
+2. **API-38 accepts a city lookup** (`GET /locations/cities/:id` → `{ id, name, state }`), which
+   also gives every other screen a way to render a city name from an id.
+
+Option 1 is preferred unless a city→state lookup is wanted for its own sake.
+
+**Related invariant worth stating explicitly, since the client now depends on it:** does API-39's
+`state` category contain *only* states that have at least one city in API-38? The owner's position
+is yes. The client keeps a defensive "no cities listed for that state yet" message for the case
+where a data edit breaks it, but if the invariant is guaranteed, that message is unreachable and the
+backend should treat a state with zero cities as a data bug.

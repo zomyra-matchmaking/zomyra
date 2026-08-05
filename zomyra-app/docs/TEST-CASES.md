@@ -60,7 +60,8 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 2 · State & data layer | 6 | Yes — seeded only |
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
-| 5–12 | — | Not started |
+| 5 · Onboarding + verification entry | 51 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
+| 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those
 modules had already closed, from their MIGRATION.md log entries rather than from the work itself.
@@ -248,3 +249,150 @@ DLT registration), so a `staging` run of M4-012…M4-018 is `BLOCKED`, not `FAIL
 > `app/otp.tsx` keypad-up on iOS. **Known mock limitation, not a client bug:** a consent recorded in
 > mock mode does not survive a cold start (the account directory is rebuilt per JS context while the
 > token persists in the keychain); fixture `9000000001` exists so M4-026 is testable anyway.
+
+---
+
+## Module 5 — Onboarding (Plot / Anchor / Love) + API-7
+
+> **Read this before running any `runtime` case below.** API-38 and API-39 are **not deployed** —
+> re-probed 2026-08-05 and both still `404 not_found` on staging, alongside `/v1/docs-json`
+> (`GET /v1/me` returns `401` on the same host, which is what makes "not routed" a distinct claim
+> from "not authorised"). Every runtime result here was therefore obtained on **`preview-mock` /
+> `.env` on `mock`**, against `src/api/mock/catalogue.ts`. **Whoever finds either endpoint live must
+> re-run M5-001 through M5-006 before trusting the catalogue shapes** — the mock's *keys* are
+> invented (`swe`, `mh`, `lt_5`) and are certain to differ from the backend's.
+
+### FR-3b — the catalogue (API-39)
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-001 | The client hardcodes no choice list | `grep` `src/` and `app/` for the prototype's arrays — `INDIAN_CITIES`, `PROFESSIONS`, `LANGUAGES` | All three are **gone** from `src/lib/onboarding/data.ts`; only `cmToImperial` and the height bounds remain, which are a unit conversion and a slider's range, not catalogues. The only list left in-tree is `src/api/mock/catalogue.ts`, which is the mock **server's** data and is imported by nothing outside `src/api/mock/` | static | PASS 2026-08-05 |
+| M5-002 | Options come over the wire | Sign in as `9000000001` on `preview-mock`, reach "I am" | Female / Male / Non-binary / Prefer not to say render from API-39's `gender` category, not from a literal in `app/onboarding.tsx` | runtime | PASS 2026-08-05 |
+| M5-003 | Keys are stored, labels are shown | Read `OptionGrid` / `SearchableSelect` in `Primitives.tsx` | `onChange` is fed from `option.key` and the rendered `Text` from `option.label`; there is **no path** from displayed text back to the caller. `testID`s are keyed on `key` (`option-male`), which is why a backend reword cannot break a test | static | — |
+| M5-004 | The catalogue is fetched once per session | Walk Plot → Anchor → Love, watch the network | One `GET /onboarding/options`. `keepUnusedDataFor: Infinity` overrides RTK Query's 60-second eviction, which a careful user spends longer than on Plot alone | runtime | PASS 2026-08-05 |
+| M5-005 | Loading blocks the stack, it does not degrade | Raise mock latency, enter onboarding | The shared `LoadingScreen` (FR-3b's *shared default*, not Chat/Requests' spinner) holds the **whole** stack. No question renders an empty option grid — which matters because `stepIdx` is persisted, so advancing past a silently-empty question would restore that skip on the next launch | runtime | PASS 2026-08-05 |
+| M5-006 | A short catalogue says so | Delete a category from `CATALOGUE`, enter onboarding | The error shell names the missing categories rather than rendering an empty grid. A 200 that is short a category is a backend bug and a network failure is not; the copy distinguishes them because whoever gets the report needs to know which | runtime | PASS 2026-08-05 |
+| M5-007 | A stale stored key is visible, not silent | Read `label()` in `use-onboarding-options.ts` | Falls back to the **raw key** when the catalogue has no entry. A resumed draft (NFR-1) can outlive a retired value; showing the key is ugly and honest, dropping the field would submit a different profile than the user filled in | static | — |
+
+### FR-3a — state, then city (API-38)
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-008 | City is two screens, not one | Reach the location step | **State first, then city.** Not a UX preference — API-38 is `?state=<key>`-scoped, so there is no way to ask for a city without a state | runtime | PASS 2026-08-05 |
+| M5-009 | The city list is state-scoped | Pick Karnataka, search the city field | Karnataka cities only (Bengaluru, Mysuru, …) — the response to `?state=ka`, not a client-side filter over every city in India | runtime | PASS 2026-08-05 |
+| M5-010 | Changing state clears the city | Pick a state and a city, go back, pick a different state | `cityId` is **cleared**. A Maharashtra city id under "I live in Karnataka" is a wrong profile that validates cleanly, which is the worst kind | runtime | — |
+| M5-011 | A state is fetched at most once | Select a state, go back, re-select the same one | No second request. The `state` string **is** the RTK Query cache key, so this comes from the argument shape rather than from any caching code | runtime | PASS 2026-08-05 |
+| M5-012 | `state` is never submitted | Read `buildSubmitBody` in `src/lib/onboarding/submit.ts` | No `state` in `plot` (O-16). `cityId` implies it via the backend's `cities` table; `state` exists in the draft only to scope API-38 | static | — |
+| M5-013 | Free-text city is impossible | Type an exact city name into the picker and walk away without tapping a suggestion | Nothing is selected and Continue stays disabled. `cityId` is a **closed set** (O-15) — a value the user never picked from the list must not be submittable | runtime | — |
+
+### API-7 — the submit
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-014 | One call, at the end | Read `handleSubmit` in `app/onboarding.tsx` | A single `POST /onboarding/submit` with `{ plot, anchor, love }`. Not per-section — FE §9.2's "no partial-submission risk" is a consequence of that, not an independent claim | static | — |
+| M5-015 | Success routes through §9.1, not to a hardcoded screen | Complete onboarding on `preview-mock` | `router.replace("/")`, **not** `/verify`. The mutation invalidates `Me`, the account flips to `profileComplete: true` + `unverified`, and `resolveRootDestination` returns the photos step itself. Hardcoding `/verify` would be a second copy of a §9.1 row that could disagree with the server | runtime | — |
+| M5-016 | The draft is destroyed on success (NFR-12) | Complete onboarding, then cold-start | `draftSubmitted` resets the slice. A draft that outlived its submit is what produces a `409` on the next launch | runtime | — |
+| M5-017 | **`409 already_submitted` is not an error** | Submit twice (the mock returns 409 on the second) | The client **clears the draft and routes on**, exactly as on success. This is a stale local draft resubmitted after finishing elsewhere; the server's state is the correct one, and showing an error would strand the user on a flow they have already completed | runtime | — |
+| M5-018 | A failed submit loses nothing | Force a 500 on submit | Stays on the last screen with an inline error; the draft survives in the persisted slice and retrying rebuilds the identical payload | runtime | — |
+| M5-019 | `languagesOther` is coupled in **both** directions | Select "Other", type text, then deselect "Other" | The free text is cleared. API-7 rejects `languagesOther` sent **without** the `other` key just as firmly as the reverse, so a leftover string is a `400`, not dead weight. `buildSubmitBody` omits the field rather than sending `""` — `undefined` vanishes in JSON, `""` does not | runtime | — |
+| M5-020 | The quiz drives the answers, not the draft | Read `buildSubmitBody`'s `quizAnswers` | Built from `SCALE_QUESTIONS`, **not** `Object.entries(draft.scales)`. Iterating the draft would submit answers to questions this client version no longer asks — reachable via a resumed draft | static | — |
+| M5-021 | `quizVersion` is flagged as the backend's, not the client's | Read `QUIZ_VERSION` in `src/lib/onboarding/submit.ts` | Documented as a **stopgap**: the owner ruled on 2026-08-05 that the backend issues this via API-33 and the client echoes it (CONTRACT-QUESTIONS §8). The comment forbids bumping it locally and says to delete rather than reassign it when API-33 lands. Until then every submit carries a version the backend never issued — a known, recorded defect, not a passing behaviour | static | — |
+| M5-022 | Finish checks the whole draft | Answer everything, go back, change state (clearing `cityId`), return to Finish | Finish is **disabled**. A per-screen `canNext` cannot see a question invalidated by a later edit, so the last screen additionally gates on `isSubmittable` | runtime | — |
+
+### NFR-1 / the persisted draft
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-023 | **A pre-Module-5 draft is discarded, not rehydrated** | Install a build with a v1 draft on disk, then this one | The draft is dropped and onboarding starts clean. ⚠️ The failure this prevents is *silent*: redux-persist's default on a version mismatch is a **pass-through**, so a v1 draft would look perfectly restored, render labels as though they were keys, and fail at API-7 with a `400` twenty screens later. `createMigrate({ 2: () => undefined })` is what turns that into a visible fresh start | runtime | — |
+| M5-024 | The migration's blast radius is stated | Read `migrations` in `src/store/index.ts` | Returning `undefined` drops **all four** whitelisted slices, not just `onboarding` — redux-persist migrates the whole persisted root. Accepted and documented: the other three are a re-askable choice, a re-settable preference, and a prompt cooldown. None is user work | static | — |
+| M5-025 | An out-of-range `stepIdx` is survivable | Persist a `stepIdx` past the end, relaunch | Clamped to the last screen. Not hypothetical since Module 5 — `SCREENS` both shrank and grew (see M5-044) | runtime | — |
+
+### NFR-16 — screen-capture block on the Onboarding stack
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-026 | `/onboarding` is covered | Read `app/onboarding.tsx` | Calls `useScreenCaptureBlock()`. §12.7 recorded `/onboarding` and `/verify` as the two authenticated surfaces the tab shell's call cannot reach, because the root gate **replaces** the tabs to get there. Module 5 closes the first; **`/verify` is still Module 6's** and NFR-16 is not met until it lands | static | — |
+| M5-027 | It stays off outside production | Read the hook | Unchanged from the Module 3 follow-up: gated on `IS_PRODUCTION` and Android-only. `FLAG_SECURE` blacks out `adb screencap` too, which would break QA evidence and the store-screenshot workflow | static | — |
+
+### Contract drift closed by Module 5
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-028 | `CompatibilityDimension` has one declaration | Read `src/lib/discover/mock.ts` | An **alias of `DiscoveryMode`**, not a second copy. It previously read `all \| lifestyle \| personality \| priorities` — neither TDD's spelling — and had already propagated into `discovery-mode-slice`, the FR-15a picker and Discover's labels | static | PASS 2026-08-05 |
+| M5-029 | The mapping was evidence-based | `git show` the rename against `discover.tsx`'s old `DIM_LABEL` | `personality` → `compatibility` and `priorities` → `marriage_goals`, which is what the screen was **already rendering** (`personality: "Compatibility"`). The labels were right; only the keys were wrong. It matters because these keys are sent to the backend on API-12 and returned by `GET /me` | static | PASS 2026-08-05 |
+
+> **Module 5 test debt — mostly cleared 2026-08-05.** This note previously said everything from the
+> height slider onward was code-review only. **The full flow has since been walked on the Android
+> emulator** — every Plot and Anchor screen, the 12-slider FR-14 quiz, Photos, the API-7 submit and
+> the routing into `/verify`. See "The Module 5 walk, end to end" below for what that added.
+>
+> **Still genuinely unrun**, because each needs a failure the mock will not produce on demand: the
+> API-7 **error** outcomes (M5-018 `409 already_submitted`, the `400` paths) and the offline/retry
+> cases. Those want a scripted flow with a controllable transport (FE §13's Maestro, still
+> uninstalled). **Do not read a blank "Last result" here as a pass.**
+
+### Edit Profile — FR-3b closed (added 2026-08-05, after the owner's review)
+
+*Module 5 originally left this screen's hardcoded option lists in place as Module 6's problem. The
+owner ruled that they must be backend-driven now, so the FR-3b half was done here; the API-23
+pre-fill / `PATCH /profile` save half is still Module 6's.*
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-030 | No client-side catalogue survives | `grep` `app/(tabs)/(profile)/edit-profile.tsx` for `_OPTS` | Nothing. `BUILD_OPTS`, `EDUCATION_OPTS`, `INCOME_OPTS`, `DIET_OPTS`, `DRINK_OPTS`, `SMOKE_OPTS` are deleted; every list comes from `useOnboardingOptions()` (API-39) | static | PASS 2026-08-05 |
+| M5-031 | The sheet stores keys and shows labels | Read `PickerSheet` | Renders `opt.label`, calls `onPick(opt.key)`, and `testID` is keyed on `opt.key`. Previously it wrote the **display label** straight into the draft — the bug that made every value on this screen un-submittable | static | PASS 2026-08-05 |
+| M5-032 | Profession is a picker, not a text box | Read the Profession row | `PickField` over API-39's `profession` category. Free text here could never match a catalogue key | static | PASS 2026-08-05 |
+| M5-033 | Languages is multi-select over the catalogue | Read the Languages row | `multi: true`, toggling on/off. Was a comma-separated `TextInput` that split on `,` and stored whatever was typed | static | PASS 2026-08-05 |
+| M5-034 | The multi-select sheet does not go stale | Open Languages, tap three options **without closing**, then tap the first again | All three tick in turn and the fourth tap un-ticks Hindi. Nothing in `PickerState` is a snapshot: `selected` and `onPick` both take the **current** draft as an argument and `options`/`loading` are resolved by the parent each render. A captured array would freeze after the first tap — the classic multi-select bug, and the `onPick` half of it was real in the first draft of this change | runtime | PASS 2026-08-05 |
+| M5-035 | City is a state→city pair, not free text | Read the LOCATION card | State from API-39's `state` category, city from `useGetCitiesQuery(state.state)` skipped while no state is set. Prototype wrote free text into a field that now holds a `cityId` | static | PASS 2026-08-05 |
+| M5-036 | Changing state clears `cityId` | Pick Maharashtra → Pune, then change the state to Karnataka | City falls back to its "Pick your city" placeholder. Cleared **only when the key differs**, matching `app/onboarding.tsx:242`. A Pune id under Karnataka is a submit the backend rejects; re-picking the same state must not wipe a good answer | runtime | PASS 2026-08-05 |
+| M5-037 | The city name is never stored | `grep` the draft type for `cityName` | Absent. The label is read off API-38's live response each render; a stored name is a second copy that goes stale on a backend rename | static | PASS 2026-08-05 |
+| M5-038 | An empty list says why | Open the City sheet with no state chosen | The sheet says **"Pick your state first."** rather than opening blank, which reads as a broken screen. `picker.empty` also distinguishes that from "no cities listed for that state yet" (O-15) | runtime | PASS 2026-08-05 |
+| M5-038a | A list still loading shows a spinner, not emptiness | Open the City sheet while API-38 is in flight | A centred `ActivityIndicator` at list height, so the sheet does not open empty and then jump. The owner asked for this after the FR-3b pass. **Not observed at runtime** — the mock answers within a frame, so the branch is only reachable against a slow server; verified by reading `pickerLoading` and the `sheetLoading` style | static | PASS (code) 2026-08-05 |
+| M5-039 | The remaining debt is written down, not hidden | Read the file header | Names all three of Module 6's: API-23 pre-fill (the draft is destroyed on submit, so a returning user sees an empty form), the missing `state` for the city picker (CONTRACT-QUESTIONS §10), and FR-4's immutability rules on name/DOB/height | static | PASS 2026-08-05 |
+
+> **Edit Profile test debt — cleared 2026-08-05.** M5-034, M5-036 and M5-038 were the three most
+> likely places for a defect in this change and were left unrun in the first pass. All three have
+> now been **driven on the Android emulator** (mock account `9000000000`, which is verified and so
+> reaches the Profile tab). Only **M5-038a's spinner** remains code-verified only, because the mock
+> answers too fast to see it.
+>
+> Driving them found a real bug the static reading had missed: `onPick` closed over the draft
+> captured when the sheet opened, so a *second* toggle in the same open sheet computed from a stale
+> array. The tick marks were right and the stored value was wrong — the worst shape of the bug.
+> `PickerState` now passes the current draft into `selected` **and** `onPick`, and resolves
+> `options`/`loading` in the parent's render.
+
+### `fitness` restored as a required Plot question (added 2026-08-05, owner's decision)
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-040 | The question is asked again, from the catalogue | Walk Onboarding past "Do you smoke?" | "How often do you exercise or stay physically active?" with six options served by API-39's `fitness` category — not a hardcoded array. Confirmed on the emulator | runtime | PASS 2026-08-05 |
+| M5-041 | It is required, not optional | Read `missingFields` and `REQUIRED_PLOT_KEYS` | `fitness` is in both, per the owner's ruling of 2026-08-05. The screen also cannot be passed without an answer (`choice` sets `canNext: !!s.fitness`) | static | PASS 2026-08-05 |
+| M5-042 | It reaches API-7 | Read `buildSubmitBody` | `plot.fitness` carries the catalogue key. ⚠️ The real backend has no such field yet (CONTRACT-QUESTIONS §9) — whether it drops the key or `400`s is the open question | static | PASS 2026-08-05 |
+| M5-043 | Edit Profile can change it | Open Edit Profile → LIFESTYLE | A **Fitness** row beneath Smoking, fed by the same category | runtime | PASS 2026-08-05 |
+| M5-044 | A stale `stepIdx` from the no-fitness builds is survivable | Read the clamp in `app/onboarding.tsx` | `Math.min(...)` against `SCREENS.length - 1`. `SCREENS` both shrank and grew during Module 5, so a persisted index from either build must not crash | static | PASS 2026-08-05 |
+
+### The Module 5 walk, end to end (2026-08-05)
+
+The flow was driven on the Android emulator from a resumed draft through API-7 to `/verify`. What
+that confirmed beyond the individual rows above:
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M5-045 | NFR-1 survives a **logout**, not just a relaunch | Get logged out mid-flow, sign back in | Onboarding resumed on the exact screen last answered, with "Software Engineer" still selected. Stronger than M5-024's relaunch case: the token went and the draft did not | runtime | PASS 2026-08-05 |
+| M5-046 | Resume lands on the first *unanswered* question | Relaunch after adding `fitness` to `SCREENS` | Opened directly on the new fitness screen rather than at the start or past it | runtime | PASS 2026-08-05 |
+| M5-047 | All seven Anchor questions are present and catalogue-driven | Walk section 2 | Age range, match location, children, interfaith, smoker comfort, household, relocate-after-marriage — the owner's list of seven, in order, options from API-39 | runtime | PASS 2026-08-05 |
+| M5-048 | The 12 quiz answers submit as one call | Walk section 3, then read the request | One `POST /onboarding/submit` carrying `love.quizAnswers` with all twelve. **No per-question call** — this is what the owner asked to have confirmed against the design doc; there is no mismatch | runtime | PASS 2026-08-05 |
+| M5-049 | Submit routes into Verification (§9.1) | Finish Photos → "Continue to Verification" | API-7 succeeds with `plot.fitness` in the body and the app lands on `/verify` at "Verify your identity" | runtime | PASS 2026-08-05 |
+| M5-050 | Journey-graphic node labels do not wrap | Read `TreasureMap.tsx` after the fix | `nodeLabel` is 80pt wide with `marginHorizontal: -20` and `numberOfLines={1}`, so "Anchor" (~50pt at this letter-spacing) sits on one line, still centred under a 40pt marker | code | PASS 2026-08-05 |
+
+> **One thing seen during the walk that is not a defect in this module.** A `stepIdx` resume can
+> look like a *skipped* question when Metro is serving a stale bundle — the fitness screen appeared
+> only after a hard restart. Worth knowing before someone files it as a bug.
+>
+> The second observation from the walk — the "Anchor" label wrapping to "Ancho / r" — **was fixed**
+> on the owner's instruction (M5-050), even though `TreasureMap.tsx` is a Module 3 component. The
+> cause was `nodeWrap`'s 40pt width, which is the *marker's* diameter and was never meant to bound
+> the caption. Not re-verified on device: the graphic only appears between onboarding sections, so
+> confirming it costs another full walk for a text-width change.

@@ -25,11 +25,11 @@
  * `cityId, cityName, state` with the last two denormalized via join for display
  * only. `state` filters the cached city list client-side and nothing more.
  *
- * This file is **two endpoints short of the contract** — API-38
- * (`GET /locations/cities?state=`) and API-39 (`GET /onboarding/options`) have
- * no definitions here. Both belong to **Module 5**, which fetches and consumes
- * them; see the note in `api.ts` beside the `Locations` tag for the cache
- * decisions they carry.
+ * **Module 5 closed the two-endpoint gap** an earlier revision of this note
+ * described: API-38 (`GET /locations/cities?state=`), API-39
+ * (`GET /onboarding/options`) and API-7 (`POST /onboarding/submit`) are all
+ * defined below. See the note in `api.ts` beside the `Locations` tag for the
+ * cache decisions the first two carry.
  */
 import type { DiscoverProfile } from "@/src/lib/discover/mock";
 
@@ -178,10 +178,12 @@ export type Consent = {
 /**
  * FE TDD §9.5 / §9.9.
  *
- * ⚠️ Drift the prototype already carries: `src/lib/discover/mock.ts` declares
- * `CompatibilityDimension` as `all | lifestyle | personality | priorities`,
- * which is neither TDD's spelling. Modules 5 and 7 own reconciling the two —
- * flagged in `docs/CONTRACT-QUESTIONS.md`.
+ * ✅ **The prototype's drift is closed (Module 5, 2026-08-05).**
+ * `src/lib/discover/mock.ts` declared `CompatibilityDimension` independently as
+ * `all | lifestyle | personality | priorities` — neither TDD's spelling, and
+ * already propagated into the store, the FR-15a picker and Discover's labels.
+ * It is now an **alias of this type**, so there is one declaration; the score
+ * keys in the mock profiles were renamed to match. See the note there.
  *
  * ⚠️ **Keep this a union — do not widen it to `string` with the others.**
  * FR-3b makes every other choice list backend-driven, and FR-15 does say these
@@ -193,6 +195,182 @@ export type Consent = {
  * catalogue supplies the **labels**; the **keys** are a fixed contract.
  */
 export type DiscoveryMode = "all" | "compatibility" | "lifestyle" | "marriage_goals";
+
+// ---------------------------------------------------------------------------
+// Onboarding reference data — FE TDD §9.2 (API-38 / API-39), FR-3a / FR-3b
+// ---------------------------------------------------------------------------
+
+/**
+ * One selectable value in API-39's catalogue, and the shape FR-3b is built on:
+ * the client **stores and submits `key`** and **renders `label`**.
+ *
+ * The distinction is the whole requirement, and it is invisible at runtime
+ * until something goes wrong — a client that submits the label gets
+ * `400 validation_error` from API-7 with a message about an unknown enum, not
+ * about having sent the wrong half of a pair.
+ */
+export type CatalogueOption = { key: string; label: string };
+
+/**
+ * API-39's category keys, as a closed union.
+ *
+ * ⚠️ **Closed on purpose, and it is the one place FR-3b's "the client hardcodes
+ * nothing" is deliberately not followed.** The *values* inside each category are
+ * fully backend-driven — that is FR-3b, and no value list appears anywhere in
+ * this client. The *category names* are different in kind: each one is wired to
+ * a specific question screen and a specific API-7 field, so a category the
+ * client has never heard of has no screen to appear on and a missing one is a
+ * question that cannot be rendered. Typing them means the second case is a
+ * compile error rather than a silently empty option grid.
+ *
+ * `state` is here but is **never submitted** (O-16) — it scopes API-38 only.
+ * `discoveryMode` is here because API-39 serves it, but it belongs to FR-15a's
+ * picker, not to onboarding; see `DiscoveryMode`, whose *keys* stay a fixed
+ * contract even though its labels come from this catalogue.
+ */
+export type OptionCategoryKey =
+  // Plot (FR-3/FR-3b)
+  | "gender"
+  | "state"
+  | "build"
+  | "education"
+  | "profession"
+  | "incomeRange"
+  | "religion"
+  | "languages"
+  | "diet"
+  | "drinking"
+  | "smoking"
+  | "fitness"
+  | "familyType"
+  // Anchor
+  | "matchLocationPreference"
+  | "childrenPreference"
+  | "interfaithStance"
+  | "smokingPartnerComfort"
+  | "householdPreference"
+  | "relocationWillingness"
+  // FR-15 / FR-15a — labels only; the keys are fixed (see `DiscoveryMode`)
+  | "discoveryMode";
+
+/**
+ * API-39 response — `{ categories: [{ key, values }] }`.
+ *
+ * Deliberately kept as the wire shape rather than normalised to a record here.
+ * `selectFromResult` in `useOnboardingOptions` does the indexing, so the cache
+ * holds exactly what the server sent and the transform is not baked into the
+ * type — which matters when O-11's codegen eventually replaces this.
+ */
+export type OnboardingOptionsResponse = {
+  categories: { key: OptionCategoryKey; values: CatalogueOption[] }[];
+};
+
+/**
+ * API-38 response. `id` is the FK submitted as `cityId`; `name` is display
+ * only. **Unpaginated for MVP** — the call is already scoped to one state.
+ */
+export type City = { id: string; name: string };
+export type CitiesResponse = { cities: City[] };
+
+// ---------------------------------------------------------------------------
+// Onboarding submit — FE TDD §9.2 (API-7)
+// ---------------------------------------------------------------------------
+
+/**
+ * API-7's `plot` object.
+ *
+ * **Every field typed `string` here is a catalogue key**, not a label —
+ * `profession: "swe"`, never `"Software Engineer"` (FR-3b). They are `string`
+ * rather than unions because the values are the backend's to define; that is
+ * exactly the property FR-3b is buying, and narrowing them here would put the
+ * lists back in the client through the type system.
+ *
+ * **`state` is absent and that is the contract** (O-16, closed): `cityId`
+ * already implies the state via the backend's `cities` table, so the client
+ * uses `state` only to scope API-38 and never sends it.
+ */
+export type OnboardingPlot = {
+  firstName: string;
+  lastName: string;
+  /** ISO `YYYY-MM-DD`. FR-4 locks this after submit — API-24 rejects changes. */
+  dateOfBirth: string;
+  gender: string;
+  build: string;
+  education: string;
+  profession: string;
+  incomeRange: string;
+  religion: string;
+  /** Catalogue keys. May include the `other` key — see `languagesOther`. */
+  languages: string[];
+  /**
+   * The one free-text value that survives FR-3b's catalogue-driven set.
+   *
+   * ⚠️ **Its presence is coupled to `languages` in both directions.** API-7
+   * returns `400 validation_error` if `other` is in `languages` without this
+   * field **or if this field is sent without `other`**. Clearing the array
+   * without clearing the text is therefore a real 400, not a harmless leftover
+   * — `buildSubmitBody` is where that invariant is enforced.
+   */
+  languagesOther?: string;
+  diet: string;
+  drinking: string;
+  smoking: string;
+  /**
+   * ⚠️ **Not yet in the backend's API-7 body** — CONTRACT-QUESTIONS §9.
+   *
+   * "How often do you exercise or stay physically active?" is a **required**
+   * Plot question (owner's decision, 2026-08-05), so the client asks it, blocks
+   * submit on it, and sends it. Until the backend adds the column this key is
+   * either ignored or a `400` depending on how strict its validator is; the mock
+   * accepts it. Nothing else in the client is conditional on it.
+   */
+  fitness: string;
+  familyType: string;
+  /** FK → the backend's `cities` table. The only location value ever sent. */
+  cityId: string;
+  heightCm: number;
+  bio: string;
+};
+
+/** API-7's `anchor` object — all six choice fields are API-39 keys. */
+export type OnboardingAnchor = {
+  partnerAgeRange: { min: number; max: number };
+  matchLocationPreference: string;
+  childrenPreference: string;
+  interfaithStance: string;
+  smokingPartnerComfort: string;
+  householdPreference: string;
+  relocationWillingness: string;
+};
+
+/**
+ * API-7's `love` object — the FR-14 compatibility quiz.
+ *
+ * `quizVersion` travels with the answers so a later scoring change can tell
+ * which question set a given answer belongs to (BE §14.2). The client sends the
+ * version of the question set it actually displayed, for the same reason
+ * API-40's consent `version` is the version of the copy displayed.
+ */
+export type OnboardingLove = {
+  quizVersion: number;
+  quizAnswers: QuizAnswer[];
+};
+
+export type OnboardingSubmitBody = {
+  plot: OnboardingPlot;
+  anchor: OnboardingAnchor;
+  love: OnboardingLove;
+};
+
+/**
+ * API-7 happy path. Always `true` on a 200 — the client proceeds to Photos.
+ *
+ * `409 already_submitted` is the response worth planning for rather than the
+ * 400: it means a stale local draft was resubmitted after onboarding finished
+ * elsewhere, and the right client behaviour is to clear the draft and re-route,
+ * not to show an error. See `app/onboarding.tsx`.
+ */
+export type OnboardingSubmitResponse = { profileComplete: true };
 
 // ---------------------------------------------------------------------------
 // Profile — FE TDD §9.9 / BE TDD §14.10

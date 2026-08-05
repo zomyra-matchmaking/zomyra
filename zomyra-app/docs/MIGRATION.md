@@ -436,14 +436,14 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-7 | Whether an unmatched (not blocked) user can resurface in Discover (FR-25b). BE defaults to yes. | Module 9 | Product owner |
 | O-10 | **Store accounts → Organization, registered once the LLP and D-U-N-S exist. Final (2026-07-28).** Long-form rationale, critical path and the parallel owner track are in **§2.2a** — the detail outgrew a table cell. | Before the §2.1 gate | Product owner |
 | O-9 | **Canonical domain conflict.** `app/terms.tsx:36` and `app/privacy.tsx:36` publish contact addresses at **`zomyra.app`** (`hello@`, `privacy@`), but the domain being purchased is **`zomyra.com`** (confirmed unregistered 2026-07-28). Pick one and correct the legal copy — these are user-facing addresses in Terms and Privacy, so a dead inbox there is worse than a cosmetic bug. Also decides the domain for universal links / associated domains in Module 11. | Module 12 (or sooner if the copy ships) | Product owner |
-| O-8 | **Re-probed 2026-08-05 (§12.8): the deployed surface is narrower than BE §14 reads** — `/auth/google`, `/me` and `/app/version-check` are live; `/consents` (API-40), `/onboarding/options` (API-39), `/locations/cities` (API-38) and both OTP endpoints return 404. Module 5 must re-probe before relying on API-38/API-39. **Backend base URL + OpenAPI spec — HALF CLOSED (2026-08-02).** ✅ **Base URL exists and is live:** `https://zomyra-staging.duckdns.org`, wired into `eas.json`'s `preview` profile and `.env`, and verified end to end from the simulator. ⚠️ **The schema is still not served** — `/v1/docs-json` returns 404, so `yarn api:generate` cannot run and O-11 stays unmitigated. ⚠️ **The surface is partial:** API-1/API-2 phone auth are undeployed and API-3 returns 503, so **no token can be obtained** and nothing authenticated is verifiable yet. Endpoint map in §6's Module 2 addendum. Superseded detail below. **Backend base URL + OpenAPI spec.** Previously unchanged as of 2026-07-31 — Module 2 looked for a URL to probe and found none: there is no base URL anywhere in this repo, the TDDs, or this document, so there was nothing to test reachability against. Module 2 shipped the mock transport behind the base query as planned, and switching to a live host is now genuinely a one-line `.env` change (`EXPO_PUBLIC_API_URL`). Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
-| O-11 | **Mechanism shipped in Module 2; the asks are sent-ready but not yet sent.** `openapi-config.ts` + `yarn api:generate` are in place, so the moment a schema is served, generated types replace the hand-written ones in `src/api/contract.ts` and drift becomes a compile error. The concrete questions for the backend — O-3, O-4, O-16, plus three found while building (where `retryAfterSeconds` lives, whether `nextCursor` is opaque, and a prototype-side `discoveryMode` enum mismatch) — are written up ready to forward in **`docs/CONTRACT-QUESTIONS.md`**. C-1 means sending them is the owner's step. **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
+| O-8 | **Re-probed again by Module 5 on 2026-08-05 — nothing moved.** `GET /v1/onboarding/options` 404, `GET /v1/locations/cities?state=mh` 404, `/v1/docs-json` 404, against `GET /v1/me` 401 on the same host. Module 5 shipped API-38/API-39/API-7 against mocks and recorded the consequence plainly: **the catalogue *keys* in `src/api/mock/catalogue.ts` are invented and will differ from the backend's**, so M5-001…M5-006 must be re-run the day either endpoint goes live. **Re-probed 2026-08-05 (§12.8): the deployed surface is narrower than BE §14 reads** — `/auth/google`, `/me` and `/app/version-check` are live; `/consents` (API-40), `/onboarding/options` (API-39), `/locations/cities` (API-38) and both OTP endpoints return 404. Module 5 must re-probe before relying on API-38/API-39. **Backend base URL + OpenAPI spec — HALF CLOSED (2026-08-02).** ✅ **Base URL exists and is live:** `https://zomyra-staging.duckdns.org`, wired into `eas.json`'s `preview` profile and `.env`, and verified end to end from the simulator. ⚠️ **The schema is still not served** — `/v1/docs-json` returns 404, so `yarn api:generate` cannot run and O-11 stays unmitigated. ⚠️ **The surface is partial:** API-1/API-2 phone auth are undeployed and API-3 returns 503, so **no token can be obtained** and nothing authenticated is verifiable yet. Endpoint map in §6's Module 2 addendum. Superseded detail below. **Backend base URL + OpenAPI spec.** Previously unchanged as of 2026-07-31 — Module 2 looked for a URL to probe and found none: there is no base URL anywhere in this repo, the TDDs, or this document, so there was nothing to test reachability against. Module 2 shipped the mock transport behind the base query as planned, and switching to a live host is now genuinely a one-line `.env` change (`EXPO_PUBLIC_API_URL`). Status as of 2026-07-28: backend development is **underway**, built with Claude Code from the BE TDD — not yet known to be deployed or reachable. Note `zomyra/backend/` is *not* it (see §7). Needed: (a) a reachable dev/staging base URL including the `/v1` prefix; (b) **a served OpenAPI schema** (NestJS `@nestjs/swagger` → `/v1/docs-json`). Module 2 builds the RTK Query layer with mocks behind the base query either way, so a live URL is a config swap — but the spec should land as early as possible, see O-11. | Module 2 (mocks) / Module 4 (live) | FE + BE |
+| O-11 | **Module 5 added one question and closed one drift item.** Added and **already answered by the owner (2026-08-05): `quizVersion` belongs to the backend.** API-33 serves the quiz and its version together (BE §14.2); the client echoes what it receives and never numbers the set itself. `QUIZ_VERSION = 1` in `src/lib/onboarding/submit.ts` is now labelled a stopgap to be **deleted** — not reassigned — when API-33 is wired up, since a client-side copy could only disagree with the served value. Still open for the backend: what the real version of the set currently in `scales.ts` is, and whether an unrecognised `quizVersion` is rejected (visible `400`) or recorded (unscoreable answers). Closed: the `CompatibilityDimension` enum drift, which is now an alias of `DiscoveryMode` rather than a second declaration. **Mechanism shipped in Module 2; the asks are sent-ready but not yet sent.** `openapi-config.ts` + `yarn api:generate` are in place, so the moment a schema is served, generated types replace the hand-written ones in `src/api/contract.ts` and drift becomes a compile error. The concrete questions for the backend — O-3, O-4, O-16, plus three found while building (where `retryAfterSeconds` lives, whether `nextCursor` is opaque, and a prototype-side `discoveryMode` enum mismatch) — are written up ready to forward in **`docs/CONTRACT-QUESTIONS.md`**. C-1 means sending them is the owner's step. **Contract-drift control between two parallel implementations.** Both frontend and backend are being built from the same TDDs, which explicitly describe their field names as "illustrative, not finalized" — so divergence is expected, not hypothetical. O-3, the `/v1` prefix and `accountStatus` are the three already found by reading both docs; more will exist. **Mitigation:** treat a served OpenAPI schema as the single source of truth over the Word docs, and generate typed endpoints from it in Module 2 via `@rtk-query/codegen-openapi`, so drift surfaces as a compile error rather than a runtime 400 during integration. Pin O-3 and the `accountStatus` routing on both sides now, while each is a one-line change. | Module 2 | FE + BE |
 
 | O-12 | ~~Is web still a target?~~ **→ No. Web is out of scope** (2026-07-28, owner). Removed in Module 0: the `expo.web` config block, the `yarn web` script, `react-dom` + `react-native-web`, `app/+html.tsx`, `src/utils/storage/index.web.ts`, `favicon.png`, and the RN-Web font-injection block in `app/_layout.tsx`. `platforms: ["ios", "android"]` now declares this in config, and `expo export --platform web` refuses. **Consequence for Module 2:** the `import.meta` workaround in `onboarding-store.ts` was a *web-bundle* problem only — it is no longer a constraint on the persistence design. | Module 0 | ✅ Decided |
 | O-13 | ~~`ios.supportsTablet`~~ **→ `false`. iPad is out of MVP scope** (2026-07-28, owner — reversed the same day during Module 0 PR review; the earlier "tablets are a target" note in §6 is superseded). What this buys the MVP: no 13-inch iPad screenshots required at submission, App Review stops exercising a phone-designed UI on iPad, and Modules 1/3 owe no large-screen layout work. **iPad users can still install** — iOS runs it letterboxed in iPhone-compatibility mode; `false` means "not optimised for iPad", not "blocked". **Android needs no equivalent change** — there is no phone-only flag in `app.json`, tablets are supported by default, and Play requires no tablet screenshots. Re-enabling post-MVP is one line plus the layout work. | Post-MVP if revisited | ✅ Decided |
 | O-14 | **Logo delivered 2026-07-28 — splash artwork still pending.** The designer's vector lockup is in-tree (`assets/brand/zomyra-lockup.svg`), and the icon, adaptive icon and in-app logo are now generated from it at full sharpness — see §10. **(b) settled in Module 1:** both backgrounds stay `#FFFFFF`, now as `colors.background` rather than a C-3 placeholder — reasoning in §10.2. **Still open:** (a) a purpose-designed splash from the designer; the current splash is an interim render of the lockup; (c) whether the app icon should be purple-on-white (current, faithful to the supplied artwork) or inverted white-on-purple. **Module 1 found (b) and (c) are not separable** — the Android foreground is the purple mark on transparency, so a purple `adaptiveIcon.backgroundColor` renders purple-on-purple. Changing that background *is* the icon-inversion decision, and it needs a new foreground asset with it. | Splash + icon treatment: before submission | Product owner |
 
-| O-15 | **Fallback when a user's town isn't in the backend's `cities` table** — flagged as undecided by the spec itself (FE TDD v1.42 FR-3a). **Half-settled as of BE v1.4 (§12.2):** the client side is decided — `city` is a **closed set**, always a `cityId` from the backend's table, never free text. That was the part that would have changed the Discover filter and the matching query, so the client is unblocked. **What remains is a backend data-curation question:** how deep the curated list goes (every district town, or top N per state), and what a user does when their town isn't there. FE v1.42 states plainly that this is *"a backend data-curation gap, not a client one"*. | Module 5 (client unblocked) | BE + product |
+| O-15 | **The client half is now built, not merely unblocked (Module 5, 2026-08-05).** FR-3a is two screens — state, then city — and a state whose city list comes back empty says so in the subtitle and sends the user back rather than showing an empty picker. There is **no free-text fallback and deliberately so**: `cityId` is a closed set, so typing an exact city name and walking away selects nothing. **What remains is still entirely the backend's**: how deep the curated list goes, and what a user whose town is genuinely absent is supposed to do — the client can only be honest that the list is limited. **Fallback when a user's town isn't in the backend's `cities` table** — flagged as undecided by the spec itself (FE TDD v1.42 FR-3a). **Half-settled as of BE v1.4 (§12.2):** the client side is decided — `city` is a **closed set**, always a `cityId` from the backend's table, never free text. That was the part that would have changed the Discover filter and the matching query, so the client is unblocked. **What remains is a backend data-curation question:** how deep the curated list goes (every district town, or top N per state), and what a user does when their town isn't there. FE v1.42 states plainly that this is *"a backend data-curation gap, not a client one"*. | Module 5 (client unblocked) | BE + product |
 | O-16 | ~~Backend TDD v1.2 has no `state` field~~ **→ Closed by BE TDD v1.4** (2026-07-31, §12.2). Resolved differently from how this item framed it: there is **no `state` column on the profile** and `state` is **never submitted**. The backend's pre-existing `cities` table is exposed via **API-38 `GET /locations/cities`**, onboarding submits **`cityId`** (FK → `cities.id`, matching the `users.city_id` that already existed), and `/profile/me` returns `cityId, cityName, state` denormalized via join. FR-5's "same state" matching already worked through that table — v1.40's claim that it needed fixing was retracted in v1.41. | Module 5 | ✅ Closed |
 
 | O-17 | **Module 4's half is now decided too (2026-08-03).** The native batch it was meant to gather turned out to be one addition and two removals: `+@react-native-google-signin/google-signin`, `−expo-blur`, `−expo-symbols`. **`expo-updates` deliberately did *not* ride along** and **`expo-camera` was kept** — reasoning in §6's Module 4 entry, and the short version is that "don't pay for two rebuilds" does not apply when two more native build events (`lottie-react-native` in Module 7, `expo-notifications` in Module 11) are already scheduled. **Loading artwork comes from the owner — ask, don't invent** (2026-07-31). **Module 3's half is decided (2026-08-02, owner): the shared default takes no Lottie.** It is token-driven, so no native dependency and no dev-client rebuild was spent, and `lottie-react-native` now lands with **treatment #5 in Module 7** — the branded logo animation, the one §13.4 says almost certainly needs supplied artwork — **batched with Module 4's Google Sign-In SDK** rather than paying for two rebuilds. `Loading.tsx`'s interior is isolated in one component so a Lottie swap does not touch call sites. **Still open for §13's later owners:** the owner has **Lottie JSON** intended as loading visuals; whenever a module reaches a shimmer or animation (§13), request the asset before building one — the same rule as brand assets in O-14/§10. See §13.4 for what to request and the reduce-motion fallback each asset needs. | ~~Module 3~~ **→ Module 7** (with the branded animation), then §13's owners | Product owner |
@@ -2420,6 +2420,87 @@ values yet. This was the cheapest possible moment to do it.
 | `app.json` `slug` | `frontend` | `zomyra` | Identifies the EAS project. Changing it after a project exists means re-linking, so it had to precede Module 0 |
 | `app.json` `scheme` | `frontend` | `zomyra` | **Deep-link scheme** (`zomyra://`). Module 11 routes push notifications through this (FE TDD §6.10); getting it wrong later means reissuing links |
 
+### Module 5 — Onboarding (Plot / Anchor / Love) + API-7 (completed 2026-08-05)
+
+**Branch `module/5-onboarding`. No native additions, so no dev-client rebuild — C-2 costs nothing
+here.** `yarn.lock` byte-identical (`0fb0030c…` before and after), `package.json` untouched. Lint 0
+errors; `typecheck:baseline` green with the same three known errors and no new ones.
+
+**The blockers were re-probed first, as §12.8 instructed, and none of them moved.** On 2026-08-05,
+`GET /v1/onboarding/options` → **404**, `GET /v1/locations/cities?state=mh` → **404**,
+`/v1/docs-json` → **404**, against `GET /v1/me` → **401** on the same host. That last one is what
+makes the others evidence rather than a guess: the server is up and routing, these paths simply do
+not exist. **Everything below is built against `src/api/mock/` and verified there only.**
+
+#### What changed, and the one idea underneath all of it
+
+FR-3b's requirement is small to state and large to implement: *the client hardcodes no choice
+lists*. The consequence is that **what is displayed and what is stored stopped being the same
+value.** The prototype stored `"Vegetarian"` — the label the user tapped. The contract stores
+`"vegetarian"` — a catalogue key that only means something to the backend. Almost every file below
+is downstream of that one split.
+
+| Area | What landed |
+|---|---|
+| **Contract** | API-38, API-39 and API-7 typed in `contract.ts` — the "two endpoints short" note it carried since Module 2 is closed. `OptionCategoryKey` is a **closed union of category names** while every *value* stays open, which is the one place FR-3b is deliberately not followed: a category is wired to a specific screen and a specific API-7 field, so a missing one should be a compile error rather than a silently empty grid |
+| **Endpoints** | `src/api/endpoints/onboarding.ts`. Both reference queries set `keepUnusedDataFor: Infinity` — RTK Query evicts 60s after the last subscriber unmounts, and onboarding unmounts subscribers on every question. **API-38's cache key is the `state` string itself**, so "fetched once per state" falls out of the argument shape rather than out of caching code |
+| **The draft** | Every hand-written union in `src/lib/onboarding/types.ts` deleted. They looked like type safety and were not — their members were *labels*, and a value the backend rejected compiled exactly as cleanly as one it accepted. What replaces them is a runtime lookup against the live catalogue, so a stale key is now *visible* instead of silently valid |
+| **Screens** | `app/onboarding.tsx` rewritten catalogue-driven. The city question **became two** (state, then city) because API-38 is state-scoped — not a UX choice, a consequence of the endpoint's shape. Changing state clears `cityId`, since a Maharashtra city under "I live in Karnataka" is a wrong profile that validates cleanly |
+| **Submit** | `src/lib/onboarding/submit.ts` — flat draft → nested `{ plot, anchor, love }`, `state` dropped, `languagesOther` **omitted rather than empty-stringed** when unused, `quizAnswers` driven by `SCALE_QUESTIONS` rather than by the draft |
+| **Persistence** | `PERSIST_VERSION` 2 + `createMigrate({ 2: () => undefined })`, exactly as §4's warning to this module demanded |
+| **NFR-16** | `/onboarding` now calls `useScreenCaptureBlock()`. **`/verify` remains uncovered — Module 6's, and NFR-16 is not met until it lands** |
+| **Drift** | `CompatibilityDimension` is now an alias of `DiscoveryMode` rather than a second declaration |
+
+#### Three decisions worth arguing with
+
+**(1) Eleven prototype fields were deleted, not carried.** `fitness`, `relocation`, and nine
+`pref*` fields have no API-39 category and no API-7 field — no screen could source their options and
+no value could be submitted. They were questions whose answers had nowhere to go, and the `fitness`
+question is gone from the flow entirely. Anything the product wants back needs a catalogue category
+and an API-7 field first; that is a spec change, not a client one.
+
+**(2) `409 already_submitted` is treated as success, not as an error.** It means a stale local draft
+was resubmitted after onboarding finished elsewhere — the server is right and the client is stale.
+Showing an error would strand the user on a flow they have already completed, so the client clears
+the draft and routes on exactly as it does on a 200. This is the single easiest thing in Module 5 to
+get wrong by writing the obvious code.
+
+**(3) The persist migration discards rather than repairs, and that is not laziness.** A v1 draft
+holds labels where v2 holds keys, and the client *cannot* map between them: the keys arrive over
+API-39, which needs auth and a network call, neither available at rehydrate time behind
+`PersistGate`. Even with the catalogue in hand, matching on label text is a guess — `"Other"` appears
+in three categories — and a wrong guess submits a profile the user never filled in. Losing a
+part-finished draft is the honest failure. **The alternative failure is silent**, which is the real
+argument: redux-persist's default on a version mismatch is a pass-through, so an unmigrated v1 draft
+would look perfectly restored and fail at API-7 twenty screens later.
+
+#### What Module 5 broke in earlier modules, and how far it fixed it
+
+The draft's reshape hit two prototype screens that read it directly. **Neither was rewritten — that
+is Module 6's** (both need API-23 to pre-fill from the server rather than from a local draft):
+
+- **`edit-profile.tsx`** — `bodyType` → `build`, `income` → `incomeRange`. The **city** row became
+  read-only (it wrote free text where a `cityId` belongs) and the **fitness** row was removed. Its
+  hardcoded `INCOME_OPTS` / `BUILD_OPTS` are still there and are still an FR-3b violation; they are
+  left visible with a note rather than papered over, and nothing they write reaches the backend
+  today because only onboarding submits.
+- **`profile.tsx`** — the city line now shows its existing hardcoded fallback outright, since the
+  draft no longer holds a city *name*. Rendering the raw id would have been worse.
+
+#### Verification, stated honestly
+
+Walked on the Android emulator (`preview-mock`) 2026-08-05: sign-in as `9000000001` → straight into
+Onboarding (M4-026 still holds) → catalogue-driven gender grid → **state → city end to end**
+(Karnataka → Mysuru, proving the per-state fetch and the scoped list).
+
+⚠️ **Everything from the height slider onward — the 12-slider FR-14 quiz, the API-7 submit and all
+three of its outcomes — is verified by code review only.** Ten M5 cases are recorded **unrun** in
+`docs/TEST-CASES.md`, not passing. The blocker is walk length rather than anything unknown, and it
+is what FE §13's still-uninstalled Maestro is for. A blank "Last result" in that section is not a
+pass.
+
+---
+
 **Deliberately unchanged in that commit:** `ios.bundleIdentifier` / `android.package` (see §9 —
 decided, applied in Module 0), and `userInterfaceStyle`, still `"automatic"` despite constraint
 C-3; flipping it to `"light"` is Module 0's job, kept out of the rename so the commit stays
@@ -3334,5 +3415,98 @@ cost O-17 flags for Lottie, which is why batching the two was the standing recom
 | **0 · Build foundation** | No change |
 | **1 · Design system** | No change |
 | **2 · State & data layer** | **One correction, applied here.** `MeResponse` was missing the new `consents` array; added, with a `Consent` / `ConsentType` type carrying the differing re-ask rules and the O-20 warning at the point of use. `IS_PRODUCTION` needed no change — it already covers NFR-16's gating |
-| **3 · Navigation** | ✅ **NFR-16 owed, and now DELIVERED by a Module 3 follow-up branch (2026-08-05).** It landed exactly where this row predicted — "once at the authenticated root" is the shell Module 3 built, so `app/(tabs)/_layout.tsx` calls `useScreenCaptureBlock()`, gated on the `IS_PRODUCTION` that already existed. `expo-screen-capture@~8.0.9` is installed and the dev-client rebuild it forces was paid rather than batched with Lottie (reasoning above; O-17 and Module 7 are unaffected). **Two authenticated surfaces remain uncovered** — `/verify` and `/onboarding`, which the gate *replaces* the tabs to reach — leaving **Module 6** and **Module 5** to extend it. Nothing else in v1.46/v1.7 touches Module 3 |
+| **3 · Navigation** | ✅ **NFR-16 owed, and now DELIVERED by a Module 3 follow-up branch (2026-08-05).** It landed exactly where this row predicted — "once at the authenticated root" is the shell Module 3 built, so `app/(tabs)/_layout.tsx` calls `useScreenCaptureBlock()`, gated on the `IS_PRODUCTION` that already existed. `expo-screen-capture@~8.0.9` is installed and the dev-client rebuild it forces was paid rather than batched with Lottie (reasoning above; O-17 and Module 7 are unaffected). **Two authenticated surfaces remain uncovered** — `/verify` and `/onboarding`, which the gate *replaces* the tabs to reach — leaving **Module 6** and **Module 5** to extend it. ✅ **Module 5's half landed 2026-08-05** — `app/onboarding.tsx` calls the hook. **`/verify` is still uncovered and NFR-16 is still not met**; Module 6 owns the last of it. Nothing else in v1.46/v1.7 touches Module 3 |
 | **4 · Auth & session** | **Reworked, applied 2026-08-04.** FR-2a was built one revision early: it recorded consent in a **persisted client-side slice**, because no endpoint existed. API-40 replaced that wholesale — the slice, `useRootRouteContext` and one `PERSIST_WHITELIST` entry are deleted, `resolveRootDestination` reads `GET /me`'s `consents`, and the screen calls `POST /consents` on accept and **does not navigate if it fails** (proceeding would put the user in Onboarding handing over religion and income with no record, which is the exact gap v1.7 closed). Detail in §6's Module 4 addendum |
+
+#### Module 5 follow-up — the owner's review, 2026-08-05
+
+Six questions came back on the Module 5 report. Four were answered by the owner and are recorded as
+decisions; two changed the code.
+
+**Corrections to what the report said.** Two statements in it were misleading and are worth fixing
+here so nobody reads the wrong thing later:
+
+1. **"Eleven prototype fields deleted" undersold how dead they were.** Only **one** of the eleven —
+   `fitness` — had a screen. `relocation` and all nine `pref*` fields were declared in
+   `OnboardingState`, initialised in `defaultOnboardingState`, and **rendered nowhere**. Note also
+   that `relocation` is a *different* field from `nnRelocation` ("Would you relocate after
+   marriage?"), which was kept and is now `relocationWillingness`. Two similar names, one live, one
+   dead. Anchor's seven questions are all present and all catalogue-driven; nothing there was lost.
+2. **"Consent correctly skipped" was the wrong word.** Consent is not skippable. The emulator walk
+   signed in as a mock account that **already had `sensitive_data` on file**, so `resolveRootDestination`
+   went straight to `/onboarding` — which is FR-2a working (recorded once, never re-asked), not
+   bypassed. A fresh account still gets `/consent` first.
+
+**Decisions taken by the owner:**
+
+- **`quizVersion` is the backend's.** Recorded in CONTRACT-QUESTIONS §8 and in `submit.ts`, whose
+  `QUIZ_VERSION = 1` is now labelled a stopgap to be **deleted** rather than reassigned when API-33
+  lands. Until then every submit carries a version the backend never issued — a known defect, not a
+  passing behaviour, and M5-021 was rewritten to say so.
+- **`fitness` belongs in Plot** and needs a backend category + field. Written up as CONTRACT-QUESTIONS
+  §9 with the three things needed (catalogue category, `plot.fitness`, and whether it is required),
+  after which the screen is ~10 lines.
+- **Edit Profile's lists must be backend-driven now**, not deferred to Module 6.
+- **API-39's `state` category only contains states that have cities**, so the client's "no cities
+  listed" message is a defensive guard rather than a product path. Stated as an invariant in
+  CONTRACT-QUESTIONS §10 so the backend treats a zero-city state as a data bug.
+
+**Code change: `app/(tabs)/(profile)/edit-profile.tsx` closed its FR-3b violation.** All six
+hardcoded `_OPTS` arrays deleted and replaced with `useOnboardingOptions()`; the picker sheet now
+renders `label` and stores `key`; Profession became a picker instead of a text box; Languages became
+a multi-select instead of a comma-separated string; and the city row became a proper state→city
+pair over API-39 + API-38, clearing `cityId` on a state change exactly as onboarding does. One
+subtlety worth naming: the sheet's `selected` is a **function of the current draft** evaluated at
+render, not a snapshot taken when it opened — a multi-select sheet stays open across taps, so a
+snapshot would freeze the tick marks after the first one. Cases M5-030…M5-039; three are **unrun**.
+
+**Still Module 6's on that screen, and now written into its header:** API-23 pre-fill and
+`PATCH /profile` save (today it edits a draft that is destroyed on submit, so a returning user sees
+an empty form), FR-4's immutability rules on name/DOB/height, and the missing `state` needed to
+scope the city picker for a returning user — CONTRACT-QUESTIONS §10, which needs a backend answer.
+
+**Not a defect: the 12 quiz answers are one call.** The owner asked whether the design implied a
+request per slider. It does not, and neither does the code — `buildSubmitBody` collects all twelve
+into `love.quizAnswers` and API-7 is a single `POST`. No spec correction needed.
+
+#### Module 5 follow-up 2 — `fitness`, the picker rebuild, and the end-to-end walk, 2026-08-05
+
+Four owner decisions arrived after the review above, and all four are now implemented.
+
+**1. `fitness` is a required Plot question again.** The owner confirmed it belongs in Plot and is
+**not optional**. It is wired end to end against the mock: a `fitness` category in
+`src/api/mock/catalogue.ts` (the prototype's own six labels), `fitness` in `OptionCategoryKey`,
+`OnboardingState`, `OnboardingPlot`, `REQUIRED_PLOT_KEYS`, `missingFields`, `buildSubmitBody`, one
+`choice()` screen in `app/onboarding.tsx` and a row in Edit Profile's LIFESTYLE card. ⚠️ **The
+backend still has neither the category nor the field** (CONTRACT-QUESTIONS §9), so until it does,
+`plot.fitness` goes out to a server with no column for it — silently dropped or a `400` depending on
+how strict API-7's validator is, which is now an explicit ask. Cases M5-040…M5-044.
+
+**2. Anchor needs nothing.** All seven of the owner's questions were already present and
+catalogue-driven; walking section 2 on the emulator confirmed it (M5-047).
+
+**3. Edit Profile's picker was rebuilt around a descriptor, not closures.** Driving the three unrun
+cases found a real bug that reading the code had missed: `onPick` closed over the draft as it was
+when the sheet *opened*, so a second toggle in the same open sheet computed from a stale array —
+tick marks correct, stored value wrong. `PickerState` now names a `source` the parent resolves each
+render, and passes the current draft into both `selected` and `onPick`. The owner's requested
+loading treatment landed with it: a translucent centred spinner while API-38 is in flight, instead
+of a sheet that opens blank. M5-034, M5-036 and M5-038 now **pass on device**; only M5-038a's
+spinner stays code-verified, because the mock answers within a frame.
+
+**4. `quizVersion` stays the backend's, and may not be needed at all.** The owner reaffirmed the
+backend owns the number and asked the sharper question: given the questions are already
+backend-driven, could an API version carry "the question set changed" instead? Written up as
+CONTRACT-QUESTIONS §8a along with the two outstanding asks restated in plain language. The client's
+position, recorded there: an API version says what the server offers *now*, `quizVersion` says what
+a stored answer was given *against* — the second must be persisted beside the answers, whatever
+field ends up carrying it. Needs deciding before API-33 is designed.
+
+**The whole flow was walked on the Android emulator**, resumed draft → every Plot and Anchor screen
+→ the 12-slider quiz → Photos → API-7 → `/verify`. Cases M5-045…M5-049. Two incidental findings,
+neither a defect in this module: a **stale Metro bundle** made the new fitness screen look skipped
+until a hard restart (worth knowing before someone files it), and the journey graphic's "Anchor"
+label wraps to "Ancho / r" at this font size — cosmetic, in a Module 3 component.
+
+**Still not covered:** API-7's error outcomes and the offline/retry paths, which need a transport
+that can be made to fail on demand. Recorded as the remaining Module 5 test debt.

@@ -13,15 +13,17 @@
 import { MOCK_GOOGLE_ID_TOKEN } from "@/src/auth/google";
 import { MOCK_PROFILES } from "@/src/lib/discover/mock";
 
-import type { DiscoverFeedResponse } from "../contract";
+import type { DiscoverFeedResponse, OnboardingSubmitBody } from "../contract";
 import {
   accountByUserId,
+  completeOnboarding,
   googleIdentity,
   meResponse,
   phoneIdentity,
   recordConsent,
   resolveAccount,
 } from "./accounts";
+import { CATALOGUE, CITIES_BY_STATE } from "./catalogue";
 import { issueSession, isAccessTokenValid, currentUserId, rotateSession } from "./session";
 
 export type MockRequest = {
@@ -76,6 +78,35 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 type Handler = (req: MockRequest) => MockResponse;
+
+/**
+ * The `plot` keys API-7 rejects a submit without.
+ *
+ * `bio` is absent deliberately — FE §9.2 lists it in the body but the screen
+ * treats it as optional (`canNext: true` with an empty field), and a mock that
+ * demanded it would make a legitimate submit fail. `languages` is checked
+ * separately because an empty *array* is falsy-adjacent rather than falsy.
+ */
+const REQUIRED_PLOT_KEYS = [
+  "firstName",
+  "lastName",
+  "dateOfBirth",
+  "gender",
+  "build",
+  "education",
+  "profession",
+  "incomeRange",
+  "religion",
+  "diet",
+  "drinking",
+  "smoking",
+  // Required by the owner's decision of 2026-08-05, ahead of the backend
+  // carrying it — see `OnboardingPlot.fitness`.
+  "fitness",
+  "familyType",
+  "cityId",
+  "heightCm",
+] as const satisfies readonly (keyof import("../contract").OnboardingPlot)[];
 
 const handlers: Record<string, Handler> = {
   // ---- API-1 · POST /auth/otp/request -------------------------------------
@@ -226,6 +257,98 @@ const handlers: Record<string, Handler> = {
     const acceptedAt = new Date().toISOString();
     recordConsent(currentUserId() ?? "mock-user", { consentType, version, acceptedAt });
     return { ok: true, data: { recorded: true, acceptedAt } };
+  },
+
+  // ---- API-39 · GET /onboarding/options ------------------------------------
+  // The catalogue is served whole, in the wire shape FE §9.2 specifies, so the
+  // client's indexing (`use-onboarding-options.ts`) is exercised rather than
+  // bypassed by a mock that returns the convenient shape.
+  //
+  // Copied on the way out for the reason `meResponse` documents at length: a
+  // mock never hands a caller a live reference to its own storage, and Immer
+  // freezes whatever lands in the RTK Query cache.
+  "GET /onboarding/options": () => ({
+    ok: true,
+    data: { categories: CATALOGUE.map((c) => ({ key: c.key, values: [...c.values] })) },
+  }),
+
+  // ---- API-38 · GET /locations/cities --------------------------------------
+  // `?state=` is **required**, and an unknown key is `400 invalid_state` rather
+  // than an empty list — FE §9.2 specifies both, and they are different bugs on
+  // the client side: an empty list is a state with no cities yet (O-15's
+  // curation gap), a 400 is a client sending a key it invented.
+  "GET /locations/cities": (req) => {
+    const state = req.query.get("state");
+    if (!state) {
+      return fail(400, "invalid_state", "state is required.");
+    }
+    const cities = CITIES_BY_STATE[state];
+    if (!cities) {
+      return fail(400, "invalid_state", `Unrecognized state key: ${state}`);
+    }
+    return { ok: true, data: { cities: [...cities] } };
+  },
+
+  // ---- API-7 · POST /onboarding/submit -------------------------------------
+  // Validates the two things the client can actually get wrong and that no
+  // type catches, then **flips `profileComplete` on the account record** — the
+  // round trip is the behaviour under test, exactly as with API-40. Without it
+  // the `Me` invalidation would refetch an unchanged `/me` and §9.1 would send
+  // the user straight back into onboarding, which is what a submit that
+  // silently did nothing would look like.
+  //
+  //   · `409 already_submitted` — a stale draft resubmitted after finishing
+  //     elsewhere. Reachable by submitting twice, which is the only way to walk
+  //     the client's clear-draft-and-reroute path.
+  //   · `400 validation_error` — the `languages` / `languagesOther` coupling,
+  //     in **both** directions, and missing required keys. FE §9.2 spells the
+  //     coupling out; it is the one invariant the client must enforce before
+  //     sending, so the mock has to be able to catch it failing to.
+  "POST /onboarding/submit": (req) => {
+    const account = accountByUserId(currentUserId() ?? "mock-user");
+    if (account.profileComplete) {
+      return fail(409, "already_submitted", "Onboarding has already been completed.");
+    }
+
+    const body = (req.body ?? {}) as Partial<OnboardingSubmitBody>;
+    const { plot, anchor, love } = body;
+    if (!plot || !anchor || !love) {
+      return fail(400, "validation_error", "plot, anchor and love are required.", {
+        errors: (["plot", "anchor", "love"] as const)
+          .filter((k) => !body[k])
+          .map((field) => ({ field, message: "Required." })),
+      });
+    }
+
+    const hasOtherLanguage = (plot.languages ?? []).includes("other");
+    const hasOtherText = Boolean(plot.languagesOther?.trim());
+    if (hasOtherLanguage !== hasOtherText) {
+      return fail(400, "validation_error", "languages and languagesOther disagree.", {
+        errors: [
+          {
+            field: "languagesOther",
+            message: hasOtherLanguage
+              ? '"other" was selected but no free text was sent.'
+              : 'Free text was sent without the "other" key.',
+          },
+        ],
+      });
+    }
+
+    const missing = REQUIRED_PLOT_KEYS.filter((k) => !plot[k]);
+    if (missing.length > 0 || (plot.languages ?? []).length === 0) {
+      return fail(400, "validation_error", "One or more fields are missing or invalid.", {
+        errors: [
+          ...missing.map((field) => ({ field, message: "Required." })),
+          ...((plot.languages ?? []).length === 0
+            ? [{ field: "languages", message: "Pick at least one." }]
+            : []),
+        ],
+      });
+    }
+
+    completeOnboarding(account.userId);
+    return { ok: true, data: { profileComplete: true } };
   },
 
   // ---- API-34 · GET /counts -------------------------------------------------

@@ -17,6 +17,7 @@ import {
   PURGE,
   REGISTER,
   REHYDRATE,
+  createMigrate,
   persistReducer,
   persistStore,
 } from "redux-persist";
@@ -79,31 +80,56 @@ const PERSIST_WHITELIST = [
   "appUpdate",
 ];
 
+/**
+ * Bump whenever a persisted slice's *shape* changes, and add a matching entry
+ * to {@link migrations}.
+ *
+ * **2 — Module 5 (2026-08-05).** FR-3b reshaped the `onboarding` slice
+ * fundamentally: free-text `city` became `cityId` + a separate `state` key,
+ * every choice field went from a display label (`"Vegetarian"`) to a catalogue
+ * key (`"vegetarian"`), `languagesOther` was added, and eleven prototype fields
+ * with no API-7 home were deleted.
+ */
+const PERSIST_VERSION = 2;
+
+/**
+ * **Discard, do not repair.**
+ *
+ * A v1 draft holds display labels where v2 holds catalogue keys, and the client
+ * cannot map between them: the keys are the backend's to define and arrive over
+ * API-39, which needs auth and a network call — neither available at rehydrate
+ * time, which happens behind `PersistGate` before the app has done anything.
+ * Even given the catalogue, matching on label text would be a guess (`"Other"`
+ * appears in three categories) and a wrong guess submits a profile the user
+ * never filled in. Losing a part-finished draft is the honest failure.
+ *
+ * ⚠️ **The `migrate` hook is not optional here, and its absence would be
+ * silent.** redux-persist's default when the stored version disagrees is a
+ * **pass-through** — the old state rehydrates unchanged into the new slice, so
+ * a v1 draft would look perfectly restored, render labels as though they were
+ * keys, and fail at API-7 with a `400` twenty screens later. `createMigrate`
+ * with an explicit `undefined` is what turns that into "start fresh", which is
+ * a visible outcome at the point it happens.
+ *
+ * Returning `undefined` drops **every** whitelisted slice, not just
+ * `onboarding` — redux-persist migrations operate on the whole persisted root.
+ * That is acceptable: the other three (`discoveryMode`, `discoverFilters`,
+ * `appUpdate`) are a re-askable one-time choice, a re-settable preference, and a
+ * prompt cooldown whose worst case is one extra optional-update prompt. None is
+ * user work; the draft was the only thing worth trying to keep.
+ *
+ * `debug: false` keeps redux-persist's own migration logging out of production
+ * bundles; the outcome is observable through the flow itself.
+ */
+const migrations = createMigrate({ 2: () => undefined }, { debug: false });
+
 const persistedReducer = persistReducer(
   {
     key: "zomyra.root",
-    /**
-     * Bump this whenever a persisted slice's *shape* changes, and add a
-     * matching migration — see the note below `whitelist`.
-     */
-    version: 1,
+    version: PERSIST_VERSION,
     storage: AsyncStorage,
     whitelist: PERSIST_WHITELIST,
-    /**
-     * No `migrate` hook. Module 2 shipped one that imported the Zustand-era
-     * AsyncStorage keys; it was removed once the app's own spec made the data
-     * it rescued unusable — see the note on `version` above.
-     *
-     * ⚠️ **Module 5 must not rely on this staying absent.** It changes the
-     * `onboarding` slice's shape fundamentally (free-text `city` → `cityId`,
-     * enum labels → catalogue keys, `+ languagesOther`). redux-persist's
-     * default behaviour when `version` disagrees is a **pass-through**, which
-     * would rehydrate old-shaped drafts into the new slice and fail at submit
-     * rather than at load. Bump `version` to 2 *and* add an explicit
-     * `createMigrate({ 2: () => undefined })` to discard, which is almost
-     * certainly the right call — a pre-v1.45 draft cannot be repaired into a
-     * submittable one.
-     */
+    migrate: migrations,
   },
   rootReducer,
 );

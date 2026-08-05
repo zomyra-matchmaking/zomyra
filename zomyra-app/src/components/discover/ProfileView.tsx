@@ -88,8 +88,8 @@ void ALIGN_ICONS;
 const DIMENSION_TITLE: Record<CompatibilityDimension, string> = {
   all: "Why we think you'll get along",
   lifestyle: "How your lifestyles align",
-  personality: "How your personalities align",
-  priorities: "How your priorities align",
+  compatibility: "How your personalities align",
+  marriage_goals: "How your priorities align",
 };
 
 // Short editorial captions for each photo slot. Cycled deterministically per
