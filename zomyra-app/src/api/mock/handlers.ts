@@ -10,9 +10,18 @@
  * `{ error: { code, message, details? } }`, so nothing above this layer can
  * accidentally depend on a shape the real backend does not produce.
  */
+import { MOCK_GOOGLE_ID_TOKEN } from "@/src/auth/google";
 import { MOCK_PROFILES } from "@/src/lib/discover/mock";
 
 import type { DiscoverFeedResponse } from "../contract";
+import {
+  accountByUserId,
+  googleIdentity,
+  meResponse,
+  phoneIdentity,
+  recordConsent,
+  resolveAccount,
+} from "./accounts";
 import { issueSession, isAccessTokenValid, currentUserId, rotateSession } from "./session";
 
 export type MockRequest = {
@@ -27,7 +36,18 @@ export type MockRequest = {
 
 export type MockResponse =
   | { ok: true; data: unknown }
-  | { ok: false; status: number; code: string; message: string; details?: unknown };
+  | {
+      ok: false;
+      status: number;
+      code: string;
+      message: string;
+      details?: unknown;
+      /**
+       * Emitted **beside** `code` in the envelope rather than inside `details`.
+       * Handlers deliberately use both spellings — see the note in `index.ts`.
+       */
+      retryAfterSeconds?: number;
+    };
 
 const fail = (
   status: number,
@@ -35,6 +55,14 @@ const fail = (
   message: string,
   details?: unknown,
 ): MockResponse => ({ ok: false, status, code, message, details });
+
+/** `rate_limited` / `too_many_attempts`, with the retry hint as a sibling of `code`. */
+const failRateLimited = (
+  status: number,
+  code: string,
+  message: string,
+  retryAfterSeconds: number,
+): MockResponse => ({ ok: false, status, code, message, retryAfterSeconds });
 
 const UNAUTHORIZED = fail(401, "unauthorized", "Your session has expired.");
 
@@ -51,10 +79,20 @@ type Handler = (req: MockRequest) => MockResponse;
 
 const handlers: Record<string, Handler> = {
   // ---- API-1 · POST /auth/otp/request -------------------------------------
+  // Two reserved numbers make §9.1's other negative paths reachable, since the
+  // real endpoint is `404` on staging (behind LLP/DLT registration — O-8):
+  //   9111111111 → `429 rate_limited` with `retryAfterSeconds`
+  //   9222222222 → `502 sms_delivery_failed`
   "POST /auth/otp/request": (req) => {
     const { phoneNumber } = (req.body ?? {}) as { phoneNumber?: string };
     if (!phoneNumber || phoneNumber.replace(/\D/g, "").length < 6) {
       return fail(400, "invalid_phone_number", "That number doesn't look right.");
+    }
+    if (phoneNumber === "9111111111") {
+      return failRateLimited(429, "rate_limited", "Too many requests for this number.", 45);
+    }
+    if (phoneNumber === "9222222222") {
+      return fail(502, "sms_delivery_failed", "We couldn't send the code. Please try again.");
     }
     return { ok: true, data: { otpSent: true, resendCooldownSeconds: 30 } };
   },
@@ -63,15 +101,57 @@ const handlers: Record<string, Handler> = {
   // The prototype accepted any 6 digits and this keeps that, so the OTP screen
   // behaves identically — but the rejection is now a real `400 invalid_otp`
   // travelling through the error envelope rather than a thrown Error.
+  //
+  // Two reserved codes make the other two negative paths reachable without a
+  // backend, which is the whole reason Module 4 could write them at all
+  // (API-2 is `404` on staging, behind LLP/DLT — MIGRATION §4, O-8):
+  //   000000 → `400 otp_expired`
+  //   111111 → `429 too_many_attempts` with the 15-minute `retryAfterSeconds`
+  //            BE §14.1 specifies
+  // Any other six digits succeed. `isNewAccount` comes from the account
+  // directory, so FR-1a has both branches (see `accounts.ts`).
   "POST /auth/otp/verify": (req) => {
     const { otp, phoneNumber } = (req.body ?? {}) as { otp?: string; phoneNumber?: string };
     if (!otp || !/^\d{6}$/.test(otp)) {
       return fail(400, "invalid_otp", "That code isn't right. Check and try again.");
     }
-    const tokens = issueSession(`user-${phoneNumber ?? "mock"}`);
+    if (otp === "000000") {
+      return fail(400, "otp_expired", "That code has expired. Request a new one.");
+    }
+    if (otp === "111111") {
+      return fail(429, "too_many_attempts", "Too many attempts. Try again later.", {
+        retryAfterSeconds: 900,
+      });
+    }
+    const { account, isNewAccount } = resolveAccount(phoneIdentity(phoneNumber ?? "unknown"));
+    const tokens = issueSession(account.userId);
     return {
       ok: true,
-      data: { ...tokens, isNewAccount: true, profileComplete: false },
+      data: { ...tokens, isNewAccount, profileComplete: account.profileComplete },
+    };
+  },
+
+  // ---- API-3 · POST /auth/google -------------------------------------------
+  // The real endpoint is **deployed and validating** as of 2026-08-03 — a bogus
+  // token gets `401 invalid_google_token` where it got `503` a day earlier — so
+  // unlike API-1/API-2 this mock has a live counterpart to be faithful to, and
+  // it rejects anything that is not the token `src/auth/google.ts` mints in
+  // mock mode with exactly that code.
+  //
+  // The Google identity is deliberately **not** derived from any phone number:
+  // API-3's note makes phone and Google fully independent identities with no
+  // linking, so signing in with Google after signing up by phone must produce a
+  // second account here, exactly as it will in production.
+  "POST /auth/google": (req) => {
+    const { idToken } = (req.body ?? {}) as { idToken?: string };
+    if (idToken !== MOCK_GOOGLE_ID_TOKEN) {
+      return fail(401, "invalid_google_token", "Google sign-in failed. Please try again.");
+    }
+    const { account, isNewAccount } = resolveAccount(googleIdentity("mock-google-user"));
+    const tokens = issueSession(account.userId);
+    return {
+      ok: true,
+      data: { ...tokens, isNewAccount, profileComplete: account.profileComplete },
     };
   },
 
@@ -114,20 +194,39 @@ const handlers: Record<string, Handler> = {
   },
 
   // ---- API-6 · GET /me ------------------------------------------------------
-  // The routing table in FE TDD §9.1 reads off exactly these fields, so Module
-  // 3's root gate can be built and exercised against this response.
+  // The routing table in FE TDD §9.1 reads off exactly these fields.
+  //
+  // Module 4 replaced the hardcoded incomplete account with a projection of the
+  // signed-in record, so `/discover`, `/onboarding` and the verification rows
+  // are all reachable by *signing in as someone*, rather than by editing this
+  // file — which a `preview` build cannot do, since its bundle is baked at
+  // build time. `accounts.ts` says which identity gets what.
   "GET /me": () => ({
     ok: true,
-    data: {
-      userId: currentUserId() ?? "mock-user",
-      profileComplete: false,
-      verificationStatus: "unverified",
-      isPremium: false,
-      discoveryMode: null,
-      firstName: "",
-      accountStatus: "active",
-    },
+    data: meResponse(accountByUserId(currentUserId() ?? "mock-user")),
   }),
+
+  // ---- API-40 · POST /consents ----------------------------------------------
+  // Append-only server-side (BE §6.1 `user_consents`), and the mock models that
+  // rather than flipping a flag: it pushes onto the account's array, so the
+  // *next* `GET /me` reports the consent and `resolveRootDestination` stops
+  // returning `/consent`. That round trip is the behaviour under test — a mock
+  // that mutated nothing would let the screen navigate on a lie.
+  "POST /consents": (req) => {
+    const { consentType, version } = (req.body ?? {}) as {
+      consentType?: string;
+      version?: number;
+    };
+    if (
+      (consentType !== "sensitive_data" && consentType !== "biometric") ||
+      typeof version !== "number"
+    ) {
+      return fail(400, "validation_error", "consentType and version are required.");
+    }
+    const acceptedAt = new Date().toISOString();
+    recordConsent(currentUserId() ?? "mock-user", { consentType, version, acceptedAt });
+    return { ok: true, data: { recorded: true, acceptedAt } };
+  },
 
   // ---- API-34 · GET /counts -------------------------------------------------
   "GET /counts": () => ({

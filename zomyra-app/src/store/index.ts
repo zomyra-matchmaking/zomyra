@@ -72,7 +72,12 @@ const rootReducer = combineReducers({
  * - **`api`** — RTK Query's cache is in-memory by design; persisting it whole
  *   is exactly the unbounded growth NFR-11 forbids.
  */
-const PERSIST_WHITELIST = ["onboarding", "discoveryMode", "discoverFilters", "appUpdate"];
+const PERSIST_WHITELIST = [
+  "onboarding",
+  "discoveryMode",
+  "discoverFilters",
+  "appUpdate",
+];
 
 const persistedReducer = persistReducer(
   {

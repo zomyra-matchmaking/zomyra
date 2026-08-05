@@ -21,10 +21,19 @@ export {
   type ApiErrorCode,
 } from "./errors";
 
-export { useRequestOtpMutation, useVerifyOtpMutation } from "./endpoints/auth";
+export {
+  useGoogleSignInMutation,
+  useRequestOtpMutation,
+  useVerifyOtpMutation,
+} from "./endpoints/auth";
 export { useCheckAppVersionQuery, useGetMeQuery, useLazyGetMeQuery } from "./endpoints/session";
 export { useGetDiscoverFeedQuery } from "./endpoints/discover";
 export { useGetCountsQuery } from "./endpoints/counts";
+export {
+  useRecordConsentMutation,
+  type RecordConsentBody,
+  type RecordConsentResponse,
+} from "./endpoints/consent";
 export {
   useSubmitVerificationMutation,
   verificationOutcome,

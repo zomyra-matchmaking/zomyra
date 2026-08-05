@@ -62,7 +62,23 @@ export const mockBaseQuery: BaseQueryFn<
     error: {
       status: result.status,
       data: {
-        error: { code: result.code, message: result.message, details: result.details },
+        error: {
+          code: result.code,
+          message: result.message,
+          details: result.details,
+          /*
+           * `retryAfterSeconds` **beside** `code` rather than inside `details`.
+           * Both TDDs are ambiguous about which one it is — item 5 in
+           * `docs/CONTRACT-QUESTIONS.md` — so `normalizeError` reads either, a
+           * defensive guess that ought not to survive unexercised. Handlers
+           * that set it here exercise the sibling form; those that put it in
+           * `details` exercise the nested one, and both must arrive at the same
+           * `ApiError.retryAfterSeconds`.
+           */
+          ...(result.retryAfterSeconds !== undefined
+            ? { retryAfterSeconds: result.retryAfterSeconds }
+            : {}),
+        },
       },
     },
   };

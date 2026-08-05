@@ -44,9 +44,46 @@ export type OtpRequestResponse = { otpSent: boolean; resendCooldownSeconds: numb
 /** API-2 request. */
 export type OtpVerifyBody = { phoneNumber: string; countryCode: string; otp: string };
 
+/**
+ * API-3 request. The `idToken` comes from the Google Sign-In SDK
+ * (`src/auth/google.ts`) and is the *only* field — no `serverAuthCode`, no
+ * access token, no profile.
+ */
+export type GoogleAuthBody = { idToken: string };
+
 export type AuthTokens = { accessToken: string; refreshToken: string };
 
-/** API-2 / API-3 response. */
+/**
+ * API-2 / API-3 response.
+ *
+ * ⚠️ **These two fields are not enough to route on, and that is the point.**
+ * FR-1a reads as "existing account → Discover, new account → Onboarding", but
+ * §9.1's table needs `verificationStatus` and `discoveryMode` as well, and
+ * neither is here. An existing account can be mid-verification or yet to pick a
+ * Discovery Mode, so branching on `profileComplete` at the auth screen would
+ * send a returning user to Discover that the tabs guard then bounces. Both auth
+ * screens therefore route to `/`, and `resolveRootDestination` answers from
+ * `GET /me`. See `src/lib/root-route.ts`.
+ *
+ * ⚠️ **`isNewAccount` is currently consumed by nothing, and that is deliberate —
+ * do not wire it up.** It is the obvious trigger for FR-2a's one-time consent
+ * screen, and it is the wrong one: FR-2a lets the user *decline*, which returns
+ * them to Welcome with the account already created. Sign in again and the flag
+ * reads `false`, so a client keyed on it would skip the notice and start
+ * collecting religion and income from someone who had explicitly refused. Since
+ * FE v1.46 the gate keys on **`GET /me`'s `consents` array** (API-40) instead,
+ * which cannot be defeated that way — a declined consent was never recorded, so
+ * the array stays empty however many times the account is signed into.
+ *
+ * It stays on this type because **this file describes what the server sends**,
+ * not what the client happens to read — API-2 and API-3 both return it (FE §9.1,
+ * BE §14.1), and once O-11's schema is served and `yarn api:generate` replaces
+ * these hand-written types, it comes back regardless. Deleting it would only
+ * make the client's model of the response wrong.
+ *
+ * Anything that legitimately wants it — a `signup_started` vs `otp_verified`
+ * analytics split (BE §17) is the plausible one — should take it from here.
+ */
 export type AuthSessionResponse = AuthTokens & {
   isNewAccount: boolean;
   profileComplete: boolean;
@@ -99,6 +136,43 @@ export type MeResponse = {
   discoveryMode: DiscoveryMode | null;
   firstName: string;
   accountStatus: AccountStatus;
+  /** API-40, added FE v1.46 / BE v1.7 — see `Consent` below. */
+  consents: Consent[];
+};
+
+export type ConsentType = "sensitive_data" | "biometric";
+
+/**
+ * FE §9.1 / API-40 (FE v1.46, BE v1.7 §14.2b — MIGRATION §12.5).
+ *
+ * **The server is the source of truth for what has been accepted** — the client
+ * reads this off `GET /me` rather than keeping its own local record, so a
+ * reinstall or a resumed onboarding doesn't re-show a screen already accepted.
+ *
+ * One entry per `consentType`, carrying its **max** version. The underlying
+ * table is append-only (BE §6.1 `user_consents`): every acceptance inserts a
+ * row and nothing is ever updated in place, so this is a projection, not the
+ * whole history.
+ *
+ * **The two types have different re-ask rules** — this is the part that is easy
+ * to get wrong:
+ * - `sensitive_data` (FR-2a) — recorded **once, never re-asked**. There is no
+ *   repeat entry point into that screen.
+ * - `biometric` (FR-11a) — re-asked and re-recorded **every time Verification
+ *   is entered from a fresh Onboarding-stack-mount**, but **not** on an FR-12
+ *   in-flow mismatch retry within the same continuous attempt, which stays
+ *   covered by the acceptance just given.
+ *
+ * `version` is *the version of the consent text the client actually displayed*
+ * — so the client cannot invent it. `SENSITIVE_DATA_CONSENT_VERSION` in
+ * `src/lib/consent.ts` is that number for FR-2a, defined beside the copy it
+ * describes. **O-20** is what is still open: who owns and approves that copy.
+ */
+export type Consent = {
+  consentType: ConsentType;
+  version: number;
+  /** ISO 8601 timestamp. */
+  acceptedAt: string;
 };
 
 /**
