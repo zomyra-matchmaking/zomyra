@@ -61,6 +61,7 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
 | 5 · Onboarding + verification entry | 57 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
+| 5.5 · Test harness | — | Not started — see MIGRATION.md §2.4. Adds no new behaviour; its job is to move existing rows from `static`/`runtime` to `build` |
 | 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those

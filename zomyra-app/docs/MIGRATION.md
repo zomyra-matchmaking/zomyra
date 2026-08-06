@@ -121,7 +121,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 2 | State & data layer | **Complete** (2026-07-31) | Every subsequent module plugs into it; nothing can reach the backend until it exists |
 | 3 | Navigation | **Complete** (2026-08-02) | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | **Complete** (2026-08-03) | First real API integration; unblocks every authenticated call. **+ FR-2a's consent screen + O-18(a) settled on a scheme-owning build** |
-| 5 | Onboarding & profile schema | Not started | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
+| 5 | Onboarding & profile schema | **Complete** (2026-08-05) | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
 | **5.5** | **Test harness (Jest + RNTL, Maestro)** | Not started | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
