@@ -32,7 +32,15 @@ export type AppEnvironment = "mock" | "staging" | "production";
 
 const RAW_APP_ENV = process.env.EXPO_PUBLIC_APP_ENV ?? "";
 
-function parseAppEnvironment(raw: string): AppEnvironment {
+/**
+ * Exported as a testable seam (Module 5.5, M2-005). The dangerous behaviour —
+ * an invalid value throwing rather than silently defaulting to `production` —
+ * is a property of this function, but `APP_ENV` invokes it at import time off a
+ * value Expo inlines at build time, so it cannot be re-exercised per test
+ * through that constant. Exposing the pure function is the seam; nothing else
+ * about the check moved.
+ */
+export function parseAppEnvironment(raw: string): AppEnvironment {
   const value = raw.trim().toLowerCase();
   if (value === "staging" || value === "production" || value === "mock") return value;
   if (value === "") return "mock";

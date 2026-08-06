@@ -61,7 +61,7 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
 | 5 · Onboarding + verification entry | 57 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
-| 5.5 · Test harness | — | Not started — see MIGRATION.md §2.4. Adds no new behaviour; its job is to move existing rows from `static`/`runtime` to `build` |
+| 5.5 · Test harness | — | **5.5a done** (2026-08-06) — Jest + RNTL stood up; the six §2.4.2 rows (M3-002, M2-004, M2-001, M2-003, M2-005, M2-006) flipped `static`/`runtime` → `build`, all green. 5.5b (Maestro + testIDs) pending review. Adds no new behaviour of its own |
 | 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those
@@ -93,12 +93,12 @@ backfill by whoever next has that code open.
 
 | ID | Area | Verify | Expect | Type | Last result |
 |---|---|---|---|---|---|
-| M2-001 | Tokens never touch disk | `grep -rn "AsyncStorage" src/` and read `src/store/index.ts` | Tokens are in `expo-secure-store` only. `PERSIST_WHITELIST` contains no token/session slice — NFR-2. **A failure here is a security regression, not a bug** | static | — |
+| M2-001 | Tokens never touch disk | `yarn test src/store/__tests__/persist-whitelist.test.ts` | The persisted root written to AsyncStorage carries no `session` slice and no token-shaped key — NFR-2. **A failure here is a security regression, not a bug** | build | PASS 2026-08-06 (5.5a) |
 | M2-002 | Onboarding draft survives a kill | Fill part of onboarding, force-quit the app, reopen | The draft is still there at the same step — NFR-1. Distinct from M2-003: the *draft* persists, the *catalogues* must not | runtime | — |
-| M2-003 | Reference data is not persisted | Read `src/store/index.ts` | `api` is absent from `PERSIST_WHITELIST`. RTK Query's cache stays in memory — FE §4.3, NFR-11. Persisting a full cities table to disk is the failure this prevents | static | — |
-| M2-004 | Concurrent 401s share one refresh | Read `src/api/base-query.ts` | A single module-scoped in-flight refresh promise that all 401s await. Parallel refreshes replay a single-use token and force-logout a healthy session (BE §9.2) | static | — |
-| M2-005 | Environment fails loud | Set `EXPO_PUBLIC_APP_ENV=nonsense`, start the app | Throws with a message naming the valid values. Silently defaulting to `production` is the failure mode this guards | runtime | — |
-| M2-006 | Legacy Zustand state imports once | With old Zustand data in AsyncStorage and no redux-persist state, cold start | `legacy-migration.ts` imports it; a returning user does not lose their draft to the port | runtime | — |
+| M2-003 | Reference data is not persisted | `yarn test src/store/__tests__/persist-whitelist.test.ts` | The persisted root carries no `api` slice — RTK Query's cache stays in memory (FE §4.3, NFR-11). Persisting a full cities table to disk is the failure this prevents | build | PASS 2026-08-06 (5.5a) |
+| M2-004 | Concurrent 401s share one refresh | `yarn test src/api/__tests__/base-query-refresh.test.ts` | Two `baseQuery` calls that 401 at once trigger **exactly one** `POST /auth/refresh`. Parallel refreshes replay a single-use token and force-logout a healthy session (BE §9.2) | build | PASS 2026-08-06 (5.5a) |
+| M2-005 | Environment fails loud | `yarn test src/config/__tests__/env.test.ts` | `parseAppEnvironment("nonsense")` throws naming the valid values; an empty value resolves to `mock`, never `production`. Silently defaulting to `production` is the failure mode this guards | build | PASS 2026-08-06 (5.5a) |
+| M2-006 | A returning user keeps their draft | `yarn test src/store/__tests__/onboarding-rehydrate.test.ts` | A same-version persisted draft rehydrates intact across a cold start (NFR-1). ⚠️ **Retargeted 5.5a:** originally asserted `legacy-migration.ts` imports Zustand-era state — that file was removed by design 2026-08-02 (MIGRATION §6, "Module 2 addendum"), superseded by M5-023's discard-on-migrate, so the old assertion was a *wrong test* and was replaced with the mechanism that now carries NFR-1 | build | PASS 2026-08-06 (5.5a) |
 
 ## Module 3 — Navigation
 
@@ -111,7 +111,7 @@ case authored for future regression runs but not formally re-run.
 | ID | Area | Verify | Expect | Type | Last result |
 |---|---|---|---|---|---|
 | M3-001 | Gate ordering | Read `app/index.tsx` / `src/components/nav/use-launch-gate.ts` | `useGetMeQuery` (API-6) carries `skip` until the version gate (API-5) resolves and the session is authenticated — an anonymous launch never fires an authenticated call it knows will 401 | static | — |
-| M3-002 | Routing is a pure function | Read `src/lib/root-route.ts` | `resolveRootDestination` is pure. `accountStatus` is an **early return**, not a column — a suspended user with `profileComplete: false` reaches the blocker, not Onboarding | static | — |
+| M3-002 | Routing is a pure function | `yarn test src/lib/__tests__/root-route.test.ts` | `resolveRootDestination` is pure (equal inputs → equal outputs, no mutation), and `accountStatus` short-circuits: a suspended user with `profileComplete: false` reaches the blocker, not Onboarding | build | PASS 2026-08-06 (5.5a) |
 | M3-003 | The unlisted `verified/unverified` row | Read `src/lib/root-route.ts` | `true` + `unverified` (submitted API-7, photos not started) routes to `/verify?entry=photos`. §9.1 omits this row; it must not fall through to Discover | static | — |
 | M3-004 | Version below minimum blocks | Set the mock `minSupportedVersion` above the app version (or `forceUpdate: true`) in `src/api/mock/handlers.ts`, cold start | Full-screen, non-dismissible `UpdateRequired`. Below-latest → dismissible prompt then proceed; current → silent. All three walked on-device 2026-08-02 | runtime | PASS 2026-08-02 (M3 on-device) |
 | M3-005 | Version compare never disables the gate | Read `src/lib/app-update.ts` (`compareVersions`) | A non-numeric segment degrades to `0`, never `NaN` — `NaN` comparisons are all-false and would silently disable the gate | static | — |
