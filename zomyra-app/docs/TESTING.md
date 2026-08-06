@@ -59,6 +59,19 @@ yarn build:preview-mock:ios-sim   # or :android
 ⚠️ **A dev client is not a substitute.** It carries `EXDevLauncher`, so a launch
 opens the launcher rather than the app and every flow fails at step one.
 
+⚠️ **`clearState` does not clear the iOS keychain.** Tokens live there
+(expo-secure-store, NFR-2) and survive an app-data wipe *and* a reinstall,
+because the keychain is keyed on the bundle id every Zomyra build shares — so a
+flow inherits whatever session the last build left behind and starts mid-app.
+**Begin every leg with `clearKeychain`.** This cost the first Maestro run:
+it launched straight into `/discovery-mode`.
+
+Reserved mock OTP codes are `000000` (`otp_expired`) and `111111`
+(`too_many_attempts`); any other six digits succeed. The flows use `123456`.
+
+⚠️ **Both flows are currently red**, blocked on a Module 4 sign-in race
+(M55-007 in `docs/TEST-CASES.md`) — not on anything wrong with the flows.
+
 ### The two flows, and why only two
 
 `.maestro/flows/login.yaml` and `.maestro/flows/onboarding.yaml` — FE §13.2's

@@ -69,13 +69,18 @@ Append a "Module log" entry at the end of every module, in the same session that
   LLP → DLT registration) and `/v1/docs-json` is still `404`. Endpoint map in §6's Module 2 addendum.
 - **Module 5.5 (test harness) is finished on `module/5.5-test-harness`, committed but not pushed and
   with no PR** (2026-08-06, C-6). `yarn test` runs 14 tests over 5 suites; six previously-`static`/
-  `runtime` cases are now `build`. **Maestro 2.8.0 is installed and both flows pass `check-syntax`,
-  but neither has ever been run** — that needs a `preview-mock` build (the simulator holds the
-  2026-08-05 dev client, which opens `EXDevLauncher` instead of the app). An EAS
-  `preview-mock-simulator` build was started 2026-08-06; **M55-007/008 stay `UNRUN` until it lands
-  and the flows are calibrated.** One finding was reported and deliberately not fixed: **M55-010 —
-  Module 5 — `OptionCard`'s testID is keyed on the display label** (dead code, so not yet a live
-  defect). **Next up is Module 6 — Photos & verification.**
+  `runtime` cases are now `build` and green. Maestro 2.8.0 is installed and **both E2E flows have
+  been run** against an EAS `preview-mock-simulator` build — **and both are red because of a real
+  Module 4 defect the harness found on its first run:**
+  ⚠️ **M55-007 — Module 4 — a fast sign-in lands on Welcome instead of the §9.1 destination.**
+  `app/otp.tsx` navigates on `await verifyOtp(...)`, but the tokens are written by `adoptSession`
+  off `onQueryStarted`, which RTK Query starts but does **not** await. The gate then sees no session
+  and redirects to `/login`. It does not reproduce at human tapping speed, which is why five modules
+  of manual passes missed it; **both auth paths share `adoptSession`, so Google is affected too.**
+  M55-008 is `BLOCKED` behind it, so `onboarding.yaml` past sign-in is still unexercised.
+  A second, lower-severity finding: **M55-010 — Module 5 — `OptionCard`'s testID is keyed on the
+  display label** (dead code, so not a live defect). **Per §2.4.2 neither was fixed here.**
+  **Next up: fix M55-007 in its own branch, then Module 6 — Photos & verification.**
 - **Next up: Module 5 — Onboarding & profile schema.** The sequence in §2 is being followed in
   order. It inherits a working consent gate immediately in front of the Onboarding stack, both
   auth paths landing on `/` so §9.1 decides, and the shared loading state. **Read §12.3 and
@@ -131,7 +136,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 3 | Navigation | **Complete** (2026-08-02) | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | **Complete** (2026-08-03) | First real API integration; unblocks every authenticated call. **+ FR-2a's consent screen + O-18(a) settled on a scheme-owning build** |
 | 5 | Onboarding & profile schema | **Complete** (2026-08-05) | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
-| **5.5** | **Test harness (Jest + RNTL, Maestro)** | **Complete** (2026-08-06) — ⚠️ *the two Maestro flows are written and syntax-checked but have never been executed; see §6* | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
+| **5.5** | **Test harness (Jest + RNTL, Maestro)** | **Complete** (2026-08-06) — ⚠️ *both Maestro flows ran and are red on a real Module 4 sign-in race (M55-007); see §6* | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
@@ -3792,18 +3797,52 @@ and Google) and `onboarding.yaml` (Plot/Anchor/Love → API-7 → the Photos han
 §13.2 priorities belong to Modules 7, 9 and 10, each of which writes its own; writing them blind
 against screens that do not exist was explicitly out of scope.
 
-⚠️ **Neither flow has ever been executed. This is the module's main gap.** Both pass
-`maestro check-syntax`, and their element ids and catalogue keys were read out of the source and out
-of `src/api/mock/catalogue.ts` — several first-draft key guesses were wrong (`chip-hi` →
-`chip-hindi`, fitness `weekly` → `3_5_weekly`, `householdPreference` had no `nuclear` at all) and were
-corrected against the mock. But §2.4.3 requires a `preview-mock` build and the only binary on the
-iPhone 16 simulator is the **2026-08-05 dev client**, which carries `EXDevLauncher` and opens the
-launcher rather than the app. An EAS `preview-mock-simulator` build was started 2026-08-06.
-**M55-007 and M55-008 are recorded `UNRUN`, and the flows should be treated as unverified drafts** —
-the legs most likely to need calibration on first run are the height **slider swipe** and the 12-step
-quiz `repeat`.
+**Both flows were executed** on 2026-08-06 against an EAS `preview-mock-simulator` build
+(`de4a76ff`) on the iPhone 16 simulator, installed with `eas build:run`. **Both are red, and the
+cause is a real defect in Module 4** — see the finding below. That is the harness doing exactly the
+job §2.4 describes: the flow found, on its first run, a sign-in bug that five modules of manual
+passes never hit.
 
-#### Finding (§2.4.2 — reported, not fixed)
+Two *harness* problems were found and fixed on the way, both worth knowing before anyone writes
+another flow:
+
+1. **`clearState` does not clear the iOS keychain.** Tokens live there (expo-secure-store, NFR-2)
+   and survive an app-data wipe *and* a reinstall, because the keychain is keyed on the bundle id
+   every Zomyra build shares. The very first run launched straight into `/discovery-mode` carrying a
+   session the 2026-08-05 dev client had left behind. Every leg now begins with `clearKeychain`.
+2. Several first-draft catalogue keys were wrong and were corrected against
+   `src/api/mock/catalogue.ts` (`chip-hi` → `chip-hindi`, fitness `weekly` → `3_5_weekly`;
+   `householdPreference` has no `nuclear` at all).
+
+**Still unexercised:** everything in `onboarding.yaml` after sign-in — the 20-question walk, the
+API-7 submit and the Photos hand-off — because the flow cannot get past the sign-in defect. The legs
+most likely to need calibration once it does are the height **slider swipe** and the 12-step quiz
+`repeat`.
+
+#### Findings (§2.4.2 — reported, not fixed)
+
+**M55-007 — Module 4 — a fast sign-in lands on Welcome instead of the §9.1 destination.**
+Reproduced 4/4 on one-shot runs of `login.yaml`; it does **not** reproduce when the Verify tap is
+separated from the sixth digit by a few seconds, which is why no manual pass has ever seen it.
+
+`app/otp.tsx`'s `verify()` awaits `verifyOtp(...)` and then calls `router.replace("/")`. The tokens
+are written by `adoptSession` in `src/api/endpoints/auth.ts`, hung off `onQueryStarted`. That file's
+comment states the assumption outright — *"the only hook that runs before the mutation's promise
+resolves to the caller … the tokens have to already be on the keychain when the destination fires
+`GET /me`"* — and the assumption is false. RTK Query **starts** `onQueryStarted` before the trigger
+resolves; it does not **await** its continuation. So `await queryFulfilled` → `await setTokens(...)`
+→ `dispatch(signedIn({}))` can still be in flight when the screen navigates, the root gate reads an
+unauthenticated session, and redirects to `/login`.
+
+Confirmed by keychain instrumentation (`log stream` on `(Security)`): the token write lands ~2s
+*after* the navigation. **Not a mock artefact and not Maestro-specific** — a user who taps Verify the
+instant the sixth digit lands hits the same window; automation merely loses the race every time.
+**Both auth paths are affected**: `verifyOtp` and `googleSignIn` share `adoptSession`
+(`auth.ts:79`, `auth.ts:95`), so O-19's Google path carries it too.
+
+The fix is a design decision, not a one-liner — await the lifecycle, or seed the session before
+navigating (the file already sketches an `upsertQueryData` variant) — and it belongs to Module 4's
+code in its own branch, which is precisely why §2.4.2 forbids doing it here.
 
 **M55-010 — Module 5 — `OptionCard`'s testID is keyed on the display label, not the catalogue key.**
 `src/components/onboarding/Primitives.tsx:27` emits ``option-${title}`` while its sibling `OptionGrid`
@@ -3813,12 +3852,13 @@ exact pattern the comment above `OptionGrid` records as removed in Module 5 (`op
 the bad id today — it is a trap for the next caller rather than a live defect. Left for its own
 branch, as §2.4.2 requires.
 
-**New cases:** M55-001…M55-012. Ten PASS, one FAIL (M55-010, the finding above), two UNRUN
-(M55-007/008). Six earlier rows converted to `build`.
+**New cases:** M55-001…M55-012 — **nine PASS, two FAIL (M55-007, M55-010), one BLOCKED
+(M55-008, behind M55-007)**. Six earlier rows converted to `build`, all green.
 
 **Verified green:** `yarn test` 14/14 · `npx eslint app src --no-cache` 0 errors (13 pre-existing
 warnings, none from this module) · `yarn typecheck:baseline` clean (the same 3 inherited errors) ·
 `maestro check-syntax` OK on both flows.
 
-**Not done, and owned by whoever runs the flows first:** the actual Maestro execution, and with it
-the `Last result` for M55-007/008. Everything else in §2.4 is complete.
+**What §2.4 asked for is complete.** What is *not* done, and is deliberately not this module's to
+do: fixing the M55-007 sign-in race, and — once that lands — running `onboarding.yaml` past sign-in
+to calibrate its remaining widget legs. Both want their own session and their own branch.

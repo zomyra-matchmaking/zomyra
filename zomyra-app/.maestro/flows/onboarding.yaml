@@ -15,8 +15,15 @@
 # Steps are addressed by **`onboarding-step-<id>`**, which is the draft field key
 # — never the index. M5-044 records SCREENS both shrinking and growing during
 # Module 5; a positional id would silently answer a different question.
+# ⚠️ **`clearState` is not enough on iOS.** Tokens live in the keychain
+# (expo-secure-store, NFR-2) and the keychain survives both an app-data wipe and
+# a reinstall — it is keyed on the bundle id, which every Zomyra build shares. So
+# without `clearKeychain` a leg inherits whatever session the last build left
+# behind and starts mid-app instead of at Welcome. Found on the first real run of
+# this flow (2026-08-06): it launched straight into `/discovery-mode`.
 appId: com.zomyra.app
 ---
+- clearKeychain
 - launchApp:
     clearState: true
 - extendedWaitUntil:

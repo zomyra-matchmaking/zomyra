@@ -61,7 +61,7 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
 | 5 · Onboarding + verification entry | 57 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
-| 5.5 · Test harness | 12 | No — authored by the module (2026-08-06). Adds no product behaviour: its job was to move six Module 2/3 rows from `static`/`runtime` to `build` (all green) and to stand up Maestro. **M55-007/008 are UNRUN** — awaiting a `preview-mock` build |
+| 5.5 · Test harness | 12 | No — authored by the module (2026-08-06). Adds no product behaviour: its job was to move six Module 2/3 rows from `static`/`runtime` to `build` (all green) and to stand up Maestro. **M55-007 FAILS and M55-008 is BLOCKED behind it** — a real Module 4 sign-in race, found by the first Maestro run |
 | 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those
@@ -452,23 +452,50 @@ catch.** Findings are recorded here and reported, not repaired.
 | ID | Area | Verify | Expect | Type | Last result |
 |---|---|---|---|---|---|
 | M55-006 | Flows are syntactically valid | `maestro check-syntax .maestro/flows/login.yaml .maestro/flows/onboarding.yaml` | `OK` for both. Cheap, needs no device, and catches the YAML/command errors that otherwise only surface halfway through a run | build | PASS 2026-08-06 |
-| M55-007 | Login through the launch gate | `maestro test .maestro/flows/login.yaml` on a `preview-mock` build | Four legs pass: `9000000000`→Discover, `9000000007`→`/blocked` (O-4), a new number→`/consent` with Decline returning to Welcome, and Google→`/consent`. Proves §9.1 decides the destination, not the auth screen (M4-009) | build | **UNRUN** — see the note below |
-| M55-008 | Onboarding submits and hands off to Photos | `maestro test .maestro/flows/onboarding.yaml` on a `preview-mock` build | Walks Plot/Anchor/Love as `9000000001`, submits API-7 once, and lands on `verify-step-photos`. The destination comes from §9.1 re-reading `Me`, never a hardcoded `/verify` (M5-015) | build | **UNRUN** — see the note below |
+| M55-007 | Login through the launch gate | `maestro test .maestro/flows/login.yaml` on a `preview-mock` build | Four legs pass: `9000000000`→Discover, `9000000007`→`/blocked` (O-4), a new number→`/consent` with Decline returning to Welcome, and Google→`/consent`. Proves §9.1 decides the destination, not the auth screen (M4-009) | build | **FAIL 2026-08-06** — leg 1 lands on Welcome, not Discover. See the finding below |
+| M55-008 | Onboarding submits and hands off to Photos | `maestro test .maestro/flows/onboarding.yaml` on a `preview-mock` build | Walks Plot/Anchor/Love as `9000000001`, submits API-7 once, and lands on `verify-step-photos`. The destination comes from §9.1 re-reading `Me`, never a hardcoded `/verify` (M5-015) | build | **BLOCKED 2026-08-06** — cannot get past sign-in; same defect as M55-007. **Everything after the sign-in step is still unexercised** |
 | M55-009 | Step ids are not positional | `grep -n "onboarding-step-" .maestro/flows/onboarding.yaml` | Every id is a draft field key (`onboarding-step-gender`), never an index. M5-044 records `SCREENS` shrinking and growing — an index would answer a different question while still passing | static | PASS 2026-08-06 |
 | M55-010 | Option ids are keyed, not labelled | `grep -rn "testID={\`option-\|testID={\`chip-\|testID={\`suggestion-" src/components/onboarding/Primitives.tsx` | Every id interpolates `opt.key`, never `opt.label`. Under FR-3b the backend may reword a label without a client release, so a label-keyed id fails on a copy edit (M5-003). ⚠️ **One violator, recorded as a finding below** | static | **FAIL 2026-08-06** — `OptionCard` uses `option-${title}` |
 | M55-011 | The shared shell namespaces its chrome | Read `testIDPrefix` in `src/components/onboarding/OnboardingShell.tsx` | Onboarding and Verify emit `onboarding-*` and `verify-*` respectively. Both previously emitted `onboarding-next`, and they are adjacent screens in one journey — a flow could not tell which it was driving | static | PASS 2026-08-06 |
 | M55-012 | The launch gate is reachable by id | Read `src/components/nav/LaunchScreens.tsx` | `launch-pending`, `launch-error`, `launch-retry`, `launch-update-required`, `launch-update-cta` exist. The gate had **zero** testIDs before 5.5b, so no E2E flow could assert it had resolved rather than merely not crashed | static | PASS 2026-08-06 |
 
-> **M55-007 / M55-008 have never been executed.** Maestro 2.8.0 is installed and
-> both flows pass `check-syntax`, but §2.4.3 requires a `preview-mock` build and
-> the only binary on the iPhone 16 simulator is the **2026-08-05 dev client**
-> (it carries `EXDevLauncher`, so a launch opens the launcher, not the app). An
-> EAS `preview-mock-simulator` build was started 2026-08-06. **Until these two
-> rows carry a PASS, treat the flows as unverified drafts** — the element ids and
-> catalogue keys in them were read out of the source and the mock catalogue
-> rather than observed on a device, and the widget legs most likely to need
-> calibration are the height **slider swipe** and the 12-step quiz `repeat`.
-> A blank result here is not a pass.
+> **Both flows were executed for the first time on 2026-08-06** against an EAS
+> `preview-mock-simulator` build (`de4a76ff`) on the iPhone 16 simulator, and **both are red** — see
+> the sign-in finding below. Two harness problems were found and fixed on the way, and both are
+> worth knowing before writing any future flow:
+>
+> 1. **`clearState` does not clear the iOS keychain.** Tokens live there (expo-secure-store, NFR-2)
+>    and survive an app-data wipe *and* a reinstall, because the keychain is keyed on the bundle id
+>    that every Zomyra build shares. The first run launched straight into `/discovery-mode` carrying
+>    a session left by the 2026-08-05 dev client. Every leg now starts with `clearKeychain`.
+> 2. **The mock's reserved OTP codes are `000000` and `111111`**; any other six digits succeed. The
+>    flows use `123456`.
+>
+> What is **still unexercised** is everything in `onboarding.yaml` after sign-in — the 20-question
+> walk, the API-7 submit and the Photos hand-off. The widget legs most likely to need calibration
+> when that unblocks remain the height **slider swipe** and the 12-step quiz `repeat`.
+
+> **Finding — M55-007 — Module 4 — a fast sign-in lands on Welcome instead of the §9.1
+> destination.** Reproduced on every one-shot run of `login.yaml` (4/4); it does **not** reproduce
+> when the Verify tap is separated from the last digit by a few seconds, which is why no manual pass
+> has ever seen it.
+>
+> `app/otp.tsx`'s `verify()` does `await verifyOtp(...)` then `router.replace("/")`. The tokens are
+> written by `adoptSession` in `src/api/endpoints/auth.ts`, hung off `onQueryStarted`. That file's
+> own comment states the assumption plainly — *"the only hook that runs before the mutation's promise
+> resolves to the caller … the tokens have to already be on the keychain when the destination fires
+> `GET /me`"* — but the assumption does not hold: RTK Query **starts** `onQueryStarted` before the
+> trigger resolves, it does not **await** its continuation. So `await queryFulfilled` →
+> `await setTokens(...)` → `dispatch(signedIn({}))` can still be in flight when the screen navigates.
+> The root gate then reads an unauthenticated session and `Redirect`s to `/login`.
+>
+> **Not a mock artefact and not Maestro-specific.** A real user who taps Verify the instant the sixth
+> digit lands hits the same window; automation just loses the race every time. **Both auth paths are
+> affected** — `verifyOtp` and `googleSignIn` share `adoptSession` (`auth.ts:79`, `auth.ts:95`).
+>
+> **Not fixed here** per §2.4.2. It is Module 4's code, the fix is a design decision (await the
+> lifecycle, or seed the session before navigating — the file already sketches an
+> `upsertQueryData` option), and it must not ride in on a harness PR.
 
 > **Finding — M55-010, Module 5, `OptionCard`'s testID is keyed on the display
 > label.** `src/components/onboarding/Primitives.tsx:27` emits

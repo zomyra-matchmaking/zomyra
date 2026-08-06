@@ -12,11 +12,18 @@
 #   9000000001 — incomplete, consent already on file → /onboarding (no consent)
 #   9000000007 — perfect Discover account but banned → /blocked (O-4)
 #   9123456789 — unknown number → new account, unconsented → /consent
+# ⚠️ **`clearState` is not enough on iOS.** Tokens live in the keychain
+# (expo-secure-store, NFR-2) and the keychain survives both an app-data wipe and
+# a reinstall — it is keyed on the bundle id, which every Zomyra build shares. So
+# without `clearKeychain` a leg inherits whatever session the last build left
+# behind and starts mid-app instead of at Welcome. Found on the first real run of
+# this flow (2026-08-06): it launched straight into `/discovery-mode`.
 appId: com.zomyra.app
 ---
 # ---------------------------------------------------------------------------
 # 1. A returning, fully-set-up account reaches Discover.
 # ---------------------------------------------------------------------------
+- clearKeychain
 - launchApp:
     clearState: true
 
@@ -43,6 +50,7 @@ appId: com.zomyra.app
 #    This account is complete, verified and has a mode set; only `banned`
 #    can explain the blocker, which is what makes it worth a leg of its own.
 # ---------------------------------------------------------------------------
+- clearKeychain
 - launchApp:
     clearState: true
 - extendedWaitUntil:
@@ -65,6 +73,7 @@ appId: com.zomyra.app
 # 3. FR-2a — a new account meets consent *before* Onboarding, and declining
 #    signs out rather than proceeding (M4-023).
 # ---------------------------------------------------------------------------
+- clearKeychain
 - launchApp:
     clearState: true
 - extendedWaitUntil:
@@ -102,6 +111,7 @@ appId: com.zomyra.app
 #    half that can regress without anyone noticing. A real Google sign-in still
 #    needs O-19 and cannot be automated here.
 # ---------------------------------------------------------------------------
+- clearKeychain
 - launchApp:
     clearState: true
 - extendedWaitUntil:
