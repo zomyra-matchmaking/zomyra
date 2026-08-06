@@ -94,7 +94,7 @@ These are decided, not open. Do not relitigate them without the owner saying so.
 | C-3 | **Light mode only** | No dark palette, no `useColorScheme` branching. `app.json` `userInterfaceStyle` set to `"light"`. |
 | C-4 | **Semantic design tokens** | Tokens named by role (`colors.text.primary`, `colors.border.subtle`), never by value (`colors.purple700`) — so a theme change stays a one-file change even with a single theme. |
 | C-5 | **One module at a time** | Finish, summarize, append to this log, stop. Never auto-continue into the next module. |
-| C-7 | **Every module appends to the regression sheet** | Before closing a module, append its cases to `zomyra-app/docs/TEST-CASES.md` — IDs are `M<module>-<nnn>`, never reused, one assertion each, testing behaviour rather than implementation. The sheet exists so a later module that breaks an earlier one is caught **by name and by owning module**, runnable in its own session. **Tracked in the repo** (reversed 2026-08-01, same day it was created untracked) — so each module's claimed coverage lands in its own PR, next to the code making the claim, and survives a fresh clone. **It is never bundled**: nothing imports it, and Metro only bundles what is reachable from the entry point (FE TDD §13.3), so tracking costs nothing at runtime. |
+| C-7 | **Every module appends to the regression sheet** | Before closing a module, append its cases to `zomyra-app/docs/TEST-CASES.md` — IDs are `M<module>-<nnn>`, never reused, one assertion each, testing behaviour rather than implementation. The sheet exists so a later module that breaks an earlier one is caught **by name and by owning module**, runnable in its own session. **Tracked in the repo** (reversed 2026-08-01, same day it was created untracked) — so each module's claimed coverage lands in its own PR, next to the code making the claim, and survives a fresh clone. **It is never bundled**: nothing imports it, and Metro only bundles what is reachable from the entry point (FE TDD §13.3), so tracking costs nothing at runtime. **From Module 5.5 onward (§2.4)** the sheet stops being purely manual: a case backed by a Jest or Maestro test cites it in `Verify` and carries type `build`, so the sheet stays the single index of coverage rather than being replaced by one. |
 | C-6 | **Branch per module, merged by PR** | `master` is the integration branch and takes no direct commits. **Create the branch at the *start* of a module, before any file changes** — `module/<n>-<slug>`, e.g. `module/0-build-foundation` — so no work ever lands on `master` by accident. At module end: commit, append the §6 log entry, summarise, and **stop**. **The owner pushes and opens the PR against `master`** — never push, force-push, or open PRs unless explicitly asked. *(Pre-Module-0 setup docs were committed directly to `master`; this rule applies from Module 0 onward.)* |
 
 ### Repository state (updated 2026-07-29)
@@ -122,13 +122,14 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 3 | Navigation | **Complete** (2026-08-02) | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | **Complete** (2026-08-03) | First real API integration; unblocks every authenticated call. **+ FR-2a's consent screen + O-18(a) settled on a scheme-owning build** |
 | 5 | Onboarding & profile schema | Not started | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
+| **5.5** | **Test harness (Jest + RNTL, Maestro)** | Not started | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
 | 9 | Chat & realtime | Not started | Largest single feature; independent once the core loop is proven |
 | 10 | Premium & entitlements | Not started | ⛔ **Gated — see §2.1.** Needs the dev build and every gated surface to already exist |
 | 11 | Push notifications | Not started | ⛔ **Gated — see §2.1.** Cross-cutting: routes into chat, requests, verification, premium |
-| 12 | Hardening | Not started | Accessibility, offline, Sentry, tests — applies across finished screens |
+| 12 | Hardening | Not started | Accessibility, offline, Sentry — applies across finished screens. **Tests moved out to 5.5** (2026-08-06); what stays here is extending coverage to the modules built after 5.5, not standing the tooling up |
 
 ### 2.1 ⛔ Store-account gate — must clear before Module 10 starts
 
@@ -209,7 +210,8 @@ refined as modules land; elapsed time runs longer because of review turnaround a
 | 2 · State & data layer | 3–5 days | | 7 · Discover / interest | 4–6 days |
 | 3 · Navigation | 2–3 days *(+½, §13)* | | 8 · Requests | 1–2 days |
 | 4 · Auth | 2–3 days | | 9 · Chat & realtime | 4–6 days |
-| | | | **0–9 total** | **24–36 days (5–7 wks build, 7–10 elapsed)** |
+| | | | 5.5 · Test harness | 2–2.5 days *(added §2.4)* |
+| | | | **0–9 total** | **26–38.5 days (5–8 wks build, 7–10 elapsed)** |
 
 | Window | Engineering | Legal / accounts |
 |---|---|---|
@@ -307,6 +309,92 @@ Needed before Module 4 can be *verified* rather than merely written:
 - **Deterministic stubs for both ML services** if photo moderation and selfie face-match aren't
   ready — Module 6 needs *a* response, not a real one. Staging should be able to return
   approved/rejected and verified/mismatch on demand
+
+---
+
+## 2.4 Module 5.5 — Test harness (assigned 2026-08-06)
+
+**Why this module exists.** FE TDD §13 chose the tooling — Jest + RNTL for unit and component tests,
+Maestro for E2E, Detox deliberately deferred — but a tooling choice is not an assignment, and none of
+it was ever installed. The work had been folded into Module 12's "Hardening" line, which is the wrong
+place: it puts the first automated test after every feature is built, when retrofitting is most
+expensive and the regressions it would have caught have already shipped. Moving it to 5.5 means the
+harness arrives with five modules to cover instead of twelve.
+
+**Numbered 5.5, not 6.** Module numbers are load-bearing: `M<n>-<nnn>` IDs in `docs/TEST-CASES.md`,
+§6 log headings, branch names and PR titles all reference them, and C-7 says IDs are never reused.
+Renumbering 6–12 to make room would invalidate all of it. Test IDs for this module are **`M55-nnn`**.
+
+### 2.4.1 Two parts, in this order
+
+| | Scope | Est. | Depends on |
+|---|---|---|---|
+| **5.5a** | Jest + RNTL: `jest-expo` preset, mocks for `expo-secure-store`, `react-native-reanimated`, `expo-router` and `@react-native-google-signin`, a `yarn test` script, first suites | ~1 day | Nothing — no device, no backend, no store account |
+| **5.5b** | Maestro: install, `.maestro/` flows, and the **testID convention retrofitted across Modules 3–5** | ~1–1.5 days | A `preview-mock` build (§2.4.3) |
+
+One module rather than two: both share the same groundwork — the testID convention, the npm scripts,
+the runner documentation, and the pass that flips `Type` in TEST-CASES.md from `static`/`runtime` to
+`build`. But **5.5a runs first and lands on its own**, so the module still delivers if 5.5b slips.
+
+**The unbudgeted cost is testIDs.** Maestro drives the app through the accessibility tree, and
+Modules 0–5 shipped with no testID convention — the root gate, auth, the FR-2a consent screen and
+every onboarding step need them added. That retrofit, not the Maestro install, is the bulk of 5.5b,
+and it is the strongest argument for doing this now rather than at Module 12: the same retrofit
+across twelve modules' worth of screens is several times the work.
+
+### 2.4.2 What to write first
+
+**Unit (5.5a) — convert the `static` cases someone currently verifies by reading code.** These are
+the highest-value targets because they are pure functions or pure reducers with no device
+dependency, and because nobody will re-read them by hand every module:
+
+| Existing case | What the test asserts |
+|---|---|
+| M3-002 | `resolveRootDestination` is pure, and `accountStatus` short-circuits before the `profileComplete` branch |
+| M2-004 | Concurrent 401s await **one** in-flight refresh promise — the case where parallel refreshes replay a single-use token and force-logout a healthy session |
+| M2-001, M2-003 | No token slice and no `api` slice in `PERSIST_WHITELIST` (NFR-2, NFR-11) |
+| M2-005 | An invalid `EXPO_PUBLIC_APP_ENV` throws rather than silently defaulting to production |
+| M2-006 | Legacy Zustand state imports exactly once and a returning user keeps their draft |
+
+Converting these from `static` to `build` also discharges part of the Modules 0–2 backfill debt the
+Status table in TEST-CASES.md records.
+
+**E2E (5.5b) — only two of FE §13.2's five priorities are buildable at this point:** phone/Google
+login through the launch gate, and onboarding submission through to the Photos hand-off. The other
+three — Express Interest→Match with the cap and snap-back, chat with optimistic reconciliation, and
+the premium purchase race — belong to Modules 7, 9 and 10 respectively. **Each of those modules
+writes its own flow**; 5.5 must not try to write them blind against screens that do not exist yet.
+
+### 2.4.3 Run Maestro against the mock build, not staging
+
+`build:preview-mock:android` and `build:preview-mock:ios-sim` already exist from Module 0. The
+automated lane runs there: deterministic fixtures, no OTP, no live backend, no dependence on anyone
+else's deploy. A regression suite that fails because staging is down is a suite people learn to
+ignore.
+
+### 2.4.4 ⚠️ The joint owner + backend test pass is separately blocked
+
+The intent behind this module is a joint session with the backend owner, walking every case through
+Module 5 against the real API before Module 6 starts. **That session cannot run today, and no amount
+of test tooling changes it** — per the 2026-08-06 staging re-probe (§6, Module 5 follow-up 3),
+**no token is obtainable on staging**: both OTP endpoints are still 404 behind DLT registration, and
+`POST /v1/auth/google` needs O-19 item (1), the Android OAuth client bound to the EAS keystore SHA-1.
+There is no dev-login backdoor.
+
+These are two different passes and conflating them wastes the session:
+
+| | Automated (Maestro, mock build) | Joint pass (real staging) |
+|---|---|---|
+| Verifies | client behaviour, regressions | the contract |
+| Runnable now | Yes | **No — cannot authenticate** |
+| Failure means | we broke something | the two sides disagree |
+
+**The ask to send the backend owner before booking that session** is a staging-only auth path — a
+fixed test number with a fixed OTP, or a guarded dev-login endpoint. It is already item 2 of §2.3 and
+is written up in `docs/CONTRACT-QUESTIONS.md`; it is also a precondition for ever running Maestro
+against staging rather than mocks. Getting it in flight now means it lands around the same time the
+harness does. Until then, staging cases stay `BLOCKED` in TEST-CASES.md — which is what that status
+is for, and is not a failure.
 
 ---
 
