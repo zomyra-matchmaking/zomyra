@@ -66,9 +66,9 @@ const HEIGHT_MAX = 200;
 
 const DIM_LABEL: Record<CompatibilityDimension, string> = {
   all: "All",
-  personality: "Compatibility",
+  compatibility: "Compatibility",
   lifestyle: "Lifestyle",
-  priorities: "Marriage Goals",
+  marriage_goals: "Marriage Goals",
 };
 
 export default function Discover() {

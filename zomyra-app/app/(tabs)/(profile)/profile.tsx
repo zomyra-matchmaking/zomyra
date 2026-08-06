@@ -54,7 +54,15 @@ export default function ProfileScreen() {
     const last = (onboarding.lastName || "Sharma").trim();
     return `${first} ${last}`.trim();
   }, [onboarding.firstName, onboarding.lastName]);
-  const city = (onboarding.city || "Bangalore, India").trim();
+  /*
+   * ⚠️ **Placeholder, and more obviously so since Module 5.** The draft holds a
+   * `cityId` now, not a city name (O-16) — the *name* is denormalized onto
+   * API-23's `/profile/me` response (`cityName`), which this screen does not
+   * fetch yet. Rendering the raw id would be worse than the existing hardcoded
+   * fallback, so it keeps the fallback until **Module 6** wires API-23 and this
+   * whole header reads from the server rather than from the onboarding draft.
+   */
+  const city = "Bangalore, India";
 
   const [showLogout, setShowLogout] = useState(false);
   const [showDelete, setShowDelete] = useState(false);

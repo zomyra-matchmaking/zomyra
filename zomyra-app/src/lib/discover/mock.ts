@@ -1,6 +1,30 @@
+import type { DiscoveryMode } from "@/src/api/contract";
+
 export type CompatibilityTier = "Excellent Match" | "Great Match" | "Potential Match";
 
-export type CompatibilityDimension = "all" | "lifestyle" | "personality" | "priorities";
+/**
+ * ✅ **The drift `contract.ts` flagged, closed by Module 5 (2026-08-05).**
+ *
+ * This was independently declared as `all | lifestyle | personality |
+ * priorities` — **neither TDD's spelling**, and the discrepancy had already
+ * reached the store (`discovery-mode-slice`), the FR-15a picker and Discover's
+ * own mode labels, all of which typed themselves against this rather than
+ * against the contract. `discover.tsx` was rendering `personality` as
+ * *"Compatibility"* and `priorities` as *"Marriage Goals"*, which is what
+ * settled the mapping: the labels were already right, only the keys were wrong.
+ *
+ * It matters because these keys are **sent to the backend** — `discoveryMode`
+ * rides on API-12's query and comes back on `GET /me` — so a client storing
+ * `"personality"` and a server expecting `"compatibility"` is a 400 or, worse,
+ * an ignored filter that quietly returns the wrong feed.
+ *
+ * **Now an alias rather than a copy**, so the two cannot drift again: there is
+ * one declaration, in `contract.ts`, where O-11's codegen will eventually
+ * replace it. The alias itself is kept only so the ~8 existing call sites need
+ * not be renamed in a module that does not otherwise touch Discover; Module 7
+ * rewrites that screen against the real contract and can retire the name then.
+ */
+export type CompatibilityDimension = DiscoveryMode;
 
 export type DimensionScore = {
   score: number; // 0–100, used for ranking the feed
@@ -63,13 +87,13 @@ export const MOCK_PROFILES: DiscoverProfile[] = [
         reason:
           "Riya is vegetarian, a non-smoker, and a social drinker who treats mornings in Cubbon Park as sacred. Your weekend rhythms — outdoor walks, a slow brunch, friends in small doses — fit easily.",
       },
-      personality: {
+      compatibility: {
         score: 88,
         tier: "Great Match",
         reason:
           "Riya describes herself as a warm, expressive communicator who talks things through rather than letting them fester. You both lean into emotional support over quick fixes — a calm, complementary pairing.",
       },
-      priorities: {
+      marriage_goals: {
         score: 95,
         tier: "Excellent Match",
         reason:
@@ -127,13 +151,13 @@ export const MOCK_PROFILES: DiscoverProfile[] = [
         reason:
           "Arjun is a non-smoker, occasional drinker, and a runner who treats early bedtimes as non-negotiable. You'd share long weekend runs, cricket nights with close friends, and a love of unhurried mornings.",
       },
-      personality: {
+      compatibility: {
         score: 90,
         tier: "Excellent Match",
         reason:
           "You're both introverted-but-warm — meaningful one-on-one conversations come naturally, and you tend to be steady through ups and downs. Communication styles look beautifully aligned.",
       },
-      priorities: {
+      marriage_goals: {
         score: 78,
         tier: "Great Match",
         reason:
@@ -189,13 +213,13 @@ export const MOCK_PROFILES: DiscoverProfile[] = [
         reason:
           "Ananya is vegetarian, non-smoker, and starts every morning with yoga. You'd share slow Sunday mornings, journaling rituals, and a love of unhurried weekends — daily rhythms feel quietly aligned.",
       },
-      personality: {
+      compatibility: {
         score: 88,
         tier: "Great Match",
         reason:
           "Ananya is gentle and thoughtful — she values kindness above being right. You'd both bring patience, curiosity, and a willingness to listen to disagreements. A calming, generous pairing.",
       },
-      priorities: {
+      marriage_goals: {
         score: 55,
         tier: "Potential Match",
         reason:

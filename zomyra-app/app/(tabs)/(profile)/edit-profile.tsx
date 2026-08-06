@@ -7,9 +7,13 @@
  * edit auto-saves and survives reloads).
  *
  * Inline editors:
- *   - Text fields  → `<TextInput>` in place (bio, name, city, profession, languages)
- *   - Enum fields  → bottom-sheet single-select picker (build, education,
- *                    income, diet, drinking, smoking, fitness)
+ *   - Text fields  → `<TextInput>` in place (name only — everything else that
+ *                    looks like text is a catalogue key underneath)
+ *   - Enum fields  → bottom-sheet picker fed by **API-39**, single- or
+ *                    multi-select (build, education, income, profession, diet,
+ *                    drinking, smoking, languages)
+ *   - Location     → state picker (API-39) then city picker (**API-38**,
+ *                    scoped to that state); the draft stores `cityId`
  *   - Photos       → expo-image-picker; stored as base64 data URIs in
  *                    `state.photos[]` (first slot acts as the hero photo)
  */
@@ -38,50 +42,136 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { useMemo, useState, type ReactNode } from "react";
-import { Alert, Image, KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useGetCitiesQuery, type CatalogueOption, type OptionCategoryKey } from "@/src/api";
 import { useOnboardingDraft } from "@/src/hooks/use-onboarding-draft";
-import type {
-  BodyType,
-  Diet,
-  Drinking,
-  Education,
-  Fitness,
-  IncomeRange,
-  Smoking,
-} from "@/src/lib/onboarding/types";
+import { useOnboardingOptions } from "@/src/hooks/use-onboarding-options";
+import type { OnboardingState } from "@/src/lib/onboarding/types";
+/*
+ * **Every list on this screen is API-39's, not this file's** (FR-3b, FE §9.2).
+ *
+ * The prototype hardcoded `INCOME_OPTS`, `BUILD_OPTS` and their neighbours as
+ * *display labels* and wrote them straight into the draft as though they were
+ * keys. That is a second copy of the catalogue — the exact thing FR-3b exists to
+ * prevent — and it drifts the moment the backend edits a list. All of them are
+ * gone; `useOnboardingOptions` is the single source, as it is in the Onboarding
+ * stack.
+ *
+ * **It is a separate call, and that is fine.** RTK Query keys `getOnboardingOptions`
+ * by endpoint, so this screen's subscription shares one cached response with
+ * onboarding's rather than refetching — but it does not *depend* on onboarding
+ * having run, which matters because the draft is destroyed on submit (NFR-12)
+ * and Edit Profile is reached long afterwards.
+ *
+ * ⚠️ **Still owed by Module 6, and both are real:**
+ *
+ * 1. **Pre-fill comes from the local draft, not from API-23.** After submit the
+ *    draft is gone, so a returning user sees an empty form. This screen needs
+ *    `GET /profile/me` to load and `PATCH /profile` to save; until then it edits
+ *    client state that reaches no server.
+ * 2. **`state` has no server-side home.** The city picker needs a state to scope
+ *    API-38, and `state` is deliberately never submitted (O-16) — so once the
+ *    draft is gone there is nothing to seed it from. Either API-23 returns the
+ *    city's state alongside `cityId`, or the client needs a city→state lookup.
+ *    Raised in docs/CONTRACT-QUESTIONS.md. Today the picker just starts at the
+ *    state step, which is correct but re-asks a question the server knows.
+ * 3. **FR-4's immutability rules** on name/DOB/height are not enforced here.
+ */
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 import { isIOS } from "@/src/utils/platform";
 
-// Design tokens — match Discover so the screens feel related.
-
-// Option lists (mirror onboarding types.ts)
-const BUILD_OPTS: BodyType[] = ["Slim", "Average", "Athletic", "Curvy", "Plus Size", "Prefer Not To Say"];
-const EDUCATION_OPTS: Education[] = ["High School", "Diploma", "Bachelor's Degree", "Master's Degree", "MBA", "PhD", "Other"];
-const INCOME_OPTS: IncomeRange[] = ["Under ₹5 LPA", "₹5–10 LPA", "₹10–20 LPA", "₹20–35 LPA", "₹35–50 LPA", "₹50 LPA+", "Prefer Not To Say"];
-const DIET_OPTS: Diet[] = ["Vegetarian", "Eggetarian", "Non-Vegetarian", "Vegan"];
-const DRINK_OPTS: Drinking[] = ["Never", "Socially", "Occasionally", "Frequently"];
-const SMOKE_OPTS: Smoking[] = ["Never", "Occasionally", "Frequently"];
-const FITNESS_OPTS: Fitness[] = ["Daily", "3–5 times a week", "1–2 times a week", "A few times a month", "Rarely", "Never"];
-
 const PLACEHOLDER_PHOTO =
   "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=900&q=80&auto=format&fit=crop";
 
-type PickerOption = string;
+/**
+ * The sheet works in keys and renders labels, like every other FR-3b surface.
+ *
+ * ⚠️ **Nothing here is a snapshot, and that is the whole design.** This object is
+ * built inside an `onPress` and then survives many renders — a multi-select sheet
+ * stays open across taps, and API-38's city list arrives *after* the sheet opens.
+ * Anything captured at open time (an option array, a loading flag, the draft)
+ * freezes at its open-time value, so the sheet either never fills in or computes
+ * the next pick from a stale array. The fix is uniform: the descriptor names
+ * *where* data comes from, and every read happens at render with values passed in.
+ *
+ * - `source` is resolved to a live option list by the component each render.
+ * - `selected` and `onPick` take the **current** draft as an argument.
+ *
+ * `selected` is an array even for single-select so one sheet covers both cases;
+ * `multi` decides whether picking closes it.
+ */
 type PickerState = {
   title: string;
-  options: readonly PickerOption[];
-  current: string;
-  onPick: (v: PickerOption) => void;
+  source: { kind: "catalogue"; category: OptionCategoryKey } | { kind: "cities" };
+  selected: (draft: OnboardingState) => readonly string[];
+  multi?: boolean;
+  empty?: string;
+  onPick: (key: string, draft: OnboardingState) => void;
 } | null;
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { draft: state, set } = useOnboardingDraft();
+  const { options, label } = useOnboardingOptions();
 
   const [picker, setPicker] = useState<PickerState>(null);
+
+  /*
+   * API-38 is state-scoped, so the fetch is driven by whichever state the draft
+   * currently holds and skipped entirely when there isn't one. `cityLabel` reads
+   * off the same response rather than storing a name in the draft — a stored
+   * name is a second copy that goes stale when the backend renames a city.
+   */
+  const { data: citiesData, isFetching: citiesLoading } = useGetCitiesQuery(state.state, {
+    skip: !state.state,
+  });
+  const cityOptions = useMemo<CatalogueOption[]>(
+    () => (citiesData?.cities ?? []).map((c) => ({ key: c.id, label: c.name })),
+    [citiesData],
+  );
+  const cityLabel = cityOptions.find((c) => c.key === state.cityId)?.label ?? "";
+
+  /**
+   * Open the sheet for a single-select catalogue-backed field. The draft key and
+   * the API-39 category are passed separately because they are not always the
+   * same word, and conflating them is how a screen ends up writing one field's
+   * keys into another.
+   */
+  const openChoice = (
+    title: string,
+    category: OptionCategoryKey,
+    field:
+      | "build"
+      | "education"
+      | "incomeRange"
+      | "profession"
+      | "diet"
+      | "drinking"
+      | "smoking"
+      | "fitness",
+  ) =>
+    setPicker({
+      title,
+      source: { kind: "catalogue", category },
+      selected: (d) => [d[field]],
+      onPick: (key) => set(field, key),
+    });
+
+  /*
+   * The sheet's live data, recomputed every render — see `PickerState`. The city
+   * branch is the one that moves under the sheet: tapping a state kicks off
+   * API-38 and the list lands a moment later, so `pickerLoading` drives an
+   * overlay spinner rather than the sheet opening empty and looking broken.
+   */
+  const pickerOptions: readonly CatalogueOption[] = !picker
+    ? []
+    : picker.source.kind === "cities"
+      ? cityOptions
+      : options(picker.source.category);
+  const pickerLoading = picker?.source.kind === "cities" && citiesLoading;
 
   const photos = state.photos.length > 0 ? state.photos : [PLACEHOLDER_PHOTO];
 
@@ -191,16 +281,20 @@ export default function EditProfileScreen() {
                 />
                 {age != null ? <Text style={styles.identityName}>, {age}</Text> : null}
               </View>
+              {/*
+                * Two taps, not a text box: `cityId` is a closed set from API-38
+                * (O-15/O-16) and API-38 is scoped by state, so the state has to
+                * be chosen before there is a city list to choose from. Free text
+                * here would write an id the backend cannot resolve.
+                */}
               <View style={styles.identityLocRow}>
                 <MapPin size={14} color={colors.text.muted} strokeWidth={2} />
-                <TextInput
+                <Text
                   testID="edit-city"
-                  value={state.city}
-                  onChangeText={(t) => set("city", t)}
-                  placeholder="Add your city"
-                  placeholderTextColor={colors.text.muted}
-                  style={styles.identityLocInput}
-                />
+                  style={[styles.identityLocInput, !cityLabel && { color: colors.text.muted }]}
+                >
+                  {cityLabel || "Add your city"}
+                </Text>
               </View>
             </View>
           </View>
@@ -253,33 +347,71 @@ export default function EditProfileScreen() {
             </View>
           </SectionCard>
 
+          {/* ── Location ── */}
+          <SectionCard kicker="LOCATION" Icon={MapPin} testID="card-location">
+            <PickField
+              testID="edit-state"
+              Icon={MapPin}
+              label="State"
+              value={label("state", state.state)}
+              placeholder="Pick your state"
+              onPress={() =>
+                setPicker({
+                  title: "State",
+                  source: { kind: "catalogue", category: "state" },
+                  selected: (d) => [d.state],
+                  /*
+                   * Same rule the Onboarding stack applies: a `cityId` is only
+                   * valid under the state it came from, so changing state has to
+                   * clear it. Guarded on inequality so re-picking the same state
+                   * is a no-op rather than silently wiping a good answer.
+                   */
+                  onPick: (key, d) => {
+                    if (key !== d.state) set("cityId", "");
+                    set("state", key);
+                  },
+                })
+              }
+            />
+            <Divider />
+            <PickField
+              testID="edit-city-row"
+              Icon={MapPin}
+              label="City"
+              value={cityLabel}
+              placeholder={state.state ? "Pick your city" : "Pick your state first"}
+              onPress={() =>
+                setPicker({
+                  title: "City",
+                  source: { kind: "cities" },
+                  selected: (d) => [d.cityId],
+                  empty: state.state
+                    ? "No cities listed for that state yet."
+                    : "Pick your state first.",
+                  onPick: (id) => set("cityId", id),
+                })
+              }
+            />
+          </SectionCard>
+
           {/* ── Profession & Income ── */}
           <SectionCard kicker="PROFESSION & INCOME" Icon={Briefcase} testID="card-prof-income">
-            <FieldRow Icon={Briefcase} label="Profession">
-              <TextInput
-                testID="edit-profession"
-                value={state.profession}
-                onChangeText={(t) => set("profession", t)}
-                placeholder="What you do"
-                placeholderTextColor={colors.text.muted}
-                style={styles.fieldInput}
-              />
-            </FieldRow>
+            <PickField
+              testID="edit-profession"
+              Icon={Briefcase}
+              label="Profession"
+              value={label("profession", state.profession)}
+              placeholder="What you do"
+              onPress={() => openChoice("Profession", "profession", "profession")}
+            />
             <Divider />
             <PickField
               testID="edit-income"
               Icon={IndianRupee}
               label="Income range"
-              value={state.income}
+              value={label("incomeRange", state.incomeRange)}
               placeholder="Pick a range"
-              onPress={() =>
-                setPicker({
-                  title: "Income range",
-                  options: INCOME_OPTS,
-                  current: state.income,
-                  onPick: (v) => set("income", v as IncomeRange),
-                })
-              }
+              onPress={() => openChoice("Income range", "incomeRange", "incomeRange")}
             />
           </SectionCard>
 
@@ -288,61 +420,34 @@ export default function EditProfileScreen() {
             <PickField
               Icon={Leaf}
               label="Diet"
-              value={state.diet}
+              value={label("diet", state.diet)}
               placeholder="Vegetarian / Non-veg…"
-              onPress={() =>
-                setPicker({
-                  title: "Diet",
-                  options: DIET_OPTS,
-                  current: state.diet,
-                  onPick: (v) => set("diet", v as Diet),
-                })
-              }
+              onPress={() => openChoice("Diet", "diet", "diet")}
             />
             <Divider />
             <PickField
               Icon={Wine}
               label="Drinking"
-              value={state.drinking}
+              value={label("drinking", state.drinking)}
               placeholder="How often you drink"
-              onPress={() =>
-                setPicker({
-                  title: "Drinking",
-                  options: DRINK_OPTS,
-                  current: state.drinking,
-                  onPick: (v) => set("drinking", v as Drinking),
-                })
-              }
+              onPress={() => openChoice("Drinking", "drinking", "drinking")}
             />
             <Divider />
             <PickField
               Icon={Cigarette}
               label="Smoking"
-              value={state.smoking}
+              value={label("smoking", state.smoking)}
               placeholder="How often you smoke"
-              onPress={() =>
-                setPicker({
-                  title: "Smoking",
-                  options: SMOKE_OPTS,
-                  current: state.smoking,
-                  onPick: (v) => set("smoking", v as Smoking),
-                })
-              }
+              onPress={() => openChoice("Smoking", "smoking", "smoking")}
             />
             <Divider />
             <PickField
+              testID="edit-fitness"
               Icon={Dumbbell}
               label="Fitness"
-              value={state.fitness}
-              placeholder="How active you are"
-              onPress={() =>
-                setPicker({
-                  title: "Fitness level",
-                  options: FITNESS_OPTS,
-                  current: state.fitness,
-                  onPick: (v) => set("fitness", v as Fitness),
-                })
-              }
+              value={label("fitness", state.fitness)}
+              placeholder="How often you exercise"
+              onPress={() => openChoice("Fitness", "fitness", "fitness")}
             />
           </SectionCard>
 
@@ -351,16 +456,9 @@ export default function EditProfileScreen() {
             <PickField
               Icon={UserRound}
               label="Build"
-              value={state.bodyType}
+              value={label("build", state.build)}
               placeholder="Pick body type"
-              onPress={() =>
-                setPicker({
-                  title: "Build",
-                  options: BUILD_OPTS,
-                  current: state.bodyType,
-                  onPick: (v) => set("bodyType", v as BodyType),
-                })
-              }
+              onPress={() => openChoice("Build", "build", "build")}
             />
             <Divider />
             <FieldRow Icon={Info} label="Height">
@@ -370,36 +468,44 @@ export default function EditProfileScreen() {
             <PickField
               Icon={GraduationCap}
               label="Education"
-              value={state.education}
+              value={label("education", state.education)}
               placeholder="Highest qualification"
-              onPress={() =>
-                setPicker({
-                  title: "Education",
-                  options: EDUCATION_OPTS,
-                  current: state.education,
-                  onPick: (v) => set("education", v as Education),
-                })
-              }
+              onPress={() => openChoice("Education", "education", "education")}
             />
           </SectionCard>
 
           {/* ── Languages ── */}
           <SectionCard kicker="LANGUAGES" Icon={LanguagesIcon} testID="card-languages">
-            <FieldRow Icon={LanguagesIcon} label="Languages">
-              <TextInput
-                testID="edit-languages"
-                value={state.languages.join(", ")}
-                onChangeText={(t) =>
-                  set(
-                    "languages",
-                    t.split(",").map((s) => s.trim()).filter(Boolean),
-                  )
-                }
-                placeholder="English, Hindi…"
-                placeholderTextColor={colors.text.muted}
-                style={styles.fieldInput}
-              />
-            </FieldRow>
+            {/*
+              * Was a comma-separated text box, which wrote whatever was typed
+              * into an array the backend matches by key — "Hindi" instead of
+              * "hindi", and any typo silently accepted. Multi-select over the
+              * catalogue makes an invalid language unrepresentable.
+              */}
+            <PickField
+              testID="edit-languages"
+              Icon={LanguagesIcon}
+              label="Languages"
+              value={state.languages.map((k) => label("languages", k)).join(", ")}
+              placeholder="Pick the languages you speak"
+              onPress={() =>
+                setPicker({
+                  title: "Languages",
+                  source: { kind: "catalogue", category: "languages" },
+                  selected: (d) => d.languages,
+                  multi: true,
+                  // `d`, not the captured draft: this sheet stays open across
+                  // taps, so the second toggle must see the first one's result.
+                  onPick: (key, d) =>
+                    set(
+                      "languages",
+                      d.languages.includes(key)
+                        ? d.languages.filter((k) => k !== key)
+                        : [...d.languages, key],
+                    ),
+                })
+              }
+            />
           </SectionCard>
 
           <View style={{ height: 24 }} />
@@ -407,7 +513,13 @@ export default function EditProfileScreen() {
       </KeyboardAvoidingView>
 
       {/* ── Single-select bottom sheet ── */}
-      <PickerSheet picker={picker} onClose={() => setPicker(null)} />
+      <PickerSheet
+        picker={picker}
+        draft={state}
+        options={pickerOptions}
+        loading={!!pickerLoading}
+        onClose={() => setPicker(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -507,11 +619,21 @@ function Divider() {
 
 function PickerSheet({
   picker,
+  draft,
+  options,
+  loading,
   onClose,
 }: {
   picker: PickerState;
+  draft: OnboardingState;
+  /** Resolved by the parent this render — never captured when the sheet opened. */
+  options: readonly CatalogueOption[];
+  loading: boolean;
   onClose: () => void;
 }) {
+  // Bound to a const so the narrowing survives into the map callback below.
+  const p = picker;
+  const selected = p?.selected(draft) ?? [];
   return (
     <Modal
       visible={!!picker}
@@ -530,31 +652,49 @@ function PickerSheet({
             </Touchable>
           </View>
           <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
-            {picker?.options.map((opt) => {
-              const active = picker.current === opt;
-              return (
-                <Touchable
-                  feedback="highlight"
-                  key={opt}
-                  testID={`picker-opt-${opt}`}
-                  onPress={() => {
-                    picker.onPick(opt);
-                    onClose();
-                  }}
-                  style={[styles.sheetItem, active && styles.sheetItemActive]}
-                >
-                  <Text
-                    style={[
-                      styles.sheetItemText,
-                      active && { color: colors.brand.default, fontWeight: fontWeight.bold },
-                    ]}
+            {/*
+              * Three states, and the empty one is not an error: API-38's list is
+              * scoped to a state that may not be chosen yet, so "nothing here"
+              * needs a sentence saying which. Falling through to a blank sheet
+              * reads as a broken screen.
+              */}
+            {loading ? (
+              <View style={styles.sheetLoading} testID="picker-loading">
+                <ActivityIndicator color={colors.brand.default} />
+              </View>
+            ) : !p || options.length === 0 ? (
+              <Text style={styles.sheetNotice}>{p?.empty ?? "Nothing to choose from yet."}</Text>
+            ) : (
+              options.map((opt) => {
+                const active = selected.includes(opt.key);
+                return (
+                  <Touchable
+                    feedback="highlight"
+                    key={opt.key}
+                    // Keyed on the catalogue key, not the label: labels are
+                    // free text the backend can reword, keys are the contract.
+                    testID={`picker-opt-${opt.key}`}
+                    onPress={() => {
+                      p.onPick(opt.key, draft);
+                      // Multi-select stays open so several can be ticked in one
+                      // pass; single-select closing on pick is the whole gesture.
+                      if (!p.multi) onClose();
+                    }}
+                    style={[styles.sheetItem, active && styles.sheetItemActive]}
                   >
-                    {opt}
-                  </Text>
-                  {active ? <CheckCircleIcon size={18} color={colors.brand.default} strokeWidth={2.2} /> : null}
-                </Touchable>
-              );
-            })}
+                    <Text
+                      style={[
+                        styles.sheetItemText,
+                        active && { color: colors.brand.default, fontWeight: fontWeight.bold },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    {active ? <CheckCircleIcon size={18} color={colors.brand.default} strokeWidth={2.2} /> : null}
+                  </Touchable>
+                );
+              })
+            )}
           </ScrollView>
         </Touchable>
       </Touchable>
@@ -823,5 +963,16 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
   },
   sheetItemActive: { backgroundColor: colors.surface.brand },
+  // Holds the list's height while API-38 is in flight, so the sheet does not
+  // snap open at spinner height and then jump when the cities land.
+  sheetLoading: { paddingVertical: spacing[10], alignItems: "center", justifyContent: "center" },
+  sheetNotice: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[5],
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.medium,
+    color: colors.text.muted,
+    textAlign: "center",
+  },
   sheetItemText: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.text.primary },
 });

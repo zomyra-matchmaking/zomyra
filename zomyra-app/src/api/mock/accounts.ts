@@ -346,6 +346,24 @@ export function recordConsent(userId: string, consent: Consent): void {
   accountByUserId(userId).consents.push(consent);
 }
 
+/**
+ * API-7's write half — the state change a successful submit makes.
+ *
+ * **Only `profileComplete` moves, and `verificationStatus` deliberately does
+ * not.** The account lands on `profileComplete: true` + `unverified`, which is
+ * the §8.1 row FE v1.47 found missing (§12.6) and the one every real user
+ * occupies between submitting onboarding and starting photos. Setting anything
+ * further here would skip the state the client most needs to route correctly
+ * out of, and `9000000002` exists precisely to make it reachable as a fixture.
+ *
+ * The submitted profile itself is discarded: nothing in the mock reads a stored
+ * profile back yet, and API-23 is Module 6's. Recording it would be inventing a
+ * store no test exercises.
+ */
+export function completeOnboarding(userId: string): void {
+  accountByUserId(userId).profileComplete = true;
+}
+
 /** API-6's response, projected from a record rather than hardcoded. */
 export function meResponse(account: MockAccount): MeResponse {
   return {

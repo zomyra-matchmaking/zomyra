@@ -52,7 +52,7 @@ const OPTIONS: Option[] = [
     Icon: Users,
   },
   {
-    key: "personality",
+    key: "compatibility",
     title: "Compatibility",
     subtitle: "Personality, values and long-term compatibility.",
     Icon: Heart,
@@ -64,7 +64,7 @@ const OPTIONS: Option[] = [
     Icon: Leaf,
   },
   {
-    key: "priorities",
+    key: "marriage_goals",
     title: "Marriage Goals",
     subtitle: "Family expectations, children, relocation and future plans.",
     Icon: Home,

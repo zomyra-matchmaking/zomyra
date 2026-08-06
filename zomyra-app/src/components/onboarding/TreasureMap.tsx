@@ -266,6 +266,7 @@ export function TreasureMap({
                   />
                 </Animated.View>
                 <Text
+                  numberOfLines={1}
                   style={[
                     styles.nodeLabel,
                     state === "locked" && { color: alpha(colors.brand.strong, 0.35) },
@@ -352,6 +353,13 @@ const styles = StyleSheet.create({
   },
   nodeLabel: {
     marginTop: spacing[1.5],
+    // `nodeWrap` is 40pt wide because that is the marker's diameter — the
+    // label is not bound by it. "Anchor" at this letter-spacing needs ~50pt
+    // and was wrapping to "Ancho / r"; the negative margins let the text
+    // overhang the marker on both sides while staying centred under it.
+    width: 80,
+    marginHorizontal: -20,
+    textAlign: "center",
     fontSize: fontSize.nano,
     fontWeight: fontWeight.semibold,
     letterSpacing: 1.4,

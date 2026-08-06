@@ -27,8 +27,10 @@ import {
   BUNDLE_UPDATE_ID,
   HEADER_APP_VERSION,
   HEADER_BUNDLE_UPDATE_ID,
+  HEADER_CLIENT_INFO,
   HEADER_REQUEST_ID,
 } from "@/src/config/app-headers";
+import { clientInfoHeader, loadDeviceId } from "@/src/config/device";
 import { API_BASE_URL, API_TIMEOUT_MS, USE_API_MOCKS } from "@/src/config/env";
 import { clearTokens, getRefreshToken, loadTokens, peekAccessToken, setTokens } from "@/src/auth/tokens";
 import { accountBlocked, sessionExpired } from "@/src/store/slices/session-slice";
@@ -64,7 +66,11 @@ const httpBaseQuery = fetchBaseQuery({
     headers.set(HEADER_BUNDLE_UPDATE_ID, BUNDLE_UPDATE_ID);
     // Do not set Content-Type here: multipart uploads (API-8, API-11) pass a
     // FormData body, and fetch must be left to generate its own boundary.
-    await loadTokens();
+    //
+    // Both awaits read a keychain that is cached in memory after the first
+    // call, so this is one pair of reads per launch, not per request.
+    const [, deviceId] = await Promise.all([loadTokens(), loadDeviceId()]);
+    headers.set(HEADER_CLIENT_INFO, clientInfoHeader(deviceId));
     const token = peekAccessToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);
     return headers;

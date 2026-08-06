@@ -35,6 +35,11 @@ export {
   type RecordConsentResponse,
 } from "./endpoints/consent";
 export {
+  useGetCitiesQuery,
+  useGetOnboardingOptionsQuery,
+  useSubmitOnboardingMutation,
+} from "./endpoints/onboarding";
+export {
   useSubmitVerificationMutation,
   verificationOutcome,
   type VerificationOutcome,

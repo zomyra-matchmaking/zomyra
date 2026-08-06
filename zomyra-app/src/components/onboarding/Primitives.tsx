@@ -6,6 +6,7 @@ import { Check, Search, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Dimensions, Keyboard, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
+import type { CatalogueOption } from "@/src/api";
 import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";
 import { isIOS } from "@/src/utils/platform";
@@ -40,16 +41,34 @@ export function OptionCard({ selected, onSelect, title, description, compact }: 
   );
 }
 
-/* ============ OptionGrid (responsive chip-style grid) ============ */
-export function OptionGrid<T extends string>({
+/**
+ * ============ OptionGrid (responsive chip-style grid) ============
+ *
+ * **Module 5 changed these three primitives from `string[]` to
+ * `CatalogueOption[]`**, and the change is FR-3b's whole shape in miniature:
+ * what is *shown* and what is *stored* stopped being the same value. Before,
+ * `value` was the label the user tapped; now it is the catalogue key behind it,
+ * and the label only ever reaches the screen.
+ *
+ * The mistake this makes hard: nothing in the component can produce a label
+ * where a key belongs, because `onChange` is fed from `option.key` and there is
+ * no path from the rendered text back to the caller.
+ *
+ * ⚠️ **`testID`s are keyed on `key`, not on the label.** They were `option-Male`
+ * and are now `option-male`. That is deliberate — a test fixed to a label breaks
+ * the moment the backend rewords one, which under FR-3b it may do at any time
+ * without a client release. Any Maestro flow written against the old ids needs
+ * updating (none exist yet — FE §13's tooling is uninstalled, MIGRATION §12.7).
+ */
+export function OptionGrid({
   options,
   value,
   onChange,
   compact,
 }: {
-  options: readonly T[];
-  value: T | "";
-  onChange: (v: T) => void;
+  options: readonly CatalogueOption[];
+  value: string;
+  onChange: (key: string) => void;
   compact?: boolean;
 }) {
   // Chips: content-based width, wraps, centered. Looks like Bumble/Hinge
@@ -59,20 +78,20 @@ export function OptionGrid<T extends string>({
   return (
     <View style={styles.gridWrap}>
       {options.map((opt) => {
-        const selected = value === opt;
+        const selected = value === opt.key;
         return (
           <Touchable
             feedback="scale"
-            key={opt}
-            testID={`option-${opt}`}
-            onPress={() => onChange(opt)}
+            key={opt.key}
+            testID={`option-${opt.key}`}
+            onPress={() => onChange(opt.key)}
             style={[styles.chipCard, selected && styles.chipCardSelected]}
           >
             <Text
               numberOfLines={1}
               style={[styles.chipCardText, selected && styles.chipCardTextSelected]}
             >
-              {opt}
+              {opt.label}
             </Text>
             {selected ? (
               <View style={styles.chipCheck}>
@@ -92,25 +111,25 @@ export function ChipGroup({
   value,
   onChange,
 }: {
-  options: readonly string[];
+  options: readonly CatalogueOption[];
   value: string[];
   onChange: (next: string[]) => void;
 }) {
-  const toggle = (opt: string) =>
-    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt]);
+  const toggle = (key: string) =>
+    onChange(value.includes(key) ? value.filter((v) => v !== key) : [...value, key]);
 
   return (
     <View style={styles.chipWrap}>
       {options.map((opt) => {
-        const selected = value.includes(opt);
+        const selected = value.includes(opt.key);
         return (
           <Touchable
-            key={opt}
-            testID={`chip-${opt}`}
-            onPress={() => toggle(opt)}
+            key={opt.key}
+            testID={`chip-${opt.key}`}
+            onPress={() => toggle(opt.key)}
             style={[styles.chip, selected && styles.chipSelected]}
           >
-            <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{opt}</Text>
+            <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{opt.label}</Text>
           </Touchable>
         );
       })}
@@ -139,6 +158,21 @@ const MAX_SUGGESTIONS = 6;
 // keyboard is showing), we flip the panel to above.
 const MIN_PANEL_HEIGHT = 200;
 
+/**
+ * A type-to-filter picker over a catalogue category.
+ *
+ * ⚠️ **Two values, and conflating them is the bug this component exists to
+ * prevent.** `value` is the committed **key** (`"swe"`); `q` is the **text in
+ * the box**, which is a label while browsing and freely-typed garbage in
+ * between. They are related only through `options` — never assume `q` is a
+ * label, and never let `q` reach `onChange`. Selection happens exclusively by
+ * tapping a suggestion, which carries a real `CatalogueOption` with it.
+ *
+ * A consequence worth stating: **typing an exact label and walking away selects
+ * nothing.** That is intended. Free text is not a catalogue value (O-15 settled
+ * that `city` is a closed set), so a value the user never picked from the list
+ * must not be submittable.
+ */
 export function SearchableSelect({
   options,
   value,
@@ -146,14 +180,19 @@ export function SearchableSelect({
   placeholder = "Select",
   label: _label,
 }: {
-  options: readonly string[];
+  options: readonly CatalogueOption[];
+  /** The committed catalogue **key**, or `""`. */
   value: string;
-  onChange: (v: string) => void;
+  onChange: (key: string) => void;
   placeholder?: string;
   label?: string;
 }) {
   void _label; // silence unused
-  const [q, setQ] = useState(value);
+  const selectedLabel = useMemo(
+    () => options.find((o) => o.key === value)?.label ?? "",
+    [options, value],
+  );
+  const [q, setQ] = useState(selectedLabel);
   const [focused, setFocused] = useState(false);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -195,30 +234,32 @@ export function SearchableSelect({
   }, [focused, kbHeight]);
 
   // ─── Search / filter ───────────────────────────────────────────
-  // If the parent value changes externally (e.g. onboarding "back" restoring
-  // an answer), keep the input in sync.
+  // If the parent value changes externally — onboarding "back" restoring an
+  // answer, or the catalogue arriving after this mounted, which is the normal
+  // case on a cold onboarding since API-39 is in flight while the first screens
+  // render — resync the box to the selected option's label.
   useEffect(() => {
-    setQ(value);
-  }, [value]);
+    setQ(selectedLabel);
+  }, [selectedLabel]);
 
   const trimmed = q.trim();
   const shouldSearch = trimmed.length >= MIN_CHARS;
 
   const filtered = useMemo(() => {
-    if (!shouldSearch) return [] as string[];
-    // Suppress the panel once the input exactly matches a committed value;
-    // otherwise it lingers on top of the input after selection.
-    if (trimmed.toLowerCase() === value.trim().toLowerCase()) return [];
+    if (!shouldSearch) return [] as CatalogueOption[];
+    // Suppress the panel once the input exactly matches the committed option's
+    // label; otherwise it lingers on top of the input after selection.
+    if (trimmed.toLowerCase() === selectedLabel.trim().toLowerCase()) return [];
     const needle = trimmed.toLowerCase();
-    const starts: string[] = [];
-    const contains: string[] = [];
+    const starts: CatalogueOption[] = [];
+    const contains: CatalogueOption[] = [];
     for (const o of options) {
-      const l = o.toLowerCase();
+      const l = o.label.toLowerCase();
       if (l.startsWith(needle)) starts.push(o);
       else if (l.includes(needle)) contains.push(o);
     }
     return [...starts, ...contains].slice(0, MAX_SUGGESTIONS);
-  }, [shouldSearch, trimmed, options, value]);
+  }, [shouldSearch, trimmed, options, selectedLabel]);
 
   const showPanel = focused && shouldSearch;
 
@@ -241,15 +282,17 @@ export function SearchableSelect({
     Math.min(280, placeAbove ? spaceAbove : spaceBelow),
   );
 
-  const commit = (item: string) => {
+  const commit = (item: CatalogueOption) => {
     // Clear any pending blur so the panel doesn't disappear before we
     // finish reading the tap.
     if (blurTimer.current) {
       clearTimeout(blurTimer.current);
       blurTimer.current = null;
     }
-    onChange(item);
-    setQ(item);
+    // The key goes up; the label goes in the box. This is the one place the two
+    // are both in hand, which is why selection cannot happen anywhere else.
+    onChange(item.key);
+    setQ(item.label);
     setFocused(false);
     Keyboard.dismiss();
   };
@@ -310,11 +353,11 @@ export function SearchableSelect({
               }
             >
               {filtered.map((item) => {
-                const selected = item === value;
+                const selected = item.key === value;
                 return (
                   <Touchable
-                    key={item}
-                    testID={`suggestion-${item}`}
+                    key={item.key}
+                    testID={`suggestion-${item.key}`}
                     onPress={() => commit(item)}
                     feedback="highlight"
                     style={[
@@ -328,7 +371,7 @@ export function SearchableSelect({
                         selected && styles.suggestItemTextSelected,
                       ]}
                     >
-                      {item}
+                      {item.label}
                     </Text>
                     {selected ? (
                       <Check size={16} color={colors.brand.default} />
