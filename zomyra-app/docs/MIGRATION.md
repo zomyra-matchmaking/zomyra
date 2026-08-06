@@ -359,6 +359,19 @@ dependency, and because nobody will re-read them by hand every module:
 Converting these from `static` to `build` also discharges part of the Modules 0–2 backfill debt the
 Status table in TEST-CASES.md records.
 
+⚠️ **This module writes tests. It does not fix what they catch.** The natural instinct on a red test
+against merged code is to go fix the code — resist it. A failure found here is a *finding*: record it
+in TEST-CASES.md's `Last result` and report it as `<ID> — <module> — <one-line symptom>`, then carry
+on building the harness. Fixes belong in their own session and their own branch, because the module
+that broke a case is frequently not the module that owns it, and because a harness PR that also
+carries behaviour changes across four merged modules cannot be reviewed. This is the same rule
+TEST-CASES.md gives a regression-run session, stated here because it applies just as much to the
+session standing the tooling up. The one exception is a test that is wrong — fix the test.
+
+If a test cannot be written without a production change (no testID, an untestable side effect,
+a module-scoped singleton with no seam), that change **is** in scope: it is the harness, not a fix.
+Keep it to the seam, and say so in the log entry.
+
 **E2E (5.5b) — only two of FE §13.2's five priorities are buildable at this point:** phone/Google
 login through the launch gate, and onboarding submission through to the Photos hand-off. The other
 three — Express Interest→Match with the cap and snap-back, chat with optimistic reconciliation, and
