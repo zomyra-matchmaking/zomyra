@@ -3913,21 +3913,28 @@ dismissing tap landed on Continue. The step advanced, the flow's own `tapOn: onb
 advanced it again, and the run **silently skipped the DOB question** while the next two assertions
 still passed. Both `hideKeyboard` calls are gone and `docs/TESTING.md` carries the rule.
 
-#### The build: local, not EAS — and the checkout path cost three patches
+#### The build: local, not EAS — and the checkout path cost three patches, since resolved
 
 Built with `npx expo run:ios --configuration Release` rather than spending an EAS credit, at the
 owner's choice. Worth doing again — a flow that can only be re-tested by spending a cloud build is a
-flow nobody re-tests — but **the checkout path contains spaces** (`…/New Matrimony App/…`) and three
+flow nobody re-tests — but **the checkout path contained spaces** (`…/New Matrimony App/…`) and three
 separate scripts in the toolchain do not quote it. Two fail loudly; the third,
 `node_modules/expo-constants/scripts/get-app-config-ios.sh:14`, **fails silently**: BSD `basename`
 accepts the split words, its `!= "Pods"` guard matches, and it `exit 0`s having written no
 `app.config`. The build succeeds and the app dies at launch on `expo-linking needs access to the
 expo-constants manifest` — an error naming a package unrelated to the cause.
 
-All three live in generated or vendored files that `expo prebuild` and `yarn install` restore. They
-are written up in `docs/TESTING.md`, but **the durable fix is to move the checkout to a path without
-spaces**; patching regenerated files is not a fix, it is a thing to redo. EAS is unaffected — it
-builds at a clean path, which is exactly why this was invisible until the first local build.
+All three live in generated or vendored files that `expo prebuild` and `yarn install` restore, so
+patching them was never a fix, only a thing to redo. EAS was unaffected — it builds at a clean path,
+which is exactly why this was invisible until the first local build.
+
+**Resolved the same day.** The owner renamed the checkout to `…/New-Matrimony-App/…`. All three
+patches were then reverted to upstream and the space-free path verified against pristine scripts:
+build green, `EXConstants.bundle/app.config` present (1262 bytes; absent under the bug), both Maestro
+flows passing. Nothing local remains to re-apply. One correction falls out of the re-verification:
+the `LANG=en_US.UTF-8` that `pod install` needs was written up here as a consequence of the spaces —
+it is not. It reproduced unchanged at the space-free path and is purely Ruby's default `ASCII-8BIT`
+locale. `docs/TESTING.md` carries the corrected note.
 
 **New cases:** M55-013…M55-016, all PASS. M55-007 and M55-010 flip FAIL → PASS; M55-008 flips
 BLOCKED → PASS. **Module 5.5 is now 16 cases, all green.**
