@@ -143,6 +143,24 @@ export type MeResponse = {
 export type ConsentType = "sensitive_data" | "biometric";
 
 /**
+ * API-40's request body, as it goes on the wire.
+ *
+ * `platform` is not part of what a caller supplies — `src/api/endpoints/consent.ts`
+ * adds it — but it *is* part of the contract, so it is typed here with the rest
+ * of the wire shapes rather than beside the hook.
+ *
+ * ⚠️ **The backend must accept this field as optional for one deploy before
+ * requiring it.** Making it required in the same release that adds it 400s every
+ * client already installed, including the dev clients on both test devices.
+ */
+export type ConsentWireBody = {
+  consentType: ConsentType;
+  version: number;
+  /** Matches `X-Client-Info`'s `p=` field; see `src/config/device.ts`. */
+  platform: "ios" | "android";
+};
+
+/**
  * FE §9.1 / API-40 (FE v1.46, BE v1.7 §14.2b — MIGRATION §12.5).
  *
  * **The server is the source of truth for what has been accepted** — the client

@@ -60,7 +60,7 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 2 · State & data layer | 6 | Yes — seeded only |
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
-| 5 · Onboarding + verification entry | 51 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
+| 5 · Onboarding + verification entry | 56 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
 | 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those
@@ -386,6 +386,21 @@ that confirmed beyond the individual rows above:
 | M5-048 | The 12 quiz answers submit as one call | Walk section 3, then read the request | One `POST /onboarding/submit` carrying `love.quizAnswers` with all twelve. **No per-question call** — this is what the owner asked to have confirmed against the design doc; there is no mismatch | runtime | PASS 2026-08-05 |
 | M5-049 | Submit routes into Verification (§9.1) | Finish Photos → "Continue to Verification" | API-7 succeeds with `plot.fitness` in the body and the app lands on `/verify` at "Verify your identity" | runtime | PASS 2026-08-05 |
 | M5-050 | Journey-graphic node labels do not wrap | Read `TreasureMap.tsx` after the fix | `nodeLabel` is 80pt wide with `marginHorizontal: -20` and `numberOfLines={1}`, so "Anchor" (~50pt at this letter-spacing) sits on one line, still centred under a 40pt marker | code | PASS 2026-08-05 |
+
+### `X-Client-Info` and API-40's `platform` (FE TDD v1.49 / BE TDD v1.10, 2026-08-06)
+
+| ID | What it proves | How | Expected | Kind | Result |
+|---|---|---|---|---|---|
+| M5-051 | `platform` cannot be omitted by a call site | Read `src/api/endpoints/consent.ts` | Set inside `query`, not in `RecordConsentBody`. Neither the FR-2a nor the FR-11a screen passes it, so neither can forget it | code | PASS 2026-08-06 |
+| M5-052 | The mock is the stricter twin | `POST /consents` without `platform` against mocks | `400 validation_error`. Deliberately stricter than staging, which accepts it as optional for one deploy so installed clients keep working | code | PASS 2026-08-06 |
+| M5-053 | Device strings cannot break the header | Read `headerSafe` in `src/config/device.ts` | Everything outside `[A-Za-z0-9._-]` collapses to `_` and the value is length-capped, so `Redmi Note 12 Pro+` → `Redmi_Note_12_Pro_`. No `;`, `\r` or `\n` can reach a header value | code | PASS 2026-08-06 |
+| M5-054 | The install id survives sign-out | Read `clearTokens` in `src/auth/tokens.ts` against `DEVICE_ID_KEY` | `clearTokens` removes only the two token keys. The device id is a separate key and is never cleared — regenerating per session would add a `devices` row per login and destroy the correlation | code | PASS 2026-08-06 |
+| M5-055 | The header is actually on the wire | Sign in against staging, read a request | `X-Client-Info: p=…; os=…; a=…; d=…` present on every call. **Cannot be run on mocks** — `prepareHeaders` belongs to the HTTP transport, so mock mode has no header to inspect | runtime | **BLOCKED** — needs a staging token (see below) |
+
+> **M5-055 is blocked, and not by us.** Staging has no obtainable token: `POST /v1/auth/otp/request`
+> and `/otp/verify` both return 404 (API-1/API-2 are on hold behind DLT registration, O-8), leaving
+> Google sign-in as the only path — which needs the Android OAuth console client from O-19 item (1),
+> still open. The moment a session exists on staging this is a one-minute check.
 
 > **One thing seen during the walk that is not a defect in this module.** A `stepIdx` resume can
 > look like a *skipped* question when Metro is serving a stale bundle — the fitness screen appeared

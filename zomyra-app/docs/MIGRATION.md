@@ -3510,3 +3510,69 @@ label wraps to "Ancho / r" at this font size — cosmetic, in a Module 3 compone
 
 **Still not covered:** API-7's error outcomes and the offline/retry paths, which need a transport
 that can be made to fail on demand. Recorded as the remaining Module 5 test debt.
+
+---
+
+### Module 5 follow-up 3 — `X-Client-Info`, API-40's `platform`, and a staging re-probe, 2026-08-06
+
+**Staging moved.** Re-probing `https://zomyra-staging.duckdns.org` found API-38, API-39, API-40,
+`/onboarding/submit` and `/verification/submit` all returning **401** where they returned **404** on
+2026-08-05 — and that host answers **404 `not_found`** for genuinely unregistered routes
+(`/v1/auth/otp/request`, `/v1/profile`, `/v1/photos`, `/v1/discover` all do), so a 401 means the
+route is registered. **O-8's three blockers are cleared.** A previously unseen `GET
+/v1/locations/states` also exists, which the client does not call — see CONTRACT-QUESTIONS §10,
+now materially more urgent, because if states come from there the client's invented `state` keys are
+wrong.
+
+**But the staging test pass cannot run.** No token is obtainable: both OTP endpoints are still 404
+(API-1/API-2 remain on hold behind DLT registration, not a regression), leaving `POST /v1/auth/google`
+as the only live auth route — which needs O-19 item (1), the Android OAuth console client bound to
+the EAS keystore's SHA-1, still open. There is no dev-login backdoor (`/auth/dev-login`,
+`/auth/test-login`, `/auth/debug/token` all 404). **Asking the backend for a staging-only auth path
+is the single highest-leverage unblock available**, and it is a precondition for any automated
+device testing later.
+
+**Two contract changes, both agreed with the backend on 2026-08-06 and both now built.** Full
+reasoning in CONTRACT-QUESTIONS §11; spec text for both sides in `docs/spec-deltas/`
+(FE TDD v1.48 → **v1.49**, BE TDD v1.9 → **v1.10**).
+
+1. **API-40 gains `platform: "ios" | "android"`.** The backend asked for it or a nullable column, and
+   preferred the field — a consent record is a legal artifact. It cannot be derived server-side
+   (`X-App-Version` is a version string and nothing else). The client sets it **inside the RTK Query
+   endpoint**, so neither consent call site can omit it, and it reads the same constant
+   `X-Client-Info` does — a consent row and a Sentry event cannot disagree. ⚠️ **The backend must
+   accept it as optional for one deploy**, or every installed client starts 400ing.
+2. **`X-Client-Info` on every request.** The owner overrode the client's `POST /devices` proposal,
+   correctly: a backend Sentry event has no client context, a client-side SDK cannot annotate a
+   server-raised 500, and **Sentry is not installed on this client at all** — the references in
+   `app-headers.ts`, `env.ts` and `errors.ts` are comments, not a dependency. A header is the only
+   channel that reaches the backend's reporter. Compact key-value rather than JSON
+   (`p=android; os=14; m=google_Pixel_7; a=1.0.0; d=<id>`), values sanitised to `[A-Za-z0-9._-]` so
+   no device string can inject a header, static fields resolved once at module load. The backend
+   upserts a `devices` row only when the tuple changes, which keeps the analytics table
+   deduplicated without the separate endpoint.
+
+**Three deliberate omissions in that header, each a decision rather than an oversight.** No model on
+iOS — the only free signal is `Constants.deviceName`, which is usually the owner's *real name*, and
+sending it would put a legal name in every backend log line; real iOS model data needs `expo-device`
+and therefore a C-2 rebuild. No IDFV or `ANDROID_ID` — the install id is a random, resettable value
+generated on first launch, far easier to defend under DPDP; it lives in secure store and is
+**deliberately not cleared by `clearTokens()`**, since the device is the same device after a logout.
+And it is not cryptographically random: `uuid` is a declared dependency imported nowhere that would
+need a `crypto.getRandomValues` polyfill this runtime lacks, and the value is a correlation key that
+authenticates nothing — adopting `uuid` would trade an id for a crash on every request.
+
+**Cost: none.** Everything comes from `react-native`'s `Platform.constants` and the already-installed
+`expo-constants` and `expo-secure-store`. No new dependency, `yarn.lock` untouched, **no dev-client
+rebuild owed under C-2.**
+
+**Answered for the backend without client changes:** `languagesOther`'s coupling is confirmed exactly
+as they stated it — the client cannot send `"other"` without text (the submit gate blocks it) nor
+text without `"other"` (the key is omitted entirely, never sent as `""`), and whitespace-only text is
+treated as absent.
+
+**Also fixed:** the journey graphic's "Anchor" label wrapping to "Ancho / r" (M5-050) — `nodeWrap` is
+40pt because that is the *marker's* diameter, which was never meant to bound the caption.
+
+**New cases:** M5-050…M5-055. M5-055 (the header on the wire) is **BLOCKED** on the same missing
+staging token, and is a one-minute check the moment one exists.

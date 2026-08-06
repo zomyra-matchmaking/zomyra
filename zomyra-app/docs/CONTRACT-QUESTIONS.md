@@ -433,3 +433,81 @@ Option 1 is preferred unless a city→state lookup is wanted for its own sake.
 is yes. The client keeps a defensive "no cities listed for that state yet" message for the case
 where a data edit breaks it, but if the invariant is guaranteed, that message is unreachable and the
 backend should treat a state with zero cities as a data bug.
+
+---
+
+## 11. `platform` on API-40, and `X-Client-Info` on every request (agreed with the backend, 2026-08-06)
+
+Both halves came out of the backend's own message of 2026-08-06. Recording them here because the
+client side is **built and on `master`'s branch already**, and the backend needs to build to the
+same shape.
+
+### 11a. `platform` on `POST /consents` — ✅ **decided: the client sends it**
+
+The backend asked whether it should (a) receive `platform: "ios" | "android"` in the API-40 body or
+(b) make the column nullable and drop it. It preferred (a) because a consent record is a legal
+artifact and a blank platform column weakens it. **Agreed, and shipped.**
+
+It could not be derived server-side, which is worth stating so nobody re-litigates it: `X-App-Version`
+carries a version string and nothing else, and no other request field named a platform.
+
+- The value is `"ios"` or `"android"`, matching `X-Client-Info`'s `p=` field exactly — one source in
+  `src/config/device.ts`, so a consent row and a Sentry event can never disagree.
+- The client sets it **inside the RTK Query endpoint**, not at the call sites, so neither the FR-2a
+  nor the FR-11a screen can omit it.
+- `app.json` declares `"platforms": ["ios", "android"]`, so a third value is impossible today. If web
+  is ever added as a build target, the enum needs widening **before** the client can send it.
+
+> ⚠️ **Accept it as optional for one deploy, then tighten.** Making it required in the same release
+> that introduces it returns `400` to every client already installed — including the dev clients on
+> both test devices, which is how this would first be noticed.
+
+### 11b. `X-Client-Info` on every request — ✅ **decided: a header, not a `POST /devices` endpoint**
+
+The client originally proposed registering a device profile once via its own endpoint, to avoid
+writing an unchanging blob onto every request row. **The owner's counter-argument won and is worth
+preserving:** a backend Sentry event has no client context of its own. A client-side Sentry SDK
+annotates *its* events, but it cannot annotate a 500 raised inside the server — and Sentry is not
+installed on this client at all yet, so today the backend's is the only one that exists. A header is
+the only channel that carries client context into a backend error report.
+
+**Grammar** — compact key-value, not JSON:
+
+```
+X-Client-Info: p=android; os=14; m=google_Pixel_7; a=1.0.0; d=1a2b3c4d-5e6f-...
+```
+
+| Field | Meaning | Notes |
+|---|---|---|
+| `p` | platform | `ios` \| `android`. Same value as API-40's `platform`. |
+| `os` | OS release | Android's *release* (`14`), not the SDK level (`34`). |
+| `m` | brand + model | **Android only** — see below. Absent on iOS; parse defensively. |
+| `a` | app version | Same value as `X-App-Version`. |
+| `d` | install id | Random UUID-shaped string, see below. |
+
+Values are sanitised client-side to `[A-Za-z0-9._-]` and length-capped, so a model like
+`Redmi Note 12 Pro+` arrives as `Redmi_Note_12_Pro_`. No value can contain `;`, `\r` or `\n`.
+
+**Three things the backend should know about what is *not* in there:**
+
+1. **No model on iOS.** The only free iOS signal is `Constants.deviceName`, which is the
+   user-assigned device name and therefore very often the owner's real name ("Priya's iPhone").
+   Sending it would put a legal name into every backend log line and Sentry event. Real iOS model
+   data needs `expo-device` — a native module, so a dev-client rebuild on both devices (C-2). Ask if
+   it is actually needed and it can be batched into the next rebuild.
+2. **`d` is a random id, not IDFV or `ANDROID_ID`.** A hardware identifier survives uninstall, is
+   shared across a vendor's apps, and cannot be reset by the user — a much harder collection to
+   defend under the DPDP Act for a matrimony app. This one is generated on first launch, stored in
+   secure store, and **survives sign-out on purpose**: regenerating it per session would add a
+   `devices` row per login and destroy the correlation it exists for.
+3. **It is not a credential.** It authenticates nothing and gates nothing. The backend must never
+   treat it as identity — it is a correlation key only.
+
+**What the backend agreed to do with it:** set it on the Sentry scope as tags, and upsert a
+`devices` row when the tuple changes so the analytics table stays deduplicated. Request-scoped rows
+(consents, submissions) store the device id only, not the blob — a consent row should be readable in
+five years without unpacking a JSON shape from 2026.
+
+**One operational flag:** this is a new header on *every* request. If any proxy, WAF or middleware
+runs a header allowlist, it needs updating, or the header is silently dropped and the Sentry context
+this was built for never appears.

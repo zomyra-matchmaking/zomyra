@@ -244,15 +244,23 @@ const handlers: Record<string, Handler> = {
   // returning `/consent`. That round trip is the behaviour under test — a mock
   // that mutated nothing would let the screen navigate on a lie.
   "POST /consents": (req) => {
-    const { consentType, version } = (req.body ?? {}) as {
+    const { consentType, version, platform } = (req.body ?? {}) as {
       consentType?: string;
       version?: number;
+      platform?: string;
     };
     if (
       (consentType !== "sensitive_data" && consentType !== "biometric") ||
       typeof version !== "number"
     ) {
       return fail(400, "validation_error", "consentType and version are required.");
+    }
+    // Stricter than staging will be on day one (the backend accepts it as
+    // optional for one deploy so existing installs keep working), and
+    // deliberately so: this mock's job is to catch a client that stopped
+    // sending the field, not to be lenient in the same places the server is.
+    if (platform !== "ios" && platform !== "android") {
+      return fail(400, "validation_error", "platform must be 'ios' or 'android'.");
     }
     const acceptedAt = new Date().toISOString();
     recordConsent(currentUserId() ?? "mock-user", { consentType, version, acceptedAt });

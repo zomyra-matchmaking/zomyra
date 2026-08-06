@@ -1,15 +1,22 @@
 /**
- * The two headers FE TDD §9 sends on every request, plus the one the backend
- * sends back.
+ * The headers FE TDD §9 sends on every request, plus the one the backend sends
+ * back.
  *
- * Both are observational only — nothing gates on them today. They exist so a
- * Sentry crash report and a backend log line can be joined to the same client
- * build (FE TDD §10.2).
+ * All are observational — nothing gates on them. They exist so a Sentry event
+ * and a backend log line can be joined to the same client build (FE TDD §10.2),
+ * which `X-Client-Info` extends from "which build" to "which device".
  */
 import Constants from "expo-constants";
 
 export const HEADER_APP_VERSION = "X-App-Version";
 export const HEADER_BUNDLE_UPDATE_ID = "X-Bundle-Update-Id";
+/**
+ * Platform, OS, model and install id in one compact field (owner's decision,
+ * 2026-08-06). Unlike the two above this one **is** consumed: the backend puts
+ * it on the Sentry scope so a server-side error carries client context, and
+ * upserts a `devices` row from it. Value built in `src/config/device.ts`.
+ */
+export const HEADER_CLIENT_INFO = "X-Client-Info";
 /** Backend-issued (BE TDD §7.1), echoed on responses. Captured onto errors. */
 export const HEADER_REQUEST_ID = "X-Request-Id";
 
