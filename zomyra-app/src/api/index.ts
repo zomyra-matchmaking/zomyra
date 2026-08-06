@@ -22,6 +22,7 @@ export {
 } from "./errors";
 
 export {
+  sessionAdopted,
   useGoogleSignInMutation,
   useRequestOtpMutation,
   useVerifyOtpMutation,

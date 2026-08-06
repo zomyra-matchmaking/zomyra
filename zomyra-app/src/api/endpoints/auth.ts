@@ -26,10 +26,23 @@ import type {
  * state**, and so a fourth sign-in path could not land them differently from
  * the first three.
  *
- * It is `onQueryStarted` rather than a `.then()` at the call site because that
- * is the only hook that runs before the mutation's promise resolves to the
- * caller — the screen navigates the moment it gets its result, and the tokens
- * have to already be on the keychain when the destination fires `GET /me`.
+ * It hangs off `onQueryStarted` so that **no sign-in path can forget to do it**
+ * — a fourth screen calling `verifyOtp` gets the tokens landed whether or not
+ * it remembers to ask.
+ *
+ * ⚠️ **`onQueryStarted` does not finish before the caller's `await` does, and
+ * assuming it did was M55-007.** RTK Query *starts* this hook before the
+ * trigger promise resolves; it never *awaits* its continuation. So
+ * `await queryFulfilled` → `await setTokens(...)` → `dispatch(signedIn({}))`
+ * was routinely still in flight when the screen did `router.replace("/")`, the
+ * root gate read `session.status !== "authenticated"`, and a correct sign-in
+ * landed back on Welcome. It reproduced 4/4 under Maestro and never once by
+ * hand, because a human takes longer to move their thumb than the keychain
+ * takes to answer.
+ *
+ * The sequencing therefore cannot be implicit. {@link sessionAdopted} exposes
+ * this work as something a caller can await, and **every screen must await it
+ * before navigating** — see `app/otp.tsx` and `app/login.tsx`.
  *
  * ## A deferred optimisation, and this is where it would go
  *
@@ -58,10 +71,60 @@ type QueryLifecycle = {
   queryFulfilled: Promise<{ data: AuthSessionResponse }>;
 };
 
-async function adoptSession({ dispatch, queryFulfilled }: QueryLifecycle): Promise<void> {
-  const { data } = await queryFulfilled;
-  await setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
-  dispatch(signedIn({}));
+/**
+ * The adoption started by the most recent sign-in mutation.
+ *
+ * Module-level rather than per-hook because the two things that need to meet
+ * are in different places: the work starts in middleware, and the wait happens
+ * in a screen that holds no reference to it. Seeded resolved so
+ * {@link sessionAdopted} is safe to call before any sign-in has ever run.
+ */
+let adoption: Promise<void> = Promise.resolve();
+
+function adoptSession({ dispatch, queryFulfilled }: QueryLifecycle): Promise<void> {
+  /*
+   * Assigned **synchronously**, which is the load-bearing detail. RTK Query
+   * invokes `onQueryStarted` while handling the mutation's `pending` action —
+   * dispatched before the trigger returns its promise — so by the time any
+   * caller can `await` the mutation, `adoption` already refers to this run and
+   * not to the previous one.
+   */
+  adoption = (async () => {
+    const { data } = await queryFulfilled;
+    await setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+    dispatch(signedIn({}));
+  })();
+
+  // The rejection is reported to the caller through `sessionAdopted()` (and,
+  // for a plain request failure, through the mutation's own `error`). Returning
+  // it un-caught here would additionally surface it as an unhandled rejection.
+  return adoption.catch(() => {});
+}
+
+/**
+ * Resolves once the in-flight sign-in has put its tokens on the keychain and
+ * marked the session authenticated — `true` if it got there, `false` if it did
+ * not.
+ *
+ * **Call this after a sign-in mutation resolves and before navigating.** The
+ * mutation resolving means the *server* answered; it does not mean the client
+ * has adopted the answer, and the root gate routes on the latter (M55-007).
+ *
+ * `false` is a genuinely different failure from a rejected mutation: the
+ * credentials were accepted and the keychain write is what failed, so there is
+ * nothing to correct in the form and the only useful advice is to try again.
+ *
+ * Meaningful only immediately after a sign-in mutation settles. Called out of
+ * that context it reports on whatever sign-in happened last, or `true` if none
+ * has.
+ */
+export async function sessionAdopted(): Promise<boolean> {
+  try {
+    await adoption;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export const authApi = api.injectEndpoints({
