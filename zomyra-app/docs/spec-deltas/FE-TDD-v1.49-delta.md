@@ -73,8 +73,10 @@ A random, UUID-shaped string generated on first launch and persisted in `expo-se
 Implementation: `src/config/device.ts`; wired in `src/api/base-query.ts`'s `prepareHeaders`.
 
 > **Scope note.** `prepareHeaders` belongs to the HTTP transport, so the header is absent in
-> `APP_ENV=mock`. This is correct — there is no server to receive it — but it means the header
-> itself is verifiable only against a live host or by reading the code.
+> `APP_ENV=mock`. This is correct — there is no server to receive it — but it means the header can
+> only be observed against a real host. It does **not** have to be *staging*: verified 2026-08-06 by
+> pointing `EXPO_PUBLIC_API_URL` at a local header-logging server under `APP_ENV=staging`, which
+> needs no token because `/app/version-check` fires before authentication. See M5-055.
 
 ---
 
@@ -109,7 +111,7 @@ is unreachable today. Adding web as a build target requires widening the backend
 
 ## Test coverage
 
-`docs/TEST-CASES.md` — M5-051 … M5-055.
+`docs/TEST-CASES.md` — M5-051 … M5-056, all passing. M5-055 verifies the header on the wire.
 
 ## Backend counterpart
 

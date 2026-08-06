@@ -60,7 +60,7 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 2 · State & data layer | 6 | Yes — seeded only |
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
-| 5 · Onboarding + verification entry | 56 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
+| 5 · Onboarding + verification entry | 57 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
 | 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those
@@ -395,12 +395,24 @@ that confirmed beyond the individual rows above:
 | M5-052 | The mock is the stricter twin | `POST /consents` without `platform` against mocks | `400 validation_error`. Deliberately stricter than staging, which accepts it as optional for one deploy so installed clients keep working | code | PASS 2026-08-06 |
 | M5-053 | Device strings cannot break the header | Read `headerSafe` in `src/config/device.ts` | Everything outside `[A-Za-z0-9._-]` collapses to `_` and the value is length-capped, so `Redmi Note 12 Pro+` → `Redmi_Note_12_Pro_`. No `;`, `\r` or `\n` can reach a header value | code | PASS 2026-08-06 |
 | M5-054 | The install id survives sign-out | Read `clearTokens` in `src/auth/tokens.ts` against `DEVICE_ID_KEY` | `clearTokens` removes only the two token keys. The device id is a separate key and is never cleared — regenerating per session would add a `devices` row per login and destroy the correlation | code | PASS 2026-08-06 |
-| M5-055 | The header is actually on the wire | Sign in against staging, read a request | `X-Client-Info: p=…; os=…; a=…; d=…` present on every call. **Cannot be run on mocks** — `prepareHeaders` belongs to the HTTP transport, so mock mode has no header to inspect | runtime | **BLOCKED** — needs a staging token (see below) |
+| M5-055 | The header is actually on the wire | Point `EXPO_PUBLIC_API_URL` at a local header-logging server, restart Metro, launch | Present on **every** request. Observed on `/v1/counts`, `/v1/discover`, `/v1/app/version-check` and `/v1/me`: `p=android; os=16; m=google_sdk_gphone64_arm64; a=1.0.0; d=00616cc2-…` — all five fields, well-formed, identical across calls | runtime | PASS 2026-08-06 |
+| M5-056 | The install id persists across a relaunch | Force-stop, relaunch, compare `d=` | Byte-identical to the previous run (`00616cc2-a9100e63-1f675637-9da9ee04`). Proves the secure-store round trip: a regenerated id would mean a `devices` row per launch | runtime | PASS 2026-08-06 |
 
-> **M5-055 is blocked, and not by us.** Staging has no obtainable token: `POST /v1/auth/otp/request`
-> and `/otp/verify` both return 404 (API-1/API-2 are on hold behind DLT registration, O-8), leaving
-> Google sign-in as the only path — which needs the Android OAuth console client from O-19 item (1),
-> still open. The moment a session exists on staging this is a one-minute check.
+> **How M5-055 was run without a staging token.** Staging has none to give — `POST
+> /v1/auth/otp/request` and `/otp/verify` are both 404 (API-1/API-2 on hold behind DLT registration,
+> O-8) and Google needs O-19 item (1). It did not matter: pointing `EXPO_PUBLIC_API_URL` at a local
+> server that logs headers proves the client's half completely, and `/app/version-check` fires at
+> launch **before** any authentication. Repeat with:
+>
+> - a server logging request headers on `10.0.2.2:<port>`,
+> - `.env` → `EXPO_PUBLIC_APP_ENV=staging`, `EXPO_PUBLIC_API_URL=http://10.0.2.2:<port>`,
+> - **restart Metro with `--clear`** — `EXPO_PUBLIC_*` are inlined at transform time, so a running
+>   bundler serves the old values,
+> - restore `.env` and restart Metro afterwards.
+>
+> ⚠️ **`APP_ENV=staging` is what makes this work**: under `mock` the in-process transport never
+> reaches `prepareHeaders`, so no header exists to inspect. That is also why this case cannot be run
+> in mock mode at all.
 
 > **One thing seen during the walk that is not a defect in this module.** A `stepIdx` resume can
 > look like a *skipped* question when Metro is serving a stale bundle — the fitness screen appeared

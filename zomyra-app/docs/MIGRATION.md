@@ -3574,5 +3574,19 @@ treated as absent.
 **Also fixed:** the journey graphic's "Anchor" label wrapping to "Ancho / r" (M5-050) — `nodeWrap` is
 40pt because that is the *marker's* diameter, which was never meant to bound the caption.
 
-**New cases:** M5-050…M5-055. M5-055 (the header on the wire) is **BLOCKED** on the same missing
-staging token, and is a one-minute check the moment one exists.
+**New cases:** M5-050…M5-056, all PASS.
+
+**The header was verified on the wire without a staging token**, which is worth recording because
+the same trick unblocks anything else that only needs to observe what the client *sends*: point
+`EXPO_PUBLIC_API_URL` at a local header-logging server, set `APP_ENV=staging`, restart Metro with
+`--clear` (`EXPO_PUBLIC_*` are inlined at transform time, so a running bundler serves the old
+values), and launch. `/app/version-check` fires before any authentication. Observed on `/v1/counts`,
+`/v1/discover`, `/v1/app/version-check` and `/v1/me`:
+
+```
+x-client-info: p=android; os=16; m=google_sdk_gphone64_arm64; a=1.0.0; d=00616cc2-a9100e63-1f675637-9da9ee04
+```
+
+A force-stop and relaunch returned the **byte-identical** `d=`, which is the secure-store round trip
+proven rather than assumed (M5-056). `.env` was restored to `mock` and Metro restarted; the app is
+back on mocks and rendering.
