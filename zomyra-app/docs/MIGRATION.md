@@ -375,11 +375,30 @@ ignore.
 ### 2.4.4 ⚠️ The joint owner + backend test pass is separately blocked
 
 The intent behind this module is a joint session with the backend owner, walking every case through
-Module 5 against the real API before Module 6 starts. **That session cannot run today, and no amount
-of test tooling changes it** — per the 2026-08-06 staging re-probe (§6, Module 5 follow-up 3),
-**no token is obtainable on staging**: both OTP endpoints are still 404 behind DLT registration, and
-`POST /v1/auth/google` needs O-19 item (1), the Android OAuth client bound to the EAS keystore SHA-1.
-There is no dev-login backdoor.
+Module 5 against the real API before Module 6 starts. **Authentication is no longer the blocker —
+one API-39 gap is.**
+
+*Updated 2026-08-06, after the first live Android pass against staging (`BE-TDD-v1.11-delta.md`).*
+That pass **succeeded** at Google sign-in, API-40 and the token-refresh path, which supersedes the
+"no token is obtainable" finding in §6's Module 5 follow-up 3 written earlier the same day, and
+closes O-19 item (1) in practice — the Android console client evidently resolved, since sign-in got
+past account selection without `DEVELOPER_ERROR`. **O-19's remaining text in §4 should be read as
+stale on item (1).** OTP (API-1/API-2) is still 404 behind DLT registration, so Google is the only
+live route — fine for testing, but it means every tester needs a Google account on the device.
+
+**What blocks the joint pass now is one missing category.** `GET /v1/onboarding/options` returns a
+well-formed 200 with 19 categories where the client declares 20 — there is no `fitness` category
+(the only occurrence of the string is the profession value `fitness_trainer`). Because `fitness` is
+a **required** Plot question, that step renders its title and zero options, and **onboarding cannot
+be completed on staging by anyone**. It is not a client bug and must not be worked around: making
+the step skippable moves the wall to the submit gate. One category added to API-39 unblocks the
+whole flow with no client change.
+
+**So the ask to send the backend owner before booking the session is the API-39 `fitness` category**
+(spec text in `docs/spec-deltas/BE-TDD-v1.11-delta.md`, §14.1c). A staging OTP bypass or dev-login
+path remains worth having — it is item 2 of §2.3, it removes the per-tester Google-account
+requirement, and it is what would let Maestro eventually run against staging rather than mocks — but
+it is no longer what stands between you and a joint pass.
 
 These are two different passes and conflating them wastes the session:
 
