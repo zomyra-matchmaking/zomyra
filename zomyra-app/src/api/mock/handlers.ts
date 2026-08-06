@@ -355,6 +355,31 @@ const handlers: Record<string, Handler> = {
       });
     }
 
+    /*
+     * The age bounds staging enforces, mirrored here.
+     *
+     * This block exists because its absence let a real bug reach staging: the
+     * client sent `anchor.partnerAgeRange: { min, max }` for the whole of
+     * Module 5 and the mock never looked at `anchor`, so nothing failed until
+     * the first live submit returned `400 anchor.property partnerAgeRange
+     * should not exist`. Checking the *shape* is the point — the values were
+     * never wrong.
+     */
+    const { partnerAgeMin, partnerAgeMax } = anchor;
+    const ageErrors = (
+      [
+        ["partnerAgeMin", partnerAgeMin],
+        ["partnerAgeMax", partnerAgeMax],
+      ] as const
+    )
+      .filter(([, v]) => !Number.isInteger(v) || v < 21 || v > 100)
+      .map(([field]) => ({ field, message: "Must be an integer between 21 and 100." }));
+    if (ageErrors.length > 0) {
+      return fail(400, "validation_error", "Partner age range is missing or invalid.", {
+        errors: ageErrors,
+      });
+    }
+
     completeOnboarding(account.userId);
     return { ok: true, data: { profileComplete: true } };
   },

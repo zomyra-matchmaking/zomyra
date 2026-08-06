@@ -93,7 +93,7 @@ export type OnboardingState = {
   bio: string;
 
   // ---- Anchor -------------------------------------------------------------
-  /** Submitted as `partnerAgeRange: { min, max }`. */
+  /** Submitted as two flat fields, `partnerAgeMin` / `partnerAgeMax` (21–100). */
   partnerAgeRange: [number, number];
   matchLocationPreference: OptionKey;
   childrenPreference: OptionKey;

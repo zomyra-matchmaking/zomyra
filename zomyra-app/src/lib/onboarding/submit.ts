@@ -164,7 +164,8 @@ export function buildSubmitBody(draft: OnboardingState): OnboardingSubmitBody {
       bio: draft.bio.trim(),
     },
     anchor: {
-      partnerAgeRange: { min: draft.partnerAgeRange[0], max: draft.partnerAgeRange[1] },
+      partnerAgeMin: draft.partnerAgeRange[0],
+      partnerAgeMax: draft.partnerAgeRange[1],
       matchLocationPreference: draft.matchLocationPreference,
       childrenPreference: draft.childrenPreference,
       interfaithStance: draft.interfaithStance,

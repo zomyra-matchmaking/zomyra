@@ -352,7 +352,22 @@ export type OnboardingPlot = {
 
 /** API-7's `anchor` object — all six choice fields are API-39 keys. */
 export type OnboardingAnchor = {
-  partnerAgeRange: { min: number; max: number };
+  /**
+   * Two flat integers, **not** a nested `{ min, max }`.
+   *
+   * The client sent `partnerAgeRange: { min, max }` until 2026-08-06, when the
+   * first live submit against staging returned `400`:
+   * `anchor.property partnerAgeRange should not exist`, alongside
+   * `partnerAgeMin/Max must be an integer number`. API-7's validator is
+   * whitelist-based, so the nested object was rejected outright rather than
+   * being read and ignored — see `docs/spec-deltas/BE-TDD-v1.11-delta.md`.
+   *
+   * The bounds below are read off the same error response (`must not be less
+   * than 21`, `must not be greater than 100`). `RangeDualSlider` already clamps
+   * to them, so they are documented here rather than re-validated on submit.
+   */
+  partnerAgeMin: number;
+  partnerAgeMax: number;
   matchLocationPreference: string;
   childrenPreference: string;
   interfaithStance: string;
