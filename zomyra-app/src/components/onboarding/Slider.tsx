@@ -31,6 +31,11 @@ type Props = {
   value: number;
   onChange: (n: number) => void;
   onComplete?: (n: number) => void;
+  /**
+   * Module 5.5b. A slider is driven by a swipe rather than a tap, so an E2E
+   * flow needs a node to aim the gesture at — there is no label to find it by.
+   */
+  testID?: string;
 };
 
 const THUMB = 28;
@@ -40,7 +45,7 @@ function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
 
-export function Slider({ min, max, step = 1, value, onChange, onComplete }: Props) {
+export function Slider({ min, max, step = 1, value, onChange, onComplete, testID }: Props) {
   const [width, setWidth] = useState(0);
   const widthRef = useRef(0);
   const trackPageXRef = useRef(0);
@@ -160,6 +165,7 @@ export function Slider({ min, max, step = 1, value, onChange, onComplete }: Prop
   return (
     <View
       ref={containerRef}
+      testID={testID}
       style={styles.trackWrap}
       onLayout={onLayout}
       {...pan.panHandlers}

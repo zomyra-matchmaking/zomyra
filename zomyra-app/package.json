@@ -8,6 +8,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "lint": "expo lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "typecheck:baseline": "node ./scripts/typecheck-baseline.js",
     "api:generate": "rtk-query-codegen-openapi openapi-config.ts",
@@ -62,9 +64,14 @@
   },
   "devDependencies": {
     "@rtk-query/codegen-openapi": "^2.2.0",
+    "@testing-library/react-native": "^13.0.0",
+    "@types/jest": "^29.5.0",
     "@types/react": "~19.1.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~10.0.0",
+    "jest": "^29.7.0",
+    "jest-expo": "~54.0.0",
+    "react-test-renderer": "19.1.0",
     "typescript": "~5.9.3"
   },
   "resolutions": {

@@ -61,6 +61,7 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
 | 5 · Onboarding + verification entry | 57 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
+| 5.5 · Test harness | 12 | No — authored by the module (2026-08-06). Adds no product behaviour: its job was to move six Module 2/3 rows from `static`/`runtime` to `build` (all green) and to stand up Maestro. **M55-007 FAILS and M55-008 is BLOCKED behind it** — a real Module 4 sign-in race, found by the first Maestro run |
 | 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those
@@ -92,12 +93,12 @@ backfill by whoever next has that code open.
 
 | ID | Area | Verify | Expect | Type | Last result |
 |---|---|---|---|---|---|
-| M2-001 | Tokens never touch disk | `grep -rn "AsyncStorage" src/` and read `src/store/index.ts` | Tokens are in `expo-secure-store` only. `PERSIST_WHITELIST` contains no token/session slice — NFR-2. **A failure here is a security regression, not a bug** | static | — |
+| M2-001 | Tokens never touch disk | `yarn test src/store/__tests__/persist-whitelist.test.ts` | The persisted root written to AsyncStorage carries no `session` slice and no token-shaped key — NFR-2. **A failure here is a security regression, not a bug** | build | PASS 2026-08-06 (5.5a) |
 | M2-002 | Onboarding draft survives a kill | Fill part of onboarding, force-quit the app, reopen | The draft is still there at the same step — NFR-1. Distinct from M2-003: the *draft* persists, the *catalogues* must not | runtime | — |
-| M2-003 | Reference data is not persisted | Read `src/store/index.ts` | `api` is absent from `PERSIST_WHITELIST`. RTK Query's cache stays in memory — FE §4.3, NFR-11. Persisting a full cities table to disk is the failure this prevents | static | — |
-| M2-004 | Concurrent 401s share one refresh | Read `src/api/base-query.ts` | A single module-scoped in-flight refresh promise that all 401s await. Parallel refreshes replay a single-use token and force-logout a healthy session (BE §9.2) | static | — |
-| M2-005 | Environment fails loud | Set `EXPO_PUBLIC_APP_ENV=nonsense`, start the app | Throws with a message naming the valid values. Silently defaulting to `production` is the failure mode this guards | runtime | — |
-| M2-006 | Legacy Zustand state imports once | With old Zustand data in AsyncStorage and no redux-persist state, cold start | `legacy-migration.ts` imports it; a returning user does not lose their draft to the port | runtime | — |
+| M2-003 | Reference data is not persisted | `yarn test src/store/__tests__/persist-whitelist.test.ts` | The persisted root carries no `api` slice — RTK Query's cache stays in memory (FE §4.3, NFR-11). Persisting a full cities table to disk is the failure this prevents | build | PASS 2026-08-06 (5.5a) |
+| M2-004 | Concurrent 401s share one refresh | `yarn test src/api/__tests__/base-query-refresh.test.ts` | Two `baseQuery` calls that 401 at once trigger **exactly one** `POST /auth/refresh`. Parallel refreshes replay a single-use token and force-logout a healthy session (BE §9.2) | build | PASS 2026-08-06 (5.5a) |
+| M2-005 | Environment fails loud | `yarn test src/config/__tests__/env.test.ts` | `parseAppEnvironment("nonsense")` throws naming the valid values; an empty value resolves to `mock`, never `production`. Silently defaulting to `production` is the failure mode this guards | build | PASS 2026-08-06 (5.5a) |
+| M2-006 | A returning user keeps their draft | `yarn test src/store/__tests__/onboarding-rehydrate.test.ts` | A same-version persisted draft rehydrates intact across a cold start (NFR-1). ⚠️ **Retargeted 5.5a:** originally asserted `legacy-migration.ts` imports Zustand-era state — that file was removed by design 2026-08-02 (MIGRATION §6, "Module 2 addendum"), superseded by M5-023's discard-on-migrate, so the old assertion was a *wrong test* and was replaced with the mechanism that now carries NFR-1 | build | PASS 2026-08-06 (5.5a) |
 
 ## Module 3 — Navigation
 
@@ -110,7 +111,7 @@ case authored for future regression runs but not formally re-run.
 | ID | Area | Verify | Expect | Type | Last result |
 |---|---|---|---|---|---|
 | M3-001 | Gate ordering | Read `app/index.tsx` / `src/components/nav/use-launch-gate.ts` | `useGetMeQuery` (API-6) carries `skip` until the version gate (API-5) resolves and the session is authenticated — an anonymous launch never fires an authenticated call it knows will 401 | static | — |
-| M3-002 | Routing is a pure function | Read `src/lib/root-route.ts` | `resolveRootDestination` is pure. `accountStatus` is an **early return**, not a column — a suspended user with `profileComplete: false` reaches the blocker, not Onboarding | static | — |
+| M3-002 | Routing is a pure function | `yarn test src/lib/__tests__/root-route.test.ts` | `resolveRootDestination` is pure (equal inputs → equal outputs, no mutation), and `accountStatus` short-circuits: a suspended user with `profileComplete: false` reaches the blocker, not Onboarding | build | PASS 2026-08-06 (5.5a) |
 | M3-003 | The unlisted `verified/unverified` row | Read `src/lib/root-route.ts` | `true` + `unverified` (submitted API-7, photos not started) routes to `/verify?entry=photos`. §9.1 omits this row; it must not fall through to Discover | static | — |
 | M3-004 | Version below minimum blocks | Set the mock `minSupportedVersion` above the app version (or `forceUpdate: true`) in `src/api/mock/handlers.ts`, cold start | Full-screen, non-dismissible `UpdateRequired`. Below-latest → dismissible prompt then proceed; current → silent. All three walked on-device 2026-08-02 | runtime | PASS 2026-08-02 (M3 on-device) |
 | M3-005 | Version compare never disables the gate | Read `src/lib/app-update.ts` (`compareVersions`) | A non-numeric segment degrades to `0`, never `NaN` — `NaN` comparisons are all-false and would silently disable the gate | static | — |
@@ -418,8 +419,91 @@ that confirmed beyond the individual rows above:
 > look like a *skipped* question when Metro is serving a stale bundle — the fitness screen appeared
 > only after a hard restart. Worth knowing before someone files it as a bug.
 >
+
 > The second observation from the walk — the "Anchor" label wrapping to "Ancho / r" — **was fixed**
 > on the owner's instruction (M5-050), even though `TreasureMap.tsx` is a Module 3 component. The
 > cause was `nodeWrap`'s 40pt width, which is the *marker's* diameter and was never meant to bound
 > the caption. Not re-verified on device: the graphic only appears between onboarding sections, so
 > confirming it costs another full walk for a text-width change.
+
+---
+
+## Module 5.5 — Test harness
+
+Authored by the module (2026-08-06). **This module adds no product behaviour** —
+its cases are about the harness itself, and its main output is the six Module 2/3
+rows above that moved from `static`/`runtime` to `build`.
+
+⚠️ **Per MIGRATION §2.4.2 this module writes tests and does not fix what they
+catch.** Findings are recorded here and reported, not repaired.
+
+### 5.5a — Jest + RNTL
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M55-001 | The runner exists and is green | `yarn test` | All suites pass. This is the case that makes the six converted rows above runnable at all | build | PASS 2026-08-06 |
+| M55-002 | Babel config is runner-only | Read `babel.config.js` | It declares `babel-preset-expo` and nothing else — exactly the preset Metro applies by default. A bundler-affecting change here would mean the harness altered production output, which it must not | static | PASS 2026-08-06 |
+| M55-003 | The four native mocks are global | Read `jest.setup.js` | `expo-secure-store`, `react-native-reanimated`, `expo-router` and `@react-native-google-signin` are mocked for every suite (MIGRATION §2.4.1). Without them any suite importing the auth or navigation layer throws at import time in Node | static | PASS 2026-08-06 |
+| M55-004 | The `@/*` alias resolves under Jest | `yarn test src/lib/__tests__/root-route.test.ts` | Passes. The alias is declared in three places (tsconfig, Metro, `jest.config.js`); a drift makes every suite fail to resolve its imports | build | PASS 2026-08-06 |
+| M55-005 | Tests are never bundled | `grep -rn "__tests__\|jest.setup" app/ src/ --include="*.ts" --include="*.tsx" \| grep -v __tests__/` | No import of a test file from app code. Metro bundles only what is reachable from the entry point (FE §13.3), so suites cost nothing at runtime — the same argument C-7 makes for this sheet | static | PASS 2026-08-06 |
+
+### 5.5b — Maestro + the testID convention
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M55-006 | Flows are syntactically valid | `maestro check-syntax .maestro/flows/login.yaml .maestro/flows/onboarding.yaml` | `OK` for both. Cheap, needs no device, and catches the YAML/command errors that otherwise only surface halfway through a run | build | PASS 2026-08-06 |
+| M55-007 | Login through the launch gate | `maestro test .maestro/flows/login.yaml` on a `preview-mock` build | Four legs pass: `9000000000`→Discover, `9000000007`→`/blocked` (O-4), a new number→`/consent` with Decline returning to Welcome, and Google→`/consent`. Proves §9.1 decides the destination, not the auth screen (M4-009) | build | **FAIL 2026-08-06** — leg 1 lands on Welcome, not Discover. See the finding below |
+| M55-008 | Onboarding submits and hands off to Photos | `maestro test .maestro/flows/onboarding.yaml` on a `preview-mock` build | Walks Plot/Anchor/Love as `9000000001`, submits API-7 once, and lands on `verify-step-photos`. The destination comes from §9.1 re-reading `Me`, never a hardcoded `/verify` (M5-015) | build | **BLOCKED 2026-08-06** — cannot get past sign-in; same defect as M55-007. **Everything after the sign-in step is still unexercised** |
+| M55-009 | Step ids are not positional | `grep -n "onboarding-step-" .maestro/flows/onboarding.yaml` | Every id is a draft field key (`onboarding-step-gender`), never an index. M5-044 records `SCREENS` shrinking and growing — an index would answer a different question while still passing | static | PASS 2026-08-06 |
+| M55-010 | Option ids are keyed, not labelled | `grep -rn "testID={\`option-\|testID={\`chip-\|testID={\`suggestion-" src/components/onboarding/Primitives.tsx` | Every id interpolates `opt.key`, never `opt.label`. Under FR-3b the backend may reword a label without a client release, so a label-keyed id fails on a copy edit (M5-003). ⚠️ **One violator, recorded as a finding below** | static | **FAIL 2026-08-06** — `OptionCard` uses `option-${title}` |
+| M55-011 | The shared shell namespaces its chrome | Read `testIDPrefix` in `src/components/onboarding/OnboardingShell.tsx` | Onboarding and Verify emit `onboarding-*` and `verify-*` respectively. Both previously emitted `onboarding-next`, and they are adjacent screens in one journey — a flow could not tell which it was driving | static | PASS 2026-08-06 |
+| M55-012 | The launch gate is reachable by id | Read `src/components/nav/LaunchScreens.tsx` | `launch-pending`, `launch-error`, `launch-retry`, `launch-update-required`, `launch-update-cta` exist. The gate had **zero** testIDs before 5.5b, so no E2E flow could assert it had resolved rather than merely not crashed | static | PASS 2026-08-06 |
+
+> **Both flows were executed for the first time on 2026-08-06** against an EAS
+> `preview-mock-simulator` build (`de4a76ff`) on the iPhone 16 simulator, and **both are red** — see
+> the sign-in finding below. Two harness problems were found and fixed on the way, and both are
+> worth knowing before writing any future flow:
+>
+> 1. **`clearState` does not clear the iOS keychain.** Tokens live there (expo-secure-store, NFR-2)
+>    and survive an app-data wipe *and* a reinstall, because the keychain is keyed on the bundle id
+>    that every Zomyra build shares. The first run launched straight into `/discovery-mode` carrying
+>    a session left by the 2026-08-05 dev client. Every leg now starts with `clearKeychain`.
+> 2. **The mock's reserved OTP codes are `000000` and `111111`**; any other six digits succeed. The
+>    flows use `123456`.
+>
+> What is **still unexercised** is everything in `onboarding.yaml` after sign-in — the 20-question
+> walk, the API-7 submit and the Photos hand-off. The widget legs most likely to need calibration
+> when that unblocks remain the height **slider swipe** and the 12-step quiz `repeat`.
+
+> **Finding — M55-007 — Module 4 — a fast sign-in lands on Welcome instead of the §9.1
+> destination.** Reproduced on every one-shot run of `login.yaml` (4/4); it does **not** reproduce
+> when the Verify tap is separated from the last digit by a few seconds, which is why no manual pass
+> has ever seen it.
+>
+> `app/otp.tsx`'s `verify()` does `await verifyOtp(...)` then `router.replace("/")`. The tokens are
+> written by `adoptSession` in `src/api/endpoints/auth.ts`, hung off `onQueryStarted`. That file's
+> own comment states the assumption plainly — *"the only hook that runs before the mutation's promise
+> resolves to the caller … the tokens have to already be on the keychain when the destination fires
+> `GET /me`"* — but the assumption does not hold: RTK Query **starts** `onQueryStarted` before the
+> trigger resolves, it does not **await** its continuation. So `await queryFulfilled` →
+> `await setTokens(...)` → `dispatch(signedIn({}))` can still be in flight when the screen navigates.
+> The root gate then reads an unauthenticated session and `Redirect`s to `/login`.
+>
+> **Not a mock artefact and not Maestro-specific.** A real user who taps Verify the instant the sixth
+> digit lands hits the same window; automation just loses the race every time. **Both auth paths are
+> affected** — `verifyOtp` and `googleSignIn` share `adoptSession` (`auth.ts:79`, `auth.ts:95`).
+>
+> **Not fixed here** per §2.4.2. It is Module 4's code, the fix is a design decision (await the
+> lifecycle, or seed the session before navigating — the file already sketches an
+> `upsertQueryData` option), and it must not ride in on a harness PR.
+
+> **Finding — M55-010, Module 5, `OptionCard`'s testID is keyed on the display
+> label.** `src/components/onboarding/Primitives.tsx:27` emits
+> ``testID={`option-${title}`}`` while its sibling `OptionGrid` emits
+> ``option-${opt.key}``, so the two share the `option-*` namespace with
+> incompatible schemes. It is the exact pattern the comment directly above
+> `OptionGrid` records as deliberately removed in Module 5 (`option-Male` →
+> `option-male`). **Not fixed here** per §2.4.2 — this module reports, it does not
+> repair. Mitigating: `OptionCard` is **exported but used nowhere**, so nothing
+> renders the bad id today; it is a trap for the next caller rather than a live
+> defect, and the fix is one line in its own branch.

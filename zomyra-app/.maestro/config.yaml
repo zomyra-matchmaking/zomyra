@@ -1,0 +1,11 @@
+# Maestro workspace config — Module 5.5b.
+#
+# Flows run against a **`preview-mock` build**, never staging (MIGRATION §2.4.3):
+# deterministic fixtures, no OTP delivery, no live backend, no dependence on
+# anyone else's deploy. A regression suite that fails because staging is down is
+# a suite people learn to ignore.
+#
+#   yarn build:preview-mock:ios-sim     # or :android
+#   maestro test .maestro/flows
+flows:
+  - flows/*.yaml

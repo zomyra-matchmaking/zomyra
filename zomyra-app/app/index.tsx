@@ -115,8 +115,9 @@ export default function RootGate() {
           title="Update available"
           description="A newer version of Zomyra is available with the latest improvements."
         >
-          <View style={styles.dialogActions}>
+          <View style={styles.dialogActions} testID="launch-update-prompt">
             <Button
+              testID="launch-update-now"
               label="Update"
               onPress={() => {
                 Linking.openURL(storeUrl);
@@ -124,7 +125,13 @@ export default function RootGate() {
               }}
               fullWidth
             />
-            <Button label="Not now" variant="ghost" onPress={acknowledge} fullWidth />
+            <Button
+              testID="launch-update-later"
+              label="Not now"
+              variant="ghost"
+              onPress={acknowledge}
+              fullWidth
+            />
           </View>
         </Dialog>
       </>

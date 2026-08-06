@@ -1,0 +1,262 @@
+# FE TDD §13.2 priority 2 — onboarding submission through to the Photos hand-off.
+#
+# Signs in as `9000000001` (incomplete, consent already on file → straight to
+# `/onboarding`, no consent screen), walks Plot / Anchor / Love, submits API-7,
+# and asserts the app lands on the **Photos** step of `/verify`.
+#
+# ⚠️ **The assertion at the end is the point of the flow.** M5-015: a successful
+# submit does `router.replace("/")` and lets §9.1 answer — it must NOT hardcode
+# `/verify`. So this flow proves the whole round trip: the mutation invalidates
+# `Me`, the account flips to `profileComplete: true` + `unverified`, and the gate
+# routes to the photos entry on its own. A regression that hardcodes the
+# destination still lands here, so the flow additionally checks the step id
+# rather than merely "some verify screen".
+#
+# Steps are addressed by **`onboarding-step-<id>`**, which is the draft field key
+# — never the index. M5-044 records SCREENS both shrinking and growing during
+# Module 5; a positional id would silently answer a different question.
+# ⚠️ **`clearState` is not enough on iOS.** Tokens live in the keychain
+# (expo-secure-store, NFR-2) and the keychain survives both an app-data wipe and
+# a reinstall — it is keyed on the bundle id, which every Zomyra build shares. So
+# without `clearKeychain` a leg inherits whatever session the last build left
+# behind and starts mid-app instead of at Welcome. Found on the first real run of
+# this flow (2026-08-06): it launched straight into `/discovery-mode`.
+appId: com.zomyra.app
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login-continue-phone"
+    timeout: 20000
+
+- runFlow:
+    file: ../subflows/sign-in-phone.yaml
+    env:
+      PHONE: "9000000001"
+      OTP: "123456"
+
+# ---------------------------------------------------------------------------
+# Section 1 — Plot. Opens on the TreasureMap intro.
+# ---------------------------------------------------------------------------
+- extendedWaitUntil:
+    visible: "Plotting the Coordinates"
+    timeout: 20000
+- tapOn: "Let's Begin"
+
+# Name — the only free-text identity fields in the flow.
+- assertVisible:
+    id: "onboarding-step-name"
+- tapOn:
+    id: "onboarding-first-name"
+- inputText: "Ada"
+- tapOn:
+    id: "onboarding-last-name"
+- inputText: "Lovelace"
+- hideKeyboard
+- tapOn:
+    id: "onboarding-next"
+
+# DOB — the wheel commits its visible defaults on mount (DateWheel's
+# `hasInitialized` effect), so Continue is already enabled and the flow does not
+# need to drive three wheels to produce a valid adult date.
+- assertVisible:
+    id: "onboarding-step-dob"
+- tapOn:
+    id: "onboarding-next"
+
+# Single-select questions auto-advance ~250ms after the tap, so they take no
+# Continue. Options are addressed by catalogue **key** (M5-003) — a label-keyed
+# id would break the moment the backend rewords one, which under FR-3b it may
+# do without a client release.
+- assertVisible:
+    id: "onboarding-step-gender"
+- tapOn:
+    id: "option-female"
+
+# State, then city — FR-3a's two screens. API-38 is `?state=`-scoped, so there
+# is no way to ask for a city without a state first.
+- assertVisible:
+    id: "onboarding-step-state"
+- tapOn:
+    id: "searchable-select-input"
+- inputText: "Karnataka"
+- tapOn:
+    id: "suggestion-ka"
+
+- assertVisible:
+    id: "onboarding-step-city"
+- tapOn:
+    id: "searchable-select-input"
+- inputText: "Bengaluru"
+- tapOn:
+    id: "suggestion-ka-bengaluru"
+- tapOn:
+    id: "onboarding-next"
+
+# Height — a swipe, not a tap. `heightCm` is undefined until the slider is
+# actually moved (the 168 on screen is a display default), so Continue stays
+# disabled until this gesture lands.
+- assertVisible:
+    id: "onboarding-step-height"
+- swipe:
+    from:
+      id: "onboarding-height-slider"
+    direction: RIGHT
+- tapOn:
+    id: "onboarding-next"
+
+- assertVisible:
+    id: "onboarding-step-build"
+- tapOn:
+    id: "option-athletic"
+
+- assertVisible:
+    id: "onboarding-step-education"
+- tapOn:
+    id: "option-bachelors"
+
+- assertVisible:
+    id: "onboarding-step-profession"
+- tapOn:
+    id: "searchable-select-input"
+- inputText: "Software"
+- tapOn:
+    id: "suggestion-swe"
+- tapOn:
+    id: "onboarding-next"
+
+- assertVisible:
+    id: "onboarding-step-incomeRange"
+- tapOn:
+    id: "option-lt_5"
+
+- assertVisible:
+    id: "onboarding-step-diet"
+- tapOn:
+    id: "option-vegetarian"
+
+- assertVisible:
+    id: "onboarding-step-drinking"
+- tapOn:
+    id: "option-never"
+
+- assertVisible:
+    id: "onboarding-step-smoking"
+- tapOn:
+    id: "option-never"
+
+# `fitness` — restored as a **required** Plot question on the owner's 2026-08-05
+# ruling (M5-040/041). Note this is the category staging is missing (§2.4.4), and
+# is exactly why this flow runs on mocks rather than staging.
+- assertVisible:
+    id: "onboarding-step-fitness"
+- tapOn:
+    id: "option-3_5_weekly"
+
+# Languages — multi-select, so it needs an explicit Continue.
+- assertVisible:
+    id: "onboarding-step-languages"
+- tapOn:
+    id: "chip-hindi"
+- tapOn:
+    id: "chip-english"
+- tapOn:
+    id: "onboarding-next"
+
+- assertVisible:
+    id: "onboarding-step-religion"
+- tapOn:
+    id: "option-hindu"
+
+- assertVisible:
+    id: "onboarding-step-familyType"
+- tapOn:
+    id: "option-nuclear"
+
+- assertVisible:
+    id: "onboarding-step-bio"
+- tapOn:
+    id: "onboarding-bio"
+- inputText: "Curious about people, mathematics and long walks."
+- hideKeyboard
+- tapOn:
+    id: "onboarding-next"
+
+# ---------------------------------------------------------------------------
+# Section 2 — Anchor. The owner's list of seven (M5-047).
+# ---------------------------------------------------------------------------
+- extendedWaitUntil:
+    visible: "Setting Your Anchors"
+    timeout: 20000
+- tapOn: "Continue Journey"
+
+# The age range opens on a valid default span, so Continue is already live.
+- assertVisible:
+    id: "onboarding-step-partnerAgeRange"
+- tapOn:
+    id: "onboarding-next"
+
+- assertVisible:
+    id: "onboarding-step-matchLocationPreference"
+- tapOn:
+    id: "option-same_city"
+
+- assertVisible:
+    id: "onboarding-step-childrenPreference"
+- tapOn:
+    id: "option-yes"
+
+- assertVisible:
+    id: "onboarding-step-interfaithStance"
+- tapOn:
+    id: "option-yes"
+
+- assertVisible:
+    id: "onboarding-step-smokingPartnerComfort"
+- tapOn:
+    id: "option-no"
+
+- assertVisible:
+    id: "onboarding-step-householdPreference"
+- tapOn:
+    id: "option-flexible"
+
+- assertVisible:
+    id: "onboarding-step-relocationWillingness"
+- tapOn:
+    id: "option-yes"
+
+# ---------------------------------------------------------------------------
+# Section 3 — Love. The FR-14 quiz: 12 sliders, submitted as ONE call (M5-048).
+# ---------------------------------------------------------------------------
+- extendedWaitUntil:
+    visible: "Unlocking How You Love"
+    timeout: 20000
+- tapOn: "Enter Final Stretch"
+
+- assertVisible:
+    id: "personality-quiz"
+- repeat:
+    times: 12
+    commands:
+      - tapOn:
+          id: "personality-continue-button"
+
+# ---------------------------------------------------------------------------
+# The hand-off. API-7 fires once here.
+# ---------------------------------------------------------------------------
+# §9.1 decides this, not the submit handler (M5-015). Landing on the *photos*
+# step specifically is what proves the round trip: `unverified` +
+# `profileComplete: true` is the row FE §9.1's table omits (M3-003).
+- extendedWaitUntil:
+    visible:
+      id: "verify-step-photos"
+    timeout: 30000
+- assertVisible: "Add your photos"
+
+# The draft is destroyed on success (NFR-12, M5-016) — a draft that outlived its
+# submit is what produces a 409 on the next launch.
+- assertVisible:
+    id: "verify-next"
