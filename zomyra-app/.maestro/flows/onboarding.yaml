@@ -54,7 +54,12 @@ appId: com.zomyra.app
 - tapOn:
     id: "onboarding-last-name"
 - inputText: "Lovelace"
-- hideKeyboard
+# ⚠️ **No `hideKeyboard` here, and that is deliberate.** On iOS Maestro dismisses
+# the keyboard by tapping outside it — and this screen's Continue is *lifted
+# above* the keyboard rather than hidden behind it, so the dismissing tap lands
+# on Continue. The step advanced before the flow's own tap, which then advanced
+# it again, and the run silently skipped the DOB question. Tapping Continue with
+# the keyboard still up is both simpler and what a real user does.
 - tapOn:
     id: "onboarding-next"
 
@@ -180,7 +185,7 @@ appId: com.zomyra.app
 - tapOn:
     id: "onboarding-bio"
 - inputText: "Curious about people, mathematics and long walks."
-- hideKeyboard
+# No `hideKeyboard` — see the note on the name step.
 - tapOn:
     id: "onboarding-next"
 

@@ -67,20 +67,17 @@ Append a "Module log" entry at the end of every module, in the same session that
   now returns **`401 invalid_google_token`** for a bogus token, where it returned `503` a day
   earlier — so **API-3 is deployed and validating**. API-1/API-2 are still `404` (on hold behind
   LLP → DLT registration) and `/v1/docs-json` is still `404`. Endpoint map in §6's Module 2 addendum.
-- **Module 5.5 (test harness) is finished on `module/5.5-test-harness`, committed but not pushed and
-  with no PR** (2026-08-06, C-6). `yarn test` runs 14 tests over 5 suites; six previously-`static`/
-  `runtime` cases are now `build` and green. Maestro 2.8.0 is installed and **both E2E flows have
-  been run** against an EAS `preview-mock-simulator` build — **and both are red because of a real
-  Module 4 defect the harness found on its first run:**
-  ⚠️ **M55-007 — Module 4 — a fast sign-in lands on Welcome instead of the §9.1 destination.**
-  `app/otp.tsx` navigates on `await verifyOtp(...)`, but the tokens are written by `adoptSession`
-  off `onQueryStarted`, which RTK Query starts but does **not** await. The gate then sees no session
-  and redirects to `/login`. It does not reproduce at human tapping speed, which is why five modules
-  of manual passes missed it; **both auth paths share `adoptSession`, so Google is affected too.**
-  M55-008 is `BLOCKED` behind it, so `onboarding.yaml` past sign-in is still unexercised.
-  A second, lower-severity finding: **M55-010 — Module 5 — `OptionCard`'s testID is keyed on the
-  display label** (dead code, so not a live defect). **Per §2.4.2 neither was fixed here.**
-  **Next up: fix M55-007 in its own branch, then Module 6 — Photos & verification.**
+- **Module 5.5 (test harness) is merged** (PR #7, 2026-08-06). `yarn test` runs 14 tests over 5
+  suites; six previously-`static`/`runtime` cases are now `build` and green. Maestro 2.8.0 is
+  installed and both E2E flows exist. Its first real run found a genuine Module 4 defect — **M55-007,
+  a fast sign-in landing on Welcome instead of the §9.1 destination** — plus a minor testID violation
+  (M55-010). Per §2.4.2 the harness reported both and fixed neither.
+- **Both findings are fixed on `fix/module-5.5-findings`, committed but not pushed and with no PR**
+  (2026-08-06, C-6). `adoptSession` now exposes `sessionAdopted()` and both auth screens await it
+  before navigating; `OptionCard` takes a required `optionKey`. **`yarn test` is 17/17 and both
+  Maestro flows pass (2/2, 4m35s)** against a locally built `preview-mock` Release app — the first
+  time `onboarding.yaml` has ever run past sign-in. See §6's addendum.
+  **Next up: Module 6 — Photos & verification.**
 - **Next up: Module 5 — Onboarding & profile schema.** The sequence in §2 is being followed in
   order. It inherits a working consent gate immediately in front of the Onboarding stack, both
   auth paths landing on `/` so §9.1 decides, and the shared loading state. **Read §12.3 and
@@ -136,7 +133,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 3 | Navigation | **Complete** (2026-08-02) | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | **Complete** (2026-08-03) | First real API integration; unblocks every authenticated call. **+ FR-2a's consent screen + O-18(a) settled on a scheme-owning build** |
 | 5 | Onboarding & profile schema | **Complete** (2026-08-05) | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
-| **5.5** | **Test harness (Jest + RNTL, Maestro)** | **Complete** (2026-08-06) — ⚠️ *both Maestro flows ran and are red on a real Module 4 sign-in race (M55-007); see §6* | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
+| **5.5** | **Test harness (Jest + RNTL, Maestro)** | **Complete** (2026-08-06, PR #7). Its two findings are fixed on `fix/module-5.5-findings`; both flows now pass — see §6 | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
@@ -3862,3 +3859,84 @@ warnings, none from this module) · `yarn typecheck:baseline` clean (the same 3 
 **What §2.4 asked for is complete.** What is *not* done, and is deliberately not this module's to
 do: fixing the M55-007 sign-in race, and — once that lands — running `onboarding.yaml` past sign-in
 to calibrate its remaining widget legs. Both want their own session and their own branch.
+
+### Module 5.5 addendum — both findings fixed, both flows green (2026-08-06)
+
+**Branch:** `fix/module-5.5-findings`, off `master` after PR #7 merged. This is the separate session
+§2.4.2 was reserving: the harness reported, this repairs.
+
+#### M55-007 — the sign-in race
+
+`adoptSession` keeps its place on `onQueryStarted` — that is what stops any sign-in path from
+forgetting to land its tokens — but it now **records its work in a module-level promise**, assigned
+synchronously while RTK Query handles the mutation's `pending` action, so it always refers to the run
+the caller is about to await. `sessionAdopted()` exposes it, and both `app/otp.tsx` and
+`app/login.tsx` await it before `router.replace("/")`.
+
+The insight worth keeping: the defect was never that the work was in the wrong place, it was that the
+**ordering was assumed rather than expressed**. A comment asserting "this runs first" is not a
+mechanism. What changed is that the sequence is now an `await` a reader can see.
+
+A `false` result is surfaced as *"We couldn't complete sign-in. Please try again."* rather than as an
+OTP error, because the credentials were accepted and the keychain write is what failed — there is
+nothing in the form for the user to correct.
+
+**Regression coverage is M55-013…M55-015**, and its shape is the point: `router.replace` is spied on
+to capture `session.status` *at the instant navigation is requested*. Asserting the end state would
+pass with or without the fix, since waiting long enough authenticates either way. Verified by
+reverting the `await` in `app/otp.tsx` — the suite goes red with `"anonymous"`.
+
+Standing this up needed two `jest.config.js` additions, and they had been latent since 5.5a because
+**no suite had ever rendered a component**: `lucide-react-native` resolves, under `jest-expo`'s
+`react-native` export condition, to a `.mjs` bundle Jest's transform does not match (now mapped to
+its CJS build), and `react-native-safe-area-context` needed transforming. Every screen imports an
+icon, so this had been blocking *all* component testing, not just these three cases.
+
+#### M55-010 — the label-keyed testID
+
+`OptionCard` takes an `optionKey` and emits ``option-${optionKey}``. **Required, not defaulted from
+`title`** — an optional prop falling back to the label would re-open the same trap for the next
+caller, which is the only way this defect can bite at all. Zero call sites, so the required prop
+costs nothing.
+
+#### Both Maestro flows now pass — 2/2, 4m35s
+
+`login.yaml` 1m25s (all four legs), `onboarding.yaml` 3m10s. **This is the first time
+`onboarding.yaml` has run past sign-in**, and the two legs 5.5b flagged as most likely to need
+calibration — the height **slider swipe** and the `repeat: 12` quiz — both worked unchanged on their
+first real execution.
+
+One flow bug surfaced, and it is the kind that would have poisoned later work quietly:
+**`hideKeyboard` is a tap, and it hit the button.** Maestro dismisses the iOS keyboard by tapping
+outside it; this screen *lifts* Continue above the keyboard rather than hiding it behind, so the
+dismissing tap landed on Continue. The step advanced, the flow's own `tapOn: onboarding-next`
+advanced it again, and the run **silently skipped the DOB question** while the next two assertions
+still passed. Both `hideKeyboard` calls are gone and `docs/TESTING.md` carries the rule.
+
+#### The build: local, not EAS — and the checkout path cost three patches
+
+Built with `npx expo run:ios --configuration Release` rather than spending an EAS credit, at the
+owner's choice. Worth doing again — a flow that can only be re-tested by spending a cloud build is a
+flow nobody re-tests — but **the checkout path contains spaces** (`…/New Matrimony App/…`) and three
+separate scripts in the toolchain do not quote it. Two fail loudly; the third,
+`node_modules/expo-constants/scripts/get-app-config-ios.sh:14`, **fails silently**: BSD `basename`
+accepts the split words, its `!= "Pods"` guard matches, and it `exit 0`s having written no
+`app.config`. The build succeeds and the app dies at launch on `expo-linking needs access to the
+expo-constants manifest` — an error naming a package unrelated to the cause.
+
+All three live in generated or vendored files that `expo prebuild` and `yarn install` restore. They
+are written up in `docs/TESTING.md`, but **the durable fix is to move the checkout to a path without
+spaces**; patching regenerated files is not a fix, it is a thing to redo. EAS is unaffected — it
+builds at a clean path, which is exactly why this was invisible until the first local build.
+
+**New cases:** M55-013…M55-016, all PASS. M55-007 and M55-010 flip FAIL → PASS; M55-008 flips
+BLOCKED → PASS. **Module 5.5 is now 16 cases, all green.**
+
+**Verified green:** `yarn test` 17/17 · `npx eslint app src --no-cache` 0 errors (the same 13
+pre-existing warnings) · `yarn typecheck:baseline` clean (the same 3 inherited errors) ·
+`maestro check-syntax` OK on all three flow files · `maestro test .maestro/flows` **2/2 passed**.
+
+**Still open, and deliberately untouched:** M5-042's contract question — the real backend has no
+`plot.fitness` field (CONTRACT-QUESTIONS §9), so whether API-7 drops the key or `400`s is unknown.
+The mock accepts it and the flow's fitness leg passes; that proves the *client*, not the contract.
+This is the owner's call to settle with their cofounder, not a harness matter.

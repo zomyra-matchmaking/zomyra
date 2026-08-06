@@ -61,7 +61,7 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
 | 5 · Onboarding + verification entry | 57 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
-| 5.5 · Test harness | 12 | No — authored by the module (2026-08-06). Adds no product behaviour: its job was to move six Module 2/3 rows from `static`/`runtime` to `build` (all green) and to stand up Maestro. **M55-007 FAILS and M55-008 is BLOCKED behind it** — a real Module 4 sign-in race, found by the first Maestro run |
+| 5.5 · Test harness | 16 | No — authored by the module (2026-08-06), plus 5.5c on `fix/module-5.5-findings`. Adds no product behaviour: its job was to move six Module 2/3 rows from `static`/`runtime` to `build` and to stand up Maestro. **All 16 green as of 2026-08-06** — the two findings it raised (M55-007's sign-in race, M55-010's label-keyed testID) are fixed and both Maestro flows now pass |
 | 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those
@@ -452,10 +452,10 @@ catch.** Findings are recorded here and reported, not repaired.
 | ID | Area | Verify | Expect | Type | Last result |
 |---|---|---|---|---|---|
 | M55-006 | Flows are syntactically valid | `maestro check-syntax .maestro/flows/login.yaml .maestro/flows/onboarding.yaml` | `OK` for both. Cheap, needs no device, and catches the YAML/command errors that otherwise only surface halfway through a run | build | PASS 2026-08-06 |
-| M55-007 | Login through the launch gate | `maestro test .maestro/flows/login.yaml` on a `preview-mock` build | Four legs pass: `9000000000`→Discover, `9000000007`→`/blocked` (O-4), a new number→`/consent` with Decline returning to Welcome, and Google→`/consent`. Proves §9.1 decides the destination, not the auth screen (M4-009) | build | **FAIL 2026-08-06** — leg 1 lands on Welcome, not Discover. See the finding below |
-| M55-008 | Onboarding submits and hands off to Photos | `maestro test .maestro/flows/onboarding.yaml` on a `preview-mock` build | Walks Plot/Anchor/Love as `9000000001`, submits API-7 once, and lands on `verify-step-photos`. The destination comes from §9.1 re-reading `Me`, never a hardcoded `/verify` (M5-015) | build | **BLOCKED 2026-08-06** — cannot get past sign-in; same defect as M55-007. **Everything after the sign-in step is still unexercised** |
+| M55-007 | Login through the launch gate | `maestro test .maestro/flows/login.yaml` on a `preview-mock` build | Four legs pass: `9000000000`→Discover, `9000000007`→`/blocked` (O-4), a new number→`/consent` with Decline returning to Welcome, and Google→`/consent`. Proves §9.1 decides the destination, not the auth screen (M4-009) | build | FAIL 2026-08-06 (leg 1 landed on Welcome), **PASS 2026-08-06 after the fix** — all four legs, 1m25s |
+| M55-008 | Onboarding submits and hands off to Photos | `maestro test .maestro/flows/onboarding.yaml` on a `preview-mock` build | Walks Plot/Anchor/Love as `9000000001`, submits API-7 once, and lands on `verify-step-photos`. The destination comes from §9.1 re-reading `Me`, never a hardcoded `/verify` (M5-015) | build | BLOCKED 2026-08-06 (behind M55-007), **PASS 2026-08-06 after the fix** — the full 20-question walk, the height slider swipe, the 12-step quiz, API-7 and the Photos hand-off, 3m10s. One flow bug found on the way: see the `hideKeyboard` note |
 | M55-009 | Step ids are not positional | `grep -n "onboarding-step-" .maestro/flows/onboarding.yaml` | Every id is a draft field key (`onboarding-step-gender`), never an index. M5-044 records `SCREENS` shrinking and growing — an index would answer a different question while still passing | static | PASS 2026-08-06 |
-| M55-010 | Option ids are keyed, not labelled | `grep -rn "testID={\`option-\|testID={\`chip-\|testID={\`suggestion-" src/components/onboarding/Primitives.tsx` | Every id interpolates `opt.key`, never `opt.label`. Under FR-3b the backend may reword a label without a client release, so a label-keyed id fails on a copy edit (M5-003). ⚠️ **One violator, recorded as a finding below** | static | **FAIL 2026-08-06** — `OptionCard` uses `option-${title}` |
+| M55-010 | Option ids are keyed, not labelled | `grep -rn "testID={\`option-\|testID={\`chip-\|testID={\`suggestion-" src/components/onboarding/Primitives.tsx` | Every id interpolates `opt.key`, never `opt.label`. Under FR-3b the backend may reword a label without a client release, so a label-keyed id fails on a copy edit (M5-003). ⚠️ **One violator, recorded as a finding below** | static | FAIL 2026-08-06, **PASS 2026-08-06 after the fix** — `OptionCard` now takes a required `optionKey` |
 | M55-011 | The shared shell namespaces its chrome | Read `testIDPrefix` in `src/components/onboarding/OnboardingShell.tsx` | Onboarding and Verify emit `onboarding-*` and `verify-*` respectively. Both previously emitted `onboarding-next`, and they are adjacent screens in one journey — a flow could not tell which it was driving | static | PASS 2026-08-06 |
 | M55-012 | The launch gate is reachable by id | Read `src/components/nav/LaunchScreens.tsx` | `launch-pending`, `launch-error`, `launch-retry`, `launch-update-required`, `launch-update-cta` exist. The gate had **zero** testIDs before 5.5b, so no E2E flow could assert it had resolved rather than merely not crashed | static | PASS 2026-08-06 |
 
@@ -474,6 +474,20 @@ catch.** Findings are recorded here and reported, not repaired.
 > What is **still unexercised** is everything in `onboarding.yaml` after sign-in — the 20-question
 > walk, the API-7 submit and the Photos hand-off. The widget legs most likely to need calibration
 > when that unblocks remain the height **slider swipe** and the 12-step quiz `repeat`.
+>
+> ✅ **Superseded 2026-08-06.** Both flows now pass — **2/2 in 4m35s** — against a locally built
+> `preview-mock` Release app on the same iPhone 16 simulator. The two legs flagged above as likely to
+> need calibration both worked unchanged on their first real execution; the height swipe and the
+> `repeat: 12` quiz needed nothing. A **third** harness problem was found, and it is the one worth
+> remembering:
+>
+> 3. **`hideKeyboard` is a tap, and it can hit your button.** On iOS Maestro dismisses the keyboard by
+>    tapping outside it. The onboarding name screen *lifts* Continue above the keyboard rather than
+>    hiding it behind, so the dismissing tap landed on Continue — the step advanced, the flow's own
+>    `tapOn: onboarding-next` advanced it again, and the run **silently skipped the DOB question**
+>    while every subsequent assertion still passed for two more steps. A flow whose CTA is
+>    keyboard-lifted should tap it directly and never `hideKeyboard` first. This is a flow bug, not an
+>    app one: it only surfaced because the flow had never run past sign-in.
 
 > **Finding — M55-007 — Module 4 — a fast sign-in lands on Welcome instead of the §9.1
 > destination.** Reproduced on every one-shot run of `login.yaml` (4/4); it does **not** reproduce
@@ -496,6 +510,15 @@ catch.** Findings are recorded here and reported, not repaired.
 > **Not fixed here** per §2.4.2. It is Module 4's code, the fix is a design decision (await the
 > lifecycle, or seed the session before navigating — the file already sketches an
 > `upsertQueryData` option), and it must not ride in on a harness PR.
+>
+> ✅ **Closed 2026-08-06** on `fix/module-5.5-findings`. `adoptSession` now records its work in a
+> module-level promise — assigned *synchronously*, while RTK Query handles the mutation's `pending`
+> action, so it always refers to the run the caller is about to await — and `sessionAdopted()`
+> exposes it. Both auth screens await it before `router.replace("/")`. The work stays on
+> `onQueryStarted` so no sign-in path can forget to land its tokens; what changed is that the
+> *ordering* is now explicit rather than assumed. A `false` result is surfaced as "try again" rather
+> than as an OTP error: the credentials were accepted and the keychain write is what failed, so there
+> is nothing in the form for the user to correct. Regression coverage is M55-013…M55-015.
 
 > **Finding — M55-010, Module 5, `OptionCard`'s testID is keyed on the display
 > label.** `src/components/onboarding/Primitives.tsx:27` emits
@@ -507,3 +530,23 @@ catch.** Findings are recorded here and reported, not repaired.
 > repair. Mitigating: `OptionCard` is **exported but used nowhere**, so nothing
 > renders the bad id today; it is a trap for the next caller rather than a live
 > defect, and the fix is one line in its own branch.
+>
+> ✅ **Closed 2026-08-06** on `fix/module-5.5-findings`. `OptionCard` now takes an
+> `optionKey` and emits ``option-${optionKey}``. **Required, not defaulted from
+> `title`** — an optional prop falling back to the label would re-open the same
+> trap for the next caller, which is the only way this defect can actually bite.
+> Zero call sites, so the required prop costs nothing today.
+
+### 5.5c — the two findings, closed (2026-08-06)
+
+Authored on `fix/module-5.5-findings`, **not** by Module 5.5 itself: §2.4.2 kept
+the harness from repairing what it caught, so the repair and its regression
+coverage are a separate branch. Recorded here because the cases belong with the
+finding they answer.
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M55-013 | A phone sign-in adopts before it navigates | `yarn test src/api/__tests__/session-adoption.test.tsx` | `router.replace("/")` is called with `session.status === "authenticated"`. The spy captures the session **at the instant navigation is requested** — the only formulation that fails if the `await sessionAdopted()` is removed, since waiting long enough after any sign-in authenticates it either way | build | PASS 2026-08-06 |
+| M55-014 | A failed keychain write does not navigate | same suite | `setTokens` rejecting leaves the screen where it is with an inline error, and `sessionAdopted()` reports `false`. Navigating on a half-adopted session would strand the user on a gate that bounces them straight back to Welcome — the M55-007 symptom by a different route | build | PASS 2026-08-06 |
+| M55-015 | The Google path carries the same guarantee | same suite | `app/login.tsx` also waits. `verifyOtp` and `googleSignIn` share one `adoptSession`, so a fix applied to one screen leaves half the defect standing | build | PASS 2026-08-06 |
+| M55-016 | The runner can render a screen at all | `yarn test` | 17/17. Until 5.5c no suite rendered a component, which hid two config gaps: `lucide-react-native` resolves to an untransformable `.mjs` under `jest-expo`'s `react-native` export condition (now mapped to its CJS build), and `react-native-safe-area-context` needed transforming. Every screen imports an icon, so this blocked *all* future component tests, not just these | build | PASS 2026-08-06 |

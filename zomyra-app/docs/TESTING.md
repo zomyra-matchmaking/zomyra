@@ -16,7 +16,14 @@ yarn test <path>     # a single file, e.g. yarn test src/lib/__tests__/root-rout
 ```
 
 - **Config:** `jest.config.js` (preset, the `@/*` alias mirrored from
-  `tsconfig.json`, `transformIgnorePatterns` widened for RTK/immer/redux-persist).
+  `tsconfig.json`, `transformIgnorePatterns` widened for RTK/immer/redux-persist
+  and `react-native-safe-area-context`).
+- **`lucide-react-native` is mapped to its CommonJS build.** Its `exports` map
+  sends the `react-native` condition — the one `jest-expo` selects — to a `.mjs`
+  bundle, and Jest's transform only matches `.[jt]sx?`, so the file reaches the
+  runtime untransformed and throws on its first `export`. Every screen imports an
+  icon, so without the mapping **no suite can render a screen at all**; the two
+  suites that do (M55-013…015) were what surfaced it.
 - **Global mocks:** `jest.setup.js` — the four §2.4.1 names (`expo-secure-store`,
   `react-native-reanimated`, `expo-router`, `@react-native-google-signin`) plus
   AsyncStorage's in-memory mock, which redux-persist writes through. A suite that
@@ -53,8 +60,48 @@ deterministic fixtures, no OTP delivery, no live backend. A suite that fails
 because staging is down is a suite people learn to ignore.
 
 ```bash
-yarn build:preview-mock:ios-sim   # or :android
+yarn build:preview-mock:ios-sim   # or :android — EAS, ~20 min, one build credit
 ```
+
+**Or build it locally**, which is what the 2026-08-06 fix run used. Free, and
+fast enough to re-run after a one-line change — which matters, because a flow
+that can only be re-tested by spending a cloud build is a flow nobody re-tests.
+Needs Xcode and CocoaPods (`brew install cocoapods`):
+
+```bash
+LANG=en_US.UTF-8 EXPO_PUBLIC_APP_ENV=mock npx expo run:ios --configuration Release --device "iPhone 16"
+```
+
+- **`--configuration Release` is not optional.** A Debug build expects Metro to
+  be serving the bundle; Maestro launches the app with no packager attached.
+- **`LANG=en_US.UTF-8` is not optional either** on this checkout. CocoaPods
+  normalises the project path through Ruby's Unicode tables and dies with
+  `Encoding::CompatibilityError` under the default `ASCII-8BIT` locale — the
+  repo path contains spaces. Homebrew prints the same advice on install.
+- `EXPO_PUBLIC_APP_ENV=mock` is what makes it a *`preview-mock`* build rather
+  than merely a local one; the other three variables in `eas.json`'s
+  `preview-mock` profile only matter to a real Google sign-in, which this build
+  short-circuits anyway.
+
+#### ⚠️ The checkout path contains spaces, and three build scripts do not quote it
+
+`/Users/…/New Matrimony App/…`. EAS is unaffected (it builds at a clean path);
+**local builds are not**. Three separate unquoted expansions had to be patched by
+hand on 2026-08-06, and every one of them lives in generated or vendored files
+that `expo prebuild` / `yarn install` will silently restore:
+
+| Where | Symptom |
+|---|---|
+| `ios/Pods/Pods.xcodeproj` — EXConstants' `[CP-User] Generate app.config` phase | `No such file or directory: /Users/…/New` — build fails outright |
+| `ios/Zomyra.xcodeproj` — `Bundle React Native code and images` | same, at link time |
+| `node_modules/expo-constants/scripts/get-app-config-ios.sh:14` — `basename $PROJECT_DIR` | **silent.** BSD `basename` accepts the split words and returns three lines, the `!= "Pods"` guard matches, and the script `exit 0`s having written nothing. The build **succeeds** and the app then dies at launch on `expo-linking needs access to the expo-constants manifest` |
+
+The third is the dangerous one: a green build that crashes on first launch, with
+an error naming a package unrelated to the cause.
+
+**The durable fix is to move the checkout to a path without spaces** — patching
+regenerated files is not a fix, it is a thing to redo. Until then, expect to
+re-apply all three after any `expo prebuild` or `yarn install`.
 
 ⚠️ **A dev client is not a substitute.** It carries `EXDevLauncher`, so a launch
 opens the launcher rather than the app and every flow fails at step one.
@@ -69,8 +116,15 @@ it launched straight into `/discovery-mode`.
 Reserved mock OTP codes are `000000` (`otp_expired`) and `111111`
 (`too_many_attempts`); any other six digits succeed. The flows use `123456`.
 
-⚠️ **Both flows are currently red**, blocked on a Module 4 sign-in race
-(M55-007 in `docs/TEST-CASES.md`) — not on anything wrong with the flows.
+⚠️ **`hideKeyboard` is a tap, and it can hit your button.** On iOS Maestro
+dismisses the keyboard by tapping outside it. Screens whose CTA is *lifted above*
+the keyboard rather than hidden behind it — which is most of ours, see
+`useKeyboardInset` — will take that tap on the CTA. On the onboarding name step
+this advanced the form before the flow's own Continue tap, so the run **silently
+skipped the DOB question** and still passed for two more assertions. **Tap the
+lifted CTA directly; do not `hideKeyboard` first.**
+
+Both flows pass as of 2026-08-06 (2/2, 4m35s, iPhone 16 simulator).
 
 ### The two flows, and why only two
 
