@@ -25,6 +25,25 @@ type Props = {
    * Defaults to the step index.
    */
   transitionKey?: string | number;
+  /**
+   * testID namespace for this shell's own chrome (Module 5.5b).
+   *
+   * ⚠️ **The shell is not only Onboarding's.** `app/verify.tsx` renders it for
+   * the Photos and selfie steps, so a hardcoded `onboarding-next` appeared on
+   * both stacks and an E2E flow driving "the Continue button" could not tell
+   * which screen it was on — the two are adjacent in the same journey, which is
+   * exactly where that ambiguity does damage. Verify passes `"verify"`.
+   */
+  testIDPrefix?: string;
+  /**
+   * A stable, **non-positional** identifier for the question being shown, used
+   * as the screen's testID (`onboarding-step-gender`).
+   *
+   * Positional ids were rejected: M5-044 records that `SCREENS` both shrank and
+   * grew during Module 5, so `onboarding-step-7` would silently come to mean a
+   * different question. Falls back to `<prefix>-screen` when absent.
+   */
+  stepId?: string;
   children: ReactNode;
 };
 
@@ -41,6 +60,8 @@ export function OnboardingShell({
   loading,
   hideStepLabel,
   transitionKey,
+  testIDPrefix = "onboarding",
+  stepId,
   children,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -117,7 +138,11 @@ export function OnboardingShell({
   });
 
   return (
-    <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={styles.root}
+      edges={["top", "left", "right"]}
+      testID={stepId ? `${testIDPrefix}-step-${stepId}` : `${testIDPrefix}-screen`}
+    >
       <KeyboardAvoidingView
         behavior={isIOS ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -126,7 +151,7 @@ export function OnboardingShell({
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Touchable
-              testID="onboarding-back"
+              testID={`${testIDPrefix}-back`}
               onPress={onBack}
               style={[styles.backBtn]}
               hitSlop={8}
@@ -160,7 +185,9 @@ export function OnboardingShell({
               { opacity, transform: [{ translateY }] },
             ]}
           >
-            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.title} testID={`${testIDPrefix}-title`}>
+              {title}
+            </Text>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
             <View style={styles.bodyWrap}>{children}</View>
           </Animated.View>
@@ -169,7 +196,7 @@ export function OnboardingShell({
         {!hideNext ? (
           <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
             <Touchable
-              testID="onboarding-next"
+              testID={`${testIDPrefix}-next`}
               disabled={!canNext || loading}
               accessibilityState={{ disabled: !canNext || loading, busy: !!loading }}
               onPress={onNext}

@@ -20,7 +20,7 @@ import { colors, fontSize, fontWeight, lineHeight, spacing } from "@/src/theme";
 export function LaunchPending({ label = "Getting things ready" }: { label?: string }) {
   return (
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
-      <View style={styles.center}>
+      <View style={styles.center} testID="launch-pending">
         <Logo size={72} />
         <Loading label={label} />
       </View>
@@ -36,7 +36,7 @@ export function UpdateRequired({ storeUrl }: { storeUrl?: string }) {
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
       {/* No back gesture and no header — there is nothing to go back to. */}
       <Stack.Screen options={{ gestureEnabled: false }} />
-      <View style={styles.center} accessible accessibilityRole="alert">
+      <View style={styles.center} testID="launch-update-required" accessible accessibilityRole="alert">
         <Logo size={72} />
         <Text style={styles.title}>Update required</Text>
         <Text style={styles.body}>
@@ -48,6 +48,7 @@ export function UpdateRequired({ storeUrl }: { storeUrl?: string }) {
             nothing on a screen with no way out is worse than no button. */}
         {storeUrl ? (
           <Button
+            testID="launch-update-cta"
             label="Update Zomyra"
             onPress={() => Linking.openURL(storeUrl)}
             fullWidth
@@ -73,13 +74,19 @@ export function UpdateRequired({ storeUrl }: { storeUrl?: string }) {
 export function LaunchError({ onRetry }: { onRetry: () => void }) {
   return (
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
-      <View style={styles.center} accessible accessibilityRole="alert">
+      <View style={styles.center} testID="launch-error" accessible accessibilityRole="alert">
         <Logo size={72} />
         <Text style={styles.title}>Something went wrong</Text>
         <Text style={styles.body}>
           We couldn&apos;t reach Zomyra just now. Check your connection and try again.
         </Text>
-        <Button label="Try again" onPress={onRetry} fullWidth style={styles.cta} />
+        <Button
+          testID="launch-retry"
+          label="Try again"
+          onPress={onRetry}
+          fullWidth
+          style={styles.cta}
+        />
       </View>
     </SafeAreaView>
   );

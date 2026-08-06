@@ -93,6 +93,8 @@ export default function VerifyScreen() {
       <OnboardingShell
         step={0}
         total={TOTAL}
+        testIDPrefix="verify"
+        stepId="photos"
         title="Add your photos"
         subtitle="Choose photos that best represent you."
         onBack={goBack}
@@ -115,6 +117,8 @@ export default function VerifyScreen() {
       <OnboardingShell
         step={1}
         total={TOTAL}
+        testIDPrefix="verify"
+        stepId="intro"
         title="Verify your identity"
         subtitle="We verify every profile to help keep Zomyra safe, authentic, and free from fake accounts."
         onBack={goBack}
@@ -154,6 +158,8 @@ export default function VerifyScreen() {
       <OnboardingShell
         step={2}
         total={TOTAL}
+        testIDPrefix="verify"
+        stepId="selfie"
         title="Take a verification selfie"
         subtitle="Follow the pose shown below so we can confirm you're the same person in your profile photos."
         onBack={goBack}
@@ -191,6 +197,8 @@ export default function VerifyScreen() {
       <OnboardingShell
         step={4}
         total={TOTAL}
+        testIDPrefix="verify"
+        stepId="review"
         title="Does this look good?"
         subtitle="Make sure your face is clearly visible before continuing."
         onBack={() => setStep(2)}
@@ -260,6 +268,8 @@ export default function VerifyScreen() {
     <OnboardingShell
       step={5}
       total={TOTAL}
+      testIDPrefix="verify"
+      stepId="submitted"
       title="Verification submitted"
       subtitle="We're reviewing your profile."
       onBack={goBack}

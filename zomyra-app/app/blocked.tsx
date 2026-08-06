@@ -39,6 +39,7 @@ export default function BlockedScreen() {
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
       <View
         style={styles.center}
+        testID="blocked-screen"
         accessible
         // One node with the whole message, so a screen reader announces the
         // situation in one pass rather than making the user walk an icon, a

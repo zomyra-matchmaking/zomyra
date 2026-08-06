@@ -38,5 +38,52 @@ one that owns it. The one exception is a test that is itself wrong.
 
 ## E2E (5.5b — Maestro)
 
-Pending. Runs against a `preview-mock` build (MIGRATION §2.4.3), never staging.
-See `.maestro/` once it lands.
+FE TDD §13.2's tooling. Installed via Homebrew (`mobile-dev-inc/tap/maestro`);
+needs a JDK, which the formula pulls in.
+
+```bash
+maestro test .maestro/flows              # both flows
+maestro test .maestro/flows/login.yaml   # one
+maestro check-syntax .maestro/flows/login.yaml
+maestro studio                           # interactive: inspect the a11y tree live
+```
+
+**Runs against a `preview-mock` build, never staging** (MIGRATION §2.4.3):
+deterministic fixtures, no OTP delivery, no live backend. A suite that fails
+because staging is down is a suite people learn to ignore.
+
+```bash
+yarn build:preview-mock:ios-sim   # or :android
+```
+
+⚠️ **A dev client is not a substitute.** It carries `EXDevLauncher`, so a launch
+opens the launcher rather than the app and every flow fails at step one.
+
+### The two flows, and why only two
+
+`.maestro/flows/login.yaml` and `.maestro/flows/onboarding.yaml` — FE §13.2's
+first two priorities. The other three (Express Interest→Match with the cap and
+snap-back, chat with optimistic reconciliation, the premium purchase race) belong
+to **Modules 7, 9 and 10**, which each write their own; 5.5 must not write them
+blind against screens that do not exist yet (MIGRATION §2.4.2).
+
+## The testID convention (5.5b)
+
+Maestro drives the app through the accessibility tree, so a testID is the
+contract between a screen and its flow. Three rules:
+
+1. **`<screen>-<element>`, kebab-case.** `login-continue-phone`, `otp-verify`,
+   `consent-agree`, `blocked-screen`.
+2. **Repeated or catalogue-driven items are keyed on the *key*, never the
+   label** — `option-male`, `chip-hindi`, `suggestion-ka-bengaluru`. Under FR-3b
+   the backend may reword any label at any time without a client release, so a
+   label-keyed id is a test that breaks on a copy edit (M5-003).
+3. **Never positional.** Onboarding steps are `onboarding-step-<draft field
+   key>` (`onboarding-step-gender`), not `onboarding-step-7`. M5-044 records that
+   `SCREENS` both shrank and grew during Module 5 — an index would silently come
+   to name a different question while the flow still passed.
+
+`OnboardingShell` is shared by Onboarding **and** Verify, so it takes a
+`testIDPrefix` (`onboarding` / `verify`). Before 5.5b both stacks emitted
+`onboarding-next`, and the two are adjacent in one journey — exactly where that
+ambiguity does damage.

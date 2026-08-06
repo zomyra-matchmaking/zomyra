@@ -1,0 +1,120 @@
+# FE TDD §13.2 priority 1 — phone/Google login through the launch gate.
+#
+# What this flow is really testing is **the gate, not the form**: that a cold
+# start resolves the version check and `GET /me` before deciding anywhere, and
+# that the destination comes from §9.1's table rather than from the auth screen
+# (M4-009 — the FR-1a bug was `app/otp.tsx` sending every account to
+# `/onboarding` unconditionally). So each leg signs in as a fixture whose
+# §9.1 answer is different, and asserts where it lands.
+#
+# Fixtures (src/api/mock/accounts.ts, README table):
+#   9000000000 — complete + verified + mode set → /discover
+#   9000000001 — incomplete, consent already on file → /onboarding (no consent)
+#   9000000007 — perfect Discover account but banned → /blocked (O-4)
+#   9123456789 — unknown number → new account, unconsented → /consent
+appId: com.zomyra.app
+---
+# ---------------------------------------------------------------------------
+# 1. A returning, fully-set-up account reaches Discover.
+# ---------------------------------------------------------------------------
+- launchApp:
+    clearState: true
+
+# The gate paints before it decides. Either it is still resolving, or it has
+# already answered — both are correct, so this waits rather than asserting.
+- extendedWaitUntil:
+    visible:
+      id: "login-continue-phone"
+    timeout: 20000
+
+- runFlow:
+    file: ../subflows/sign-in-phone.yaml
+    env:
+      PHONE: "9000000000"
+      OTP: "123456"
+
+- extendedWaitUntil:
+    visible:
+      id: "discover-scroll"
+    timeout: 20000
+
+# ---------------------------------------------------------------------------
+# 2. O-4 — accountStatus wins over everything below it.
+#    This account is complete, verified and has a mode set; only `banned`
+#    can explain the blocker, which is what makes it worth a leg of its own.
+# ---------------------------------------------------------------------------
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login-continue-phone"
+    timeout: 20000
+
+- runFlow:
+    file: ../subflows/sign-in-phone.yaml
+    env:
+      PHONE: "9000000007"
+      OTP: "123456"
+
+- extendedWaitUntil:
+    visible:
+      id: "blocked-screen"
+    timeout: 20000
+
+# ---------------------------------------------------------------------------
+# 3. FR-2a — a new account meets consent *before* Onboarding, and declining
+#    signs out rather than proceeding (M4-023).
+# ---------------------------------------------------------------------------
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login-continue-phone"
+    timeout: 20000
+
+- runFlow:
+    file: ../subflows/sign-in-phone.yaml
+    env:
+      PHONE: "9123456789"
+      OTP: "123456"
+
+- extendedWaitUntil:
+    visible:
+      id: "consent-agree"
+    timeout: 20000
+- assertVisible:
+    id: "consent-decline"
+
+- tapOn:
+    id: "consent-decline"
+# Consent is a precondition, not a preference — declining returns to Welcome.
+- extendedWaitUntil:
+    visible:
+      id: "login-continue-phone"
+    timeout: 20000
+
+# ---------------------------------------------------------------------------
+# 4. Google is the other entry to the same gate.
+#
+#    In a `preview-mock` build `signInWithGoogle()` short-circuits to a fixed
+#    fake idToken without touching the native SDK (src/auth/google.ts), so this
+#    leg exercises the gate rather than Google's consent screen — which is the
+#    half that can regress without anyone noticing. A real Google sign-in still
+#    needs O-19 and cannot be automated here.
+# ---------------------------------------------------------------------------
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "login-continue-google"
+    timeout: 20000
+
+- tapOn:
+    id: "login-continue-google"
+
+# A Google identity is never linked to a phone one (API-3), so this is always a
+# fresh account and always meets consent first.
+- extendedWaitUntil:
+    visible:
+      id: "consent-agree"
+    timeout: 20000

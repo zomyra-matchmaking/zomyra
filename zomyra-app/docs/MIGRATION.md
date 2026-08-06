@@ -67,6 +67,15 @@ Append a "Module log" entry at the end of every module, in the same session that
   now returns **`401 invalid_google_token`** for a bogus token, where it returned `503` a day
   earlier — so **API-3 is deployed and validating**. API-1/API-2 are still `404` (on hold behind
   LLP → DLT registration) and `/v1/docs-json` is still `404`. Endpoint map in §6's Module 2 addendum.
+- **Module 5.5 (test harness) is finished on `module/5.5-test-harness`, committed but not pushed and
+  with no PR** (2026-08-06, C-6). `yarn test` runs 14 tests over 5 suites; six previously-`static`/
+  `runtime` cases are now `build`. **Maestro 2.8.0 is installed and both flows pass `check-syntax`,
+  but neither has ever been run** — that needs a `preview-mock` build (the simulator holds the
+  2026-08-05 dev client, which opens `EXDevLauncher` instead of the app). An EAS
+  `preview-mock-simulator` build was started 2026-08-06; **M55-007/008 stay `UNRUN` until it lands
+  and the flows are calibrated.** One finding was reported and deliberately not fixed: **M55-010 —
+  Module 5 — `OptionCard`'s testID is keyed on the display label** (dead code, so not yet a live
+  defect). **Next up is Module 6 — Photos & verification.**
 - **Next up: Module 5 — Onboarding & profile schema.** The sequence in §2 is being followed in
   order. It inherits a working consent gate immediately in front of the Onboarding stack, both
   auth paths landing on `/` so §9.1 decides, and the shared loading state. **Read §12.3 and
@@ -122,7 +131,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 3 | Navigation | **Complete** (2026-08-02) | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | **Complete** (2026-08-03) | First real API integration; unblocks every authenticated call. **+ FR-2a's consent screen + O-18(a) settled on a scheme-owning build** |
 | 5 | Onboarding & profile schema | **Complete** (2026-08-05) | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
-| **5.5** | **Test harness (Jest + RNTL, Maestro)** | Not started | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
+| **5.5** | **Test harness (Jest + RNTL, Maestro)** | **Complete** (2026-08-06) — ⚠️ *the two Maestro flows are written and syntax-checked but have never been executed; see §6* | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
@@ -3710,3 +3719,106 @@ x-client-info: p=android; os=16; m=google_sdk_gphone64_arm64; a=1.0.0; d=00616cc
 A force-stop and relaunch returned the **byte-identical** `d=`, which is the secure-store round trip
 proven rather than assumed (M5-056). `.env` was restored to `mock` and Metro restarted; the app is
 back on mocks and rendering.
+
+---
+
+### Module 5.5 — Test harness (completed 2026-08-06)
+
+**Branch:** `module/5.5-test-harness`. **Adds no product behaviour.** Its output is tooling plus a
+change of *evidence class*: six cases that a human previously verified by reading code now run as a
+command.
+
+#### 5.5a — Jest + RNTL
+
+FE TDD §13.1's tooling, which had been chosen and never installed. `jest-expo` preset, RNTL,
+`yarn test`, and `jest.setup.js` carrying the four mocks §2.4.1 names (`expo-secure-store`,
+`react-native-reanimated`, `expo-router`, `@react-native-google-signin`) plus AsyncStorage's, which
+redux-persist writes through.
+
+`babel.config.js` is new and is **runner-only**: it declares `babel-preset-expo`, which is exactly
+what Metro applies by default when no config is present, so no production build changes. Jest simply
+needs a config it can find.
+
+**The six §2.4.2 rows are now `build`, and all pass** — M3-002, M2-004, M2-001, M2-003, M2-005,
+M2-006. They were written as *behaviour*, not as shape assertions: M2-001/003 dispatch a real action,
+flush the persistor and inspect the payload that actually reached AsyncStorage rather than counting
+strings in `PERSIST_WHITELIST`; M2-004 fires two concurrent 401s and counts refreshes. 14 tests green.
+
+**Two in-scope production changes, both seams and neither a behaviour fix:**
+
+1. `src/config/env.ts` exports `parseAppEnvironment`. `APP_ENV` invokes it at import time against a
+   value Expo inlines at build time, so the throw-vs-default branch cannot be varied per test through
+   that constant.
+2. `OnboardingShell` gained `testIDPrefix` / `stepId` (5.5b, below).
+
+**One wrong test, fixed as a test (§2.4.2's one exception).** M2-006 asserted that
+`legacy-migration.ts` imports Zustand-era AsyncStorage state exactly once. That file was **deleted on
+purpose** on 2026-08-02 (§6, "Module 2 addendum") and superseded by M5-023's discard-on-migrate, so
+the case described behaviour the codebase had deliberately removed. Retargeted to the NFR-1 contract
+that replaced it: a same-version draft rehydrates intact, a pre-v2 draft is discarded rather than
+pass-through rehydrated. **Zustand is otherwise entirely gone** — not a dependency, not in
+`yarn.lock`, not installed, zero imports; the three surviving mentions are prose in doc comments
+explaining why persistence is redux-persist's job now, and were left as the rationale they are.
+
+#### 5.5b — Maestro and the testID convention
+
+Maestro **2.8.0**, installed via Homebrew (`mobile-dev-inc/tap/maestro`) on the owner's instruction —
+preferred over the vendor's `curl | bash` installer.
+
+**The testID convention is written down in `docs/TESTING.md`** and has three rules:
+`<screen>-<element>` kebab-case; repeated items keyed on the **catalogue key, never the label**
+(FR-3b lets the backend reword any label with no client release); and **never positional**.
+
+**The retrofit was much smaller than §2.4.1 budgeted.** That section assumed Modules 0–5 shipped with
+no convention at all; in fact **176 testIDs already existed across 33 files**, largely consistent and
+already key-based. The genuine gaps were four:
+
+- **The launch gate had zero** — `app/index.tsx` and `LaunchScreens.tsx` now carry `launch-pending`,
+  `launch-error`, `launch-retry`, `launch-update-required`, `launch-update-cta` and the FR-30 prompt's
+  three. Without these no flow could assert the gate had *resolved* rather than merely not crashed.
+- **`app/blocked.tsx` had none** — `blocked-screen`.
+- **`OnboardingShell` is shared by Onboarding *and* Verify**, and hardcoded `onboarding-back` /
+  `onboarding-next` on both. It now takes `testIDPrefix`; `app/verify.tsx` passes `"verify"`. The two
+  are adjacent screens in one journey, which is precisely where that ambiguity does damage.
+- **Onboarding steps had no stable identity.** `QuestionScreen` gained a **required** `id` —
+  the draft field key, so `onboarding-step-gender`. Deliberately not the index: M5-044 records
+  `SCREENS` both shrinking *and* growing during Module 5, so a positional id would come to name a
+  different question while the flow still passed.
+
+Plus `testID` props on `NameField`, and on `Slider` (a swipe target has no label to find it by).
+
+**Two flows only**, per §2.4.2 — `login.yaml` (four legs: Discover, O-4's blocker, consent-then-decline,
+and Google) and `onboarding.yaml` (Plot/Anchor/Love → API-7 → the Photos hand-off). The other three
+§13.2 priorities belong to Modules 7, 9 and 10, each of which writes its own; writing them blind
+against screens that do not exist was explicitly out of scope.
+
+⚠️ **Neither flow has ever been executed. This is the module's main gap.** Both pass
+`maestro check-syntax`, and their element ids and catalogue keys were read out of the source and out
+of `src/api/mock/catalogue.ts` — several first-draft key guesses were wrong (`chip-hi` →
+`chip-hindi`, fitness `weekly` → `3_5_weekly`, `householdPreference` had no `nuclear` at all) and were
+corrected against the mock. But §2.4.3 requires a `preview-mock` build and the only binary on the
+iPhone 16 simulator is the **2026-08-05 dev client**, which carries `EXDevLauncher` and opens the
+launcher rather than the app. An EAS `preview-mock-simulator` build was started 2026-08-06.
+**M55-007 and M55-008 are recorded `UNRUN`, and the flows should be treated as unverified drafts** —
+the legs most likely to need calibration on first run are the height **slider swipe** and the 12-step
+quiz `repeat`.
+
+#### Finding (§2.4.2 — reported, not fixed)
+
+**M55-010 — Module 5 — `OptionCard`'s testID is keyed on the display label, not the catalogue key.**
+`src/components/onboarding/Primitives.tsx:27` emits ``option-${title}`` while its sibling `OptionGrid`
+emits ``option-${opt.key}``, so one `option-*` namespace carries two incompatible schemes. It is the
+exact pattern the comment above `OptionGrid` records as removed in Module 5 (`option-Male` →
+`option-male`). **Mitigating: `OptionCard` is exported but called from nowhere**, so nothing renders
+the bad id today — it is a trap for the next caller rather than a live defect. Left for its own
+branch, as §2.4.2 requires.
+
+**New cases:** M55-001…M55-012. Ten PASS, one FAIL (M55-010, the finding above), two UNRUN
+(M55-007/008). Six earlier rows converted to `build`.
+
+**Verified green:** `yarn test` 14/14 · `npx eslint app src --no-cache` 0 errors (13 pre-existing
+warnings, none from this module) · `yarn typecheck:baseline` clean (the same 3 inherited errors) ·
+`maestro check-syntax` OK on both flows.
+
+**Not done, and owned by whoever runs the flows first:** the actual Maestro execution, and with it
+the `Last result` for M55-007/008. Everything else in §2.4 is complete.

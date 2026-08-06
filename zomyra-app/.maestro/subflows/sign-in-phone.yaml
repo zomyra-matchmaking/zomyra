@@ -1,0 +1,48 @@
+# Sign in by phone, from a cleared state through to the root gate's answer.
+#
+# Extracted because both flows need it and neither is *about* it: the login flow
+# asserts this path, the onboarding flow only has to get past it.
+#
+# Parameters:
+#   PHONE — a fixture from src/api/mock/accounts.ts (README table)
+#   OTP   — any 6 digits except the two reserved codes (000000 → otp_expired,
+#           111111 → too_many_attempts). Defaults to 123456.
+appId: com.zomyra.app
+---
+- tapOn:
+    id: "login-continue-phone"
+
+- assertVisible:
+    id: "phone-input"
+- tapOn:
+    id: "phone-input"
+- inputText: "${PHONE}"
+- tapOn:
+    id: "phone-send-otp"
+
+# Six single-character boxes rather than one field (app/otp.tsx). Each is tapped
+# explicitly: the screen advances focus itself on input, but tapping is correct
+# whether or not it does, and does not depend on that behaviour.
+- assertVisible:
+    id: "otp-digit-0"
+- tapOn:
+    id: "otp-digit-0"
+- inputText: "${OTP[0]}"
+- tapOn:
+    id: "otp-digit-1"
+- inputText: "${OTP[1]}"
+- tapOn:
+    id: "otp-digit-2"
+- inputText: "${OTP[2]}"
+- tapOn:
+    id: "otp-digit-3"
+- inputText: "${OTP[3]}"
+- tapOn:
+    id: "otp-digit-4"
+- inputText: "${OTP[4]}"
+- tapOn:
+    id: "otp-digit-5"
+- inputText: "${OTP[5]}"
+
+- tapOn:
+    id: "otp-verify"

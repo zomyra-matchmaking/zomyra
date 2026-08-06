@@ -110,6 +110,17 @@ type QuestionScreen = {
   kind: "q";
   section: Section;
   /**
+   * Stable identifier for this question, used as its testID
+   * (`onboarding-step-<id>`) — Module 5.5b's testID convention.
+   *
+   * **Required, and deliberately not the array index.** M5-044 records that
+   * `SCREENS` both shrank and grew during Module 5, so a positional id would
+   * silently come to name a different question and an E2E flow would answer the
+   * wrong one while still passing. For `choice()` screens this is the draft
+   * field key verbatim, which is the same string the answer is stored under.
+   */
+  id: string;
+  /**
    * When true, the question auto-advances ~250ms after the user picks an
    * option (no Continue tap needed). Use only for single-select questions.
    */
@@ -163,6 +174,7 @@ function choice(
   return {
     kind: "q",
     section,
+    id: field,
     autoAdvance: true,
     render: (s, set, ctx) => ({
       ...copy,
@@ -183,20 +195,32 @@ function choice(
 const Q1: QuestionScreen[] = [
   {
     kind: "q", section: 1,
+    id: "name",
     render: (s, set) => ({
       title: "What's your name?",
       subtitle: "How you'd like to appear to your matches.",
       canNext: !!s.firstName.trim() && !!s.lastName.trim(),
       body: (
         <View style={{ gap: spacing[3] }}>
-          <NameField label="First name" value={s.firstName} onChange={(v) => set("firstName", v)} />
-          <NameField label="Last name" value={s.lastName} onChange={(v) => set("lastName", v)} />
+          <NameField
+            testID="onboarding-first-name"
+            label="First name"
+            value={s.firstName}
+            onChange={(v) => set("firstName", v)}
+          />
+          <NameField
+            testID="onboarding-last-name"
+            label="Last name"
+            value={s.lastName}
+            onChange={(v) => set("lastName", v)}
+          />
         </View>
       ),
     }),
   },
   {
     kind: "q", section: 1,
+    id: "dob",
     render: (s, set) => {
       const age = calcAge(s.dob);
       return {
@@ -229,6 +253,7 @@ const Q1: QuestionScreen[] = [
    */
   {
     kind: "q", section: 1, autoAdvance: true,
+    id: "state",
     render: (s, set, ctx) => ({
       title: "Which state do you live in?",
       subtitle: "We'll narrow the city list down next.",
@@ -249,6 +274,7 @@ const Q1: QuestionScreen[] = [
   },
   {
     kind: "q", section: 1,
+    id: "city",
     render: (s, set, ctx) => ({
       title: "Which city do you live in?",
       // O-15's client-visible half: the curated list may genuinely not contain
@@ -274,6 +300,7 @@ const Q1: QuestionScreen[] = [
 
   {
     kind: "q", section: 1,
+    id: "height",
     render: (s, set) => {
       const cm = s.heightCm ?? 168;
       return {
@@ -286,6 +313,7 @@ const Q1: QuestionScreen[] = [
               <Text style={styles.smallValue}>{cm} cm</Text>
             </View>
             <Slider
+              testID="onboarding-height-slider"
               min={HEIGHT_MIN_CM}
               max={HEIGHT_MAX_CM}
               value={cm}
@@ -304,6 +332,7 @@ const Q1: QuestionScreen[] = [
   choice(1, "education", "education", { title: "Your highest education?" }),
   {
     kind: "q", section: 1,
+    id: "profession",
     render: (s, set, ctx) => ({
       title: "What do you do?",
       canNext: !!s.profession,
@@ -333,6 +362,7 @@ const Q1: QuestionScreen[] = [
    */
   {
     kind: "q", section: 1,
+    id: "languages",
     render: (s, set, ctx) => {
       const usesOther = s.languages.includes(OTHER_LANGUAGE_KEY);
       return {
@@ -373,6 +403,7 @@ const Q1: QuestionScreen[] = [
   }),
   {
     kind: "q", section: 1,
+    id: "bio",
     render: (s, set) => ({
       title: "About you",
       subtitle: "Write a short intro your matches will see on your profile.",
@@ -398,6 +429,7 @@ const Q1: QuestionScreen[] = [
 const Q2: QuestionScreen[] = [
   {
     kind: "q", section: 2,
+    id: "partnerAgeRange",
     render: (s, set) => ({
       title: "Preferred age range in partner?",
       canNext: true,
@@ -642,6 +674,7 @@ export default function OnboardingScreen() {
       nextLabel={isLast ? "Finish" : "Continue"}
       hideStepLabel
       transitionKey={idx}
+      stepId={screen.id}
     >
       {r.body}
       {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
@@ -653,15 +686,18 @@ function NameField({
   label,
   value,
   onChange,
+  testID,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  testID?: string;
 }) {
   return (
     <View>
       <Text style={styles.fieldLabel}>{label.toUpperCase()}</Text>
       <TextInput
+        testID={testID}
         value={value}
         onChangeText={onChange}
         maxLength={40}

@@ -61,7 +61,7 @@ Append your cases before you close the module (MIGRATION.md C-7). Rules that kee
 | 3 · Navigation | 31 | No — authored by the module (incl. the 2026-08-05 follow-up) |
 | 4 · Auth & session | 30 | No — authored by the module (incl. the 2026-08-04 permutation pass) |
 | 5 · Onboarding + verification entry | 57 | No — authored by the module (incl. the 2026-08-05 Edit Profile, `fitness` and end-to-end walk follow-ups) |
-| 5.5 · Test harness | — | **5.5a done** (2026-08-06) — Jest + RNTL stood up; the six §2.4.2 rows (M3-002, M2-004, M2-001, M2-003, M2-005, M2-006) flipped `static`/`runtime` → `build`, all green. 5.5b (Maestro + testIDs) pending review. Adds no new behaviour of its own |
+| 5.5 · Test harness | 12 | No — authored by the module (2026-08-06). Adds no product behaviour: its job was to move six Module 2/3 rows from `static`/`runtime` to `build` (all green) and to stand up Maestro. **M55-007/008 are UNRUN** — awaiting a `preview-mock` build |
 | 6–12 | — | Not started |
 
 **The seeded cases below are a starting set, not a complete one.** They were written after those
@@ -419,8 +419,64 @@ that confirmed beyond the individual rows above:
 > look like a *skipped* question when Metro is serving a stale bundle — the fitness screen appeared
 > only after a hard restart. Worth knowing before someone files it as a bug.
 >
+
 > The second observation from the walk — the "Anchor" label wrapping to "Ancho / r" — **was fixed**
 > on the owner's instruction (M5-050), even though `TreasureMap.tsx` is a Module 3 component. The
 > cause was `nodeWrap`'s 40pt width, which is the *marker's* diameter and was never meant to bound
 > the caption. Not re-verified on device: the graphic only appears between onboarding sections, so
 > confirming it costs another full walk for a text-width change.
+
+---
+
+## Module 5.5 — Test harness
+
+Authored by the module (2026-08-06). **This module adds no product behaviour** —
+its cases are about the harness itself, and its main output is the six Module 2/3
+rows above that moved from `static`/`runtime` to `build`.
+
+⚠️ **Per MIGRATION §2.4.2 this module writes tests and does not fix what they
+catch.** Findings are recorded here and reported, not repaired.
+
+### 5.5a — Jest + RNTL
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M55-001 | The runner exists and is green | `yarn test` | All suites pass. This is the case that makes the six converted rows above runnable at all | build | PASS 2026-08-06 |
+| M55-002 | Babel config is runner-only | Read `babel.config.js` | It declares `babel-preset-expo` and nothing else — exactly the preset Metro applies by default. A bundler-affecting change here would mean the harness altered production output, which it must not | static | PASS 2026-08-06 |
+| M55-003 | The four native mocks are global | Read `jest.setup.js` | `expo-secure-store`, `react-native-reanimated`, `expo-router` and `@react-native-google-signin` are mocked for every suite (MIGRATION §2.4.1). Without them any suite importing the auth or navigation layer throws at import time in Node | static | PASS 2026-08-06 |
+| M55-004 | The `@/*` alias resolves under Jest | `yarn test src/lib/__tests__/root-route.test.ts` | Passes. The alias is declared in three places (tsconfig, Metro, `jest.config.js`); a drift makes every suite fail to resolve its imports | build | PASS 2026-08-06 |
+| M55-005 | Tests are never bundled | `grep -rn "__tests__\|jest.setup" app/ src/ --include="*.ts" --include="*.tsx" \| grep -v __tests__/` | No import of a test file from app code. Metro bundles only what is reachable from the entry point (FE §13.3), so suites cost nothing at runtime — the same argument C-7 makes for this sheet | static | PASS 2026-08-06 |
+
+### 5.5b — Maestro + the testID convention
+
+| ID | Area | Verify | Expect | Type | Last result |
+|---|---|---|---|---|---|
+| M55-006 | Flows are syntactically valid | `maestro check-syntax .maestro/flows/login.yaml .maestro/flows/onboarding.yaml` | `OK` for both. Cheap, needs no device, and catches the YAML/command errors that otherwise only surface halfway through a run | build | PASS 2026-08-06 |
+| M55-007 | Login through the launch gate | `maestro test .maestro/flows/login.yaml` on a `preview-mock` build | Four legs pass: `9000000000`→Discover, `9000000007`→`/blocked` (O-4), a new number→`/consent` with Decline returning to Welcome, and Google→`/consent`. Proves §9.1 decides the destination, not the auth screen (M4-009) | build | **UNRUN** — see the note below |
+| M55-008 | Onboarding submits and hands off to Photos | `maestro test .maestro/flows/onboarding.yaml` on a `preview-mock` build | Walks Plot/Anchor/Love as `9000000001`, submits API-7 once, and lands on `verify-step-photos`. The destination comes from §9.1 re-reading `Me`, never a hardcoded `/verify` (M5-015) | build | **UNRUN** — see the note below |
+| M55-009 | Step ids are not positional | `grep -n "onboarding-step-" .maestro/flows/onboarding.yaml` | Every id is a draft field key (`onboarding-step-gender`), never an index. M5-044 records `SCREENS` shrinking and growing — an index would answer a different question while still passing | static | PASS 2026-08-06 |
+| M55-010 | Option ids are keyed, not labelled | `grep -rn "testID={\`option-\|testID={\`chip-\|testID={\`suggestion-" src/components/onboarding/Primitives.tsx` | Every id interpolates `opt.key`, never `opt.label`. Under FR-3b the backend may reword a label without a client release, so a label-keyed id fails on a copy edit (M5-003). ⚠️ **One violator, recorded as a finding below** | static | **FAIL 2026-08-06** — `OptionCard` uses `option-${title}` |
+| M55-011 | The shared shell namespaces its chrome | Read `testIDPrefix` in `src/components/onboarding/OnboardingShell.tsx` | Onboarding and Verify emit `onboarding-*` and `verify-*` respectively. Both previously emitted `onboarding-next`, and they are adjacent screens in one journey — a flow could not tell which it was driving | static | PASS 2026-08-06 |
+| M55-012 | The launch gate is reachable by id | Read `src/components/nav/LaunchScreens.tsx` | `launch-pending`, `launch-error`, `launch-retry`, `launch-update-required`, `launch-update-cta` exist. The gate had **zero** testIDs before 5.5b, so no E2E flow could assert it had resolved rather than merely not crashed | static | PASS 2026-08-06 |
+
+> **M55-007 / M55-008 have never been executed.** Maestro 2.8.0 is installed and
+> both flows pass `check-syntax`, but §2.4.3 requires a `preview-mock` build and
+> the only binary on the iPhone 16 simulator is the **2026-08-05 dev client**
+> (it carries `EXDevLauncher`, so a launch opens the launcher, not the app). An
+> EAS `preview-mock-simulator` build was started 2026-08-06. **Until these two
+> rows carry a PASS, treat the flows as unverified drafts** — the element ids and
+> catalogue keys in them were read out of the source and the mock catalogue
+> rather than observed on a device, and the widget legs most likely to need
+> calibration are the height **slider swipe** and the 12-step quiz `repeat`.
+> A blank result here is not a pass.
+
+> **Finding — M55-010, Module 5, `OptionCard`'s testID is keyed on the display
+> label.** `src/components/onboarding/Primitives.tsx:27` emits
+> ``testID={`option-${title}`}`` while its sibling `OptionGrid` emits
+> ``option-${opt.key}``, so the two share the `option-*` namespace with
+> incompatible schemes. It is the exact pattern the comment directly above
+> `OptionGrid` records as deliberately removed in Module 5 (`option-Male` →
+> `option-male`). **Not fixed here** per §2.4.2 — this module reports, it does not
+> repair. Mitigating: `OptionCard` is **exported but used nowhere**, so nothing
+> renders the bad id today; it is a trap for the next caller rather than a live
+> defect, and the fix is one line in its own branch.
