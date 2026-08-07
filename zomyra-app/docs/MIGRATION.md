@@ -588,6 +588,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | O-20 | **Consent text versioning — the mechanism is built; what is open is ownership of the copy.** ✅ **Engineering's half is done (Module 4).** `SENSITIVE_DATA_CONSENT_VERSION` in `src/lib/consent.ts` is the constant, it sits beside a statement of what version 1 says, and the file states the bump rule: adding a category, changing a use, or changing who data is shared with is a bump; a typo or clarity re-word is not. `app/consent.tsx` renders that copy and API-40 sends that number, so the value and the text cannot drift apart in the client. ⚠️ **What is genuinely still open is not a frontend task and cannot be closed by one:** (a) **who owns the sensitive-data copy** — the version-1 text was written by the frontend to satisfy FR-2a's requirement that the categories be named plainly, and **has never been through legal review**; (b) **who approves a bump**, since bumping is what makes every prior acceptance older than the current notice and therefore identifies who must be re-asked. Until (a) happens the consent log records agreement to unreviewed wording, which is the evidential weakness the table exists to prevent — the log is well-formed, but only as good as the copy it points at. **If legal changes the wording materially, the constant goes to 2 in the same commit**, which is a one-line change the file already documents. FR-11a's biometric equivalent is deliberately not defined yet — **Module 6 owns it** and should set it the same way, beside its own copy. | ~~Module 4~~ **Legal review — before the consent screen ships to real users** | Product owner + legal |
 | O-21 | **`ip_address` on consent rows at hard-delete** — BE v1.7 flags it as undecided: purged with the rest of the user's PII at FR-28's hard delete, or retained as a legitimate compliance interest in proving consent was obtained. **Backend-side and legal, no client work either way** — recorded so it isn't mistaken for a frontend gap. | Backend | BE + legal |
+| O-22 | **The Love quiz submits client-invented slugs, not the server UUIDs the contract requires — a guaranteed API-7 `400` on any real submit (surfaced by the owner's FE v1.49, §12.9).** The contract, on **both** sides and for some time, is that `love.quizAnswers[].questionId` is the server-issued UUID from **API-33** (`GET /compatibility-quiz/questions`), read from that response and echoed back verbatim; `dimensionKey`/`order` is the join key the client uses to attach its local pole copy. **The client does neither.** API-33 is not wired at all, the 12 questions come from the hardcoded `SCALE_QUESTIONS` list (`src/lib/onboarding/scales.ts`), and `src/lib/onboarding/submit.ts:184` sends `questionId: q.id` — a client slug. It passed Module 5 only because Module 5 submits against mocks, whose validation is lenient. **The fix is FR-3b's own pattern, one the client already applies to onboarding options:** fetch API-33 (RTK Query, in-memory like API-39), render each question by matching `dimensionKey`/`order` to local copy, and submit the fetched `questionId`. **Not this session's to build** — needs its own branch. Natural owner is a Module 5 follow-up; if deferred, whichever module wires the quiz retake (API-26) must take it, since that endpoint carries the identical rule. | **Module 5 follow-up (or the quiz-retake module)** | FE |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -3644,6 +3645,63 @@ label wraps to "Ancho / r" at this font size — cosmetic, in a Module 3 compone
 
 **Still not covered:** API-7's error outcomes and the offline/retry paths, which need a transport
 that can be made to fail on demand. Recorded as the remaining Module 5 test debt.
+
+---
+
+### 12.9 Owner docx set — FE v1.49 + BE v1.10 (received 2026-08-07)
+
+The owner handed over two **consolidated** `.docx` — `zomyra_frontend_requirements_v1_49.docx` and
+`ZOMYRA_Backend_TDD_v1_10.docx` — and noted the cofounder is building the backend to the latter.
+Diffed against the repo's delta-tracked state (FE through `FE-TDD-v1.49-delta.md`, BE through
+`BE-TDD-v1.11-delta.md`). **The reassuring headline: almost everything in these docs is already
+tracked and mostly already built. The problem is not the content — it is that both documents reuse a
+version number the repo already spent on different content.** Two collisions, one stale contradiction,
+one live client defect.
+
+**Collision 1 — two different "FE v1.49".** The repo's `FE-TDD-v1.49-delta.md` defines v1.49 as *"add
+the `X-Client-Info` header"* (§9). The owner's `_v1_49.docx` defines v1.49 as *(1) `fitness` as a
+real Plot field, (2) `questionId` is a server-issued UUID everywhere* — and contains **no mention of
+`X-Client-Info` at all** (its §9 still lists only the two observational headers). Neither v1.49
+contains the other's change. The implementing session and the owner bumped to the same number
+independently.
+
+**Collision 2 — two different "BE v1.10".** The repo splits the 2026-08-06 work into `v1.10` (adds
+`platform` to `POST /consents`) and `v1.11` (adds the `fitness` catalogue category). The owner's
+`_v1_10.docx` changelog says *"first design change since v1.7"* and folds **fitness + questionId**
+into a single `v1.10` — skipping the repo's `platform`/metadata-transport delta entirely.
+
+**The one that can actually bite: the BE docx is stale on two agreed decisions the client already
+ships.** Both were **agreed with the backend on 2026-08-06** (CONTRACT-QUESTIONS §11, marked
+decided), and both are live in the merged client — yet the cofounder's `_v1_10.docx` records neither:
+
+| Agreed & shipped on the client | Where the client does it | What the BE v1.10 docx says |
+|---|---|---|
+| `platform` is a **body field** on `POST /consents` | `src/api/endpoints/consent.ts:60` sends `{ …body, platform }` | **Contradicts it** — line ≈1385 still reads *"platform … read server-side from the existing `X-App-Version` header … not supplied as request-body fields — no new client plumbing needed. The request body stays just consentType + version."* This is the superseded position; a strict validator built to it drops or 400s the field the client sends |
+| `X-Client-Info` on **every** request | built per `FE-TDD-v1.49-delta.md` | Absent. §7.1 lists only `X-App-Version` + `X-Bundle-Update-Id`, so the backend consumer (devices upsert + Sentry context) has no doc to build to |
+
+This is a **doc-hygiene warning for the cofounder**, not a design dispute — the decisions stand; the
+consolidated docx simply predates or dropped them. Flagged in CONTRACT-QUESTIONS §11 as the message
+to send. **C-1 holds — we do not edit the backend doc; we surface the divergence.**
+
+**Substance that is genuinely fine (do not re-open):**
+- **`fitness`** — in both owner docs, in the repo (BE v1.11 delta, `plot.fitness` in the client),
+  and actively being verified on the `fix/module-5.5-findings` branch (`probe-fitness.sh`). The
+  version *label* differs; the field does not.
+- **`questionId` as a server UUID** — the *backend* contract already said this (BE v1.10 docx lines
+  ≈1319/1808/637, and BE ≤v1.9 before it): quiz answers submit the UUID from API-33, never a slug.
+  The owner's FE v1.49 is the **client** contract catching up, not a new backend ask.
+
+**Collision → live client defect (O-22).** Because the client never implemented the UUID rule, it
+still submits **client-invented slugs** for all twelve quiz answers: `src/lib/onboarding/submit.ts:184`
+maps `questionId: q.id` where `q.id` comes from the hardcoded `SCALE_QUESTIONS` list
+(`src/lib/onboarding/scales.ts`), and **API-33 is not wired at all** — the client fetches no question
+set. Against API-7's server-side validation this is a guaranteed `400 validation_error` (exactly the
+400 the owner's v1.49 changelog attributes to the 2026-08-06 staging run). It escaped Module 5
+because Module 5 submits against mocks. Recorded as **O-20**; it is FR-3b's backend-driven pattern
+extended to the Love quiz — the same treatment already applied to onboarding options, not yet to the
+quiz.
+
+No files renamed or diagrammed on our side; this is a diff record only.
 
 ---
 
