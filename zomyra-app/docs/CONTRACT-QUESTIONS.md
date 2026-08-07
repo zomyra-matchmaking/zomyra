@@ -458,6 +458,34 @@ carries a version string and nothing else, and no other request field named a pl
 - `app.json` declares `"platforms": ["ios", "android"]`, so a third value is impossible today. If web
   is ever added as a build target, the enum needs widening **before** the client can send it.
 
+**Re-examined 2026-08-07 — header-only alternative considered and rejected; A stands.** Because
+`platform` already rides on *every* request in `X-Client-Info`'s `p=` field (11b), the question was
+reopened: could the legal column instead be parsed from that header at write time, dropping the body
+field entirely? **No — the body field stays**, for one decisive reason plus three supporting ones:
+
+- **Reliability tier (decisive).** 11b itself documents `X-Client-Info` as best-effort: *"if any
+  proxy, WAF or middleware runs a header allowlist … the header is silently dropped."* That is
+  tolerable for observability — one Sentry event loses context — but not for an **append-only legal
+  record**, where a stripped header writes a permanent `NULL` platform, discoverable only in a later
+  audit and never repairable. A legal artifact must not source a required column from a channel we
+  have documented as silently droppable.
+- **Validation.** The body field is validated at the endpoint (`400` on unknown platform, already the
+  contract); a best-effort header cannot be cleanly rejected the same way.
+- **Decoupling.** The legal write does not depend on the observability-header parser — two different
+  reliability tiers should not share a single point of failure.
+- **No drift, no real cost.** Header `p=` and the body field both read the one `CLIENT_PLATFORM`
+  constant (`src/config/device.ts`), so they cannot disagree; and the wire "saving" of header-only is
+  a single field on an endpoint that fires a handful of times per user lifetime — the per-request
+  overhead argument that (correctly) drove 11b does not apply to a per-endpoint legal field.
+
+**Sending `p=` in the header as well raises no legal issue** (asked and confirmed 2026-08-07):
+`platform` (`ios`/`android`) is a coarse, non-identifying device class, not personal data — the
+DPDP-sensitive field in the header is the install id `d=`, already designed to be defensible (random
+per-install UUID, not IDFV/`ANDROID_ID`, authenticates nothing — see 11b). The header and the consent
+column co-exist at different tiers and do not contaminate each other, **provided the consent row's
+platform is written from its own validated body column and never read back from the header blob** —
+which 11b already commits to (request-scoped rows store only the device id, not the blob).
+
 > ⚠️ **Accept it as optional for one deploy, then tighten.** Making it required in the same release
 > that introduces it returns `400` to every client already installed — including the dev clients on
 > both test devices, which is how this would first be noticed.
@@ -511,3 +539,25 @@ five years without unpacking a JSON shape from 2026.
 **One operational flag:** this is a new header on *every* request. If any proxy, WAF or middleware
 runs a header allowlist, it needs updating, or the header is silently dropped and the Sentry context
 this was built for never appears.
+
+### 11c. ⚠️ The consolidated `ZOMYRA_Backend_TDD_v1_10.docx` (received 2026-08-07) does not reflect 11a or 11b
+
+Flagging this so the decisions above don't get quietly reverted while the backend is built. The
+owner's consolidated **BE v1.10 docx** — the one the backend is being built to — predates or dropped
+both of these agreed changes:
+
+1. **`platform` on `POST /consents`.** The docx (§ around the `user_consents` note) still reads
+   *"platform … read server-side from the existing X-App-Version header … not supplied as
+   request-body fields — no new client plumbing needed. The request body stays just consentType +
+   version."* That is the **superseded** position (11a decided the opposite). The **shipped client
+   sends `platform` in the body** (`src/api/endpoints/consent.ts`). If the backend is built to the
+   docx as written, a strict validator drops or 400s that field.
+2. **`X-Client-Info`.** The docx's §7.1 lists only `X-App-Version` and `X-Bundle-Update-Id`; there is
+   no third header and no `devices`-upsert / Sentry-tag consumer. The client already sends
+   `X-Client-Info` on every request, so the consumer 11b describes has no doc to build against.
+
+**Neither is a new ask — both were agreed 2026-08-06 (above).** The action is documentation
+hygiene: fold 11a and 11b into the backend doc (and delete the contradicting `user_consents`
+sentence) so the build target matches what was decided and what the client ships. Also worth a
+one-line heads-up on version numbering — the docx labels the fitness change `v1.10`, while the repo's
+deltas already spent `v1.10` on the `platform` change and `v1.11` on fitness (MIGRATION §12.9).
