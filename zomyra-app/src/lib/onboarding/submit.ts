@@ -25,7 +25,6 @@
  */
 import type { CompatibilityQuizResponse, OnboardingSubmitBody } from "@/src/api";
 
-import { SCALE_QUESTIONS } from "./scales";
 import type { OnboardingState } from "./types";
 
 /**
@@ -82,9 +81,12 @@ export function missingFields(draft: OnboardingState): string[] {
     missing.push("Other language");
   }
   // FR-14 is answered on one screen that cannot be left partly done, so this is
-  // a guard against reaching submit having skipped it entirely, not per-answer
-  // validation.
-  if (Object.keys(draft.scales).length < SCALE_QUESTIONS.length) missing.push("Compatibility quiz");
+  // a guard against reaching submit having skipped it **entirely**, not
+  // per-answer validation — and deliberately not a fixed count. The quiz set is
+  // the backend's (API-33, O-22), so its length is not the client's to assert;
+  // `buildSubmitBody` sends exactly the served questions the user answered, and
+  // `PersonalityQuiz` cannot advance past the served set without an answer.
+  if (Object.keys(draft.scales).length === 0) missing.push("Compatibility quiz");
 
   return missing;
 }

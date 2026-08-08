@@ -112,7 +112,11 @@ export type OnboardingState = {
   householdPreference: OptionKey;
 
   // ---- Love ---------------------------------------------------------------
-  /** FR-14's slider answers, keyed by `SCALE_QUESTIONS[].id`. */
+  /**
+   * FR-14's slider answers, keyed by API-33's `dimensionKey` (the backend's
+   * stable join key, equal to `SCALE_QUESTIONS[].id` for the copy lookup).
+   * `buildSubmitBody` maps these onto the served `questionId` UUIDs.
+   */
   scales: Record<string, number>;
 
   // ---- Client-side only ----------------------------------------------------

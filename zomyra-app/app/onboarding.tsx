@@ -507,7 +507,7 @@ export default function OnboardingScreen() {
    * `quizVersion` are read off this response rather than invented (O-22), so a
    * submit cannot proceed until it has loaded.
    */
-  const { data: quiz } = useGetCompatibilityQuizQuery();
+  const { data: quiz, isError: quizError, refetch: refetchQuiz } = useGetCompatibilityQuizQuery();
 
   /*
    * API-38 is fetched only once a state has been chosen — `skip` is what makes
@@ -687,8 +687,34 @@ export default function OnboardingScreen() {
   }
 
   if (screen.kind === "chat") {
+    // API-33 owns the quiz set (O-22). Wait for it before rendering the quiz —
+    // a slow or failed fetch must not let the user answer a stale/empty set and
+    // only discover the problem at Finish. A 200 with no questions is a backend
+    // fault, not a network one, so it lands on the same retry rather than an
+    // empty screen. Nothing filled in is lost across a retry (persisted draft).
+    if (quizError || (quiz && quiz.questions.length === 0)) {
+      return (
+        <OnboardingShell
+          step={0}
+          total={1}
+          title="We couldn't load your compatibility quiz"
+          subtitle="Check your connection and try again — nothing you've filled in is lost."
+          onBack={handleBack}
+          onNext={() => void refetchQuiz()}
+          canNext
+          nextLabel="Try again"
+          hideStepLabel
+        >
+          <View />
+        </OnboardingShell>
+      );
+    }
+    if (!quiz) {
+      return <LoadingScreen label="Loading your compatibility quiz…" />;
+    }
     return (
       <PersonalityQuiz
+        questions={quiz.questions}
         state={state}
         onUpdateScale={(id, value) => set("scales", { ...state.scales, [id]: value })}
         onComplete={handleNext}
