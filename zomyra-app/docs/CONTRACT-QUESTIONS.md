@@ -561,3 +561,15 @@ hygiene: fold 11a and 11b into the backend doc (and delete the contradicting `us
 sentence) so the build target matches what was decided and what the client ships. Also worth a
 one-line heads-up on version numbering — the docx labels the fitness change `v1.10`, while the repo's
 deltas already spent `v1.10` on the `platform` change and `v1.11` on fitness (MIGRATION §12.9).
+
+**Update — the newer `BE v1.14 docx` (received 2026-08-08) still contradicts 11a.** Line ≈1345 carries
+the same *"platform … read server-side … request body stays just consentType + version"* sentence
+verbatim, and `X-Client-Info` is still absent. **The direction is not in doubt — 11a was *finalized*
+2026-08-07: the body field stays** (the header-only alternative was reconsidered and rejected because
+`X-Client-Info` is best-effort/strippable, wrong for an append-only legal record). So this is not an
+open decision; it is that **two backend revisions (v1.10 → v1.14) have shipped without folding in a
+decision that was already made** (MIGRATION §12.10). The action is unchanged and now overdue: the
+cofounder corrects the backend doc to match 11a/11b and the shipped client. The frontend client is
+already correct; C-1 keeps us out of the backend doc; and the frontend requirements doc does not
+misstate this (it is silent on the consent-body `platform`), so nothing there needs changing to
+resolve the contradiction.

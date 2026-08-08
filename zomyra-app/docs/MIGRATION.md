@@ -586,6 +586,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-20 | **Consent text versioning — the mechanism is built; what is open is ownership of the copy.** ✅ **Engineering's half is done (Module 4).** `SENSITIVE_DATA_CONSENT_VERSION` in `src/lib/consent.ts` is the constant, it sits beside a statement of what version 1 says, and the file states the bump rule: adding a category, changing a use, or changing who data is shared with is a bump; a typo or clarity re-word is not. `app/consent.tsx` renders that copy and API-40 sends that number, so the value and the text cannot drift apart in the client. ⚠️ **What is genuinely still open is not a frontend task and cannot be closed by one:** (a) **who owns the sensitive-data copy** — the version-1 text was written by the frontend to satisfy FR-2a's requirement that the categories be named plainly, and **has never been through legal review**; (b) **who approves a bump**, since bumping is what makes every prior acceptance older than the current notice and therefore identifies who must be re-asked. Until (a) happens the consent log records agreement to unreviewed wording, which is the evidential weakness the table exists to prevent — the log is well-formed, but only as good as the copy it points at. **If legal changes the wording materially, the constant goes to 2 in the same commit**, which is a one-line change the file already documents. FR-11a's biometric equivalent is deliberately not defined yet — **Module 6 owns it** and should set it the same way, beside its own copy. | ~~Module 4~~ **Legal review — before the consent screen ships to real users** | Product owner + legal |
 | O-21 | **`ip_address` on consent rows at hard-delete** — BE v1.7 flags it as undecided: purged with the rest of the user's PII at FR-28's hard delete, or retained as a legitimate compliance interest in proving consent was obtained. **Backend-side and legal, no client work either way** — recorded so it isn't mistaken for a frontend gap. | Backend | BE + legal |
 | O-22 | **The Love quiz submits client-invented slugs, not the server UUIDs the contract requires — a guaranteed API-7 `400` on any real submit (surfaced by the owner's FE v1.49, §12.9).** The contract, on **both** sides and for some time, is that `love.quizAnswers[].questionId` is the server-issued UUID from **API-33** (`GET /compatibility-quiz/questions`), read from that response and echoed back verbatim; `dimensionKey`/`order` is the join key the client uses to attach its local pole copy. **The client does neither.** API-33 is not wired at all, the 12 questions come from the hardcoded `SCALE_QUESTIONS` list (`src/lib/onboarding/scales.ts`), and `src/lib/onboarding/submit.ts:184` sends `questionId: q.id` — a client slug. It passed Module 5 only because Module 5 submits against mocks, whose validation is lenient. **The fix is FR-3b's own pattern, one the client already applies to onboarding options:** fetch API-33 (RTK Query, in-memory like API-39), render each question by matching `dimensionKey`/`order` to local copy, and submit the fetched `questionId`. **Not this session's to build** — needs its own branch. Natural owner is a Module 5 follow-up; if deferred, whichever module wires the quiz retake (API-26) must take it, since that endpoint carries the identical rule. | **Module 5 follow-up (or the quiz-retake module)** | FE |
+| O-23 | **"Relocation" moved Anchor → Plot (FE v1.50–1.51 / BE v1.12, §12.10) — the merged onboarding modules still ship the old field and must change.** The spec deletes Anchor's `relocationWillingness` (partner-preference) and adds Plot's `openToRelocation` (`yes\|no\|depends`, public + filterable, new premium filter FR-24/API-13, disambiguated by new FR-3c). The client does **not** track the catalogue's key set — keys are a fixed contract (`src/api/contract.ts:213`), so this is a code change across ~7 sites: remove the Anchor key at `src/hooks/use-onboarding-options.ts:100`; drop field + default at `src/lib/onboarding/types.ts:103,141` and add `openToRelocation` to Plot; move it in the submit body at `src/lib/onboarding/submit.ts:71,142` (Anchor→Plot — otherwise API-7 still carries the deleted key); update the union member + interface field at `src/api/contract.ts:270,376`; relabel the mock at `src/api/mock/catalogue.ts:262`; and move the question between the Anchor and Plot **screens** (Anchor 7→6, Plot →~19). **Not this session's to build** — needs its own branch; pairs naturally with O-22 (both are onboarding-submit/API-7 contract corrections). Backend's column drop is theirs (C-1). | **Module 5 follow-up (with O-22)** | FE |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -3699,6 +3700,76 @@ extended to the Love quiz — the same treatment already applied to onboarding o
 quiz.
 
 No files renamed or diagrammed on our side; this is a diff record only.
+
+### 12.10 Owner docx set — FE v1.50→v1.53 + BE v1.12→v1.14 (received 2026-08-08)
+
+Two consolidated `.docx` again (`zomyra_frontend_requirements_v1_53.docx`, `ZOMYRA_Backend_TDD_v1_14.docx`),
+cofounder building to the backend one. Diffed against the repo state left by §12.9. **Everything new
+resolves into exactly two coherent feature threads. One lands inside the merged onboarding modules and
+needs code (→ O-23); the other lands in a module that is not built yet, so it is a spec note, not
+rework.** The stale-contradiction from §12.9 is **still open** in v1.14 (below).
+
+**Thread A — "relocation" moves Anchor → Plot (FE v1.50–1.51, BE v1.12). TOUCHES MERGED MODULES 3–5.**
+The field the client asks about changes identity, not just place:
+- **New Plot field `openToRelocation`** (`yes | no | depends`) — the user's *own* answer, **public and
+  filterable**. It is a new premium Discover filter (FR-24 / API-13) — that filter is the reason it was
+  added: Anchor already asked what a user wants *of a partner*, but the user's own stance was never
+  captured, so "show me people open to relocating" was unanswerable. New **FR-3c** exists only to keep
+  the two near-homonyms apart (public own-answer vs. private partner-preference).
+- **Anchor's `relocationWillingness` is deleted outright** — from FR-5, the API-7 `anchor` object, the
+  API-39 catalogue's Anchor list (**Anchor 7 → 6 categories / 7 → 6 screens**), and the screen
+  inventory. FE v1.51 also corrects a v1.49 miscount: **Plot reads ~19 screens** now (covering both
+  `fitness` and `openToRelocation`), not ~17.
+- **BE v1.12** drops the `user_partner_preferences.relocation_willingness` column. Their migration
+  note: it discards data already collected from any user who finished Anchor and is not recoverable
+  from the new field (different question). **Backend-side — C-1, not ours; recorded so it is not read
+  as a frontend gap.**
+- **Why this is real client work, not a free catalogue swap:** the API-39 catalogue supplies *labels*;
+  the field **keys are a fixed client contract** (`src/api/contract.ts:213`), and `relocationWillingness`
+  is a hardcoded Anchor key in the fixed list (`src/hooks/use-onboarding-options.ts:100`). The client
+  will **not** drop the removed field or grow the new one on its own, and the API-7 submit body would
+  otherwise still carry the deleted key. **→ O-23.**
+
+**Thread B — Discover end-of-feed, 3-tier relaxation (FE v1.52–1.53, BE v1.13–1.14). NOT in modules 1–5.**
+- New **FR-13a**: filtered feed exhausts → offer to drop FR-24 filters → that exhausts (or none set) →
+  offer to drop Anchor partner-preferences (age, location, children, interfaith, smoker-comfort,
+  household are **dropped, not loosened**) → terminal "you've seen everyone" with no further CTA.
+  **Safety exclusions never relax.** Session-only, reset-on-close, in-memory.
+- **API-12** (`GET /discover`): `relaxFilters` (bool) → **`relaxLevel`** (`none | filters | anchor`);
+  `outsideFiltersAvailable` (bool) → **`nextRelaxLevel`** (`filters | anchor | null`, collapses a
+  skipped tier). BE v1.13 introduced the two-state form; **BE v1.14 replaced it with this three-tier
+  form** — so the *only* live shape is `relaxLevel`/`nextRelaxLevel`; the booleans never ship.
+- **Impact on merged modules: none.** The Discover feed is a later, unbuilt module. Whoever builds it
+  targets the three-tier shape from the start — no rework here. The `relocation`/relaxation strings in
+  `src/lib/discover/mock.ts` are prototype mock copy, inert. **No open item** — this is a build-to-spec
+  note for the future Discover module, captured here so it is not built to the superseded booleans.
+
+**Still-open stale contradiction (from §12.9, unresolved through v1.14).** BE v1.14 line ≈1345 repeats
+verbatim: *"platform and app_version … read server-side from the existing `X-App-Version` header …
+not supplied as request-body fields … The request body stays just consentType + version."* The merged
+client still sends `platform` in the body (`src/api/endpoints/consent.ts:60`), and `X-Client-Info` is
+still absent from the backend doc's header list. **The decision is not open — §11a was finalized
+2026-08-07: the body field stays** (header-only rejected; `X-Client-Info` is strippable, wrong for a
+legal record). So two backend revisions (v1.10 → v1.14) have shipped **without folding in a settled
+decision** — the cofounder's doc is simply overdue for the correction. Re-flagged in
+CONTRACT-QUESTIONS §11c. **C-1 holds: not edited backend-side.**
+
+**Frontend doc updated to record the decision (2026-08-08).** On the owner's instruction, the *frontend*
+requirements doc was bumped **v1.53 → v1.54** (new file `zomyra_frontend_requirements_v1_54.docx`;
+v1.53 left intact) to make the two shipped behaviours explicit rather than merely implied: API-40's
+body now lists `platform` with the append-only-legal-artifact rationale, and §9's cross-cutting header
+convention now names three headers including `X-Client-Info` (with its best-effort/strippable caveat).
+This does not touch or resolve the *backend*-doc contradiction — that is still the cofounder's to fix.
+⚠️ **Version-collision risk:** `v1.54` was chosen to follow the doc's own changelog convention (editing
+content without a bump would have created a second "v1.53"), but the cofounder could independently bump
+to `v1.54` for different content — the same pathology as the §12.9 collisions. Belongs to the
+numbering-convention decision the founders still owe.
+
+**Fine, do not re-open:** no *new* version-number collisions this batch — FE advanced 1.50→1.53 and BE
+1.12→1.14 on numbers the repo had not spent. The §12.9 collisions (two "FE v1.49", two "BE v1.10")
+are unchanged and still belong to the numbering-convention decision the founders owe.
+
+No files renamed or diagrammed; diff record only.
 
 ---
 
