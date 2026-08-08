@@ -12,7 +12,7 @@
  * navigating back preserves prior answers.
  */
 import { useMemo, useState } from "react";
-import { Animated, Easing, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, Easing, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
@@ -29,6 +29,10 @@ type Props = {
   onUpdateScale: (id: string, value: number) => void;
   onComplete: () => void;
   onBack?: () => void;
+  /** API-7 is in flight (fires from Finish on the last question). */
+  submitting?: boolean;
+  /** A submit failure to surface beside the Finish button, or null. */
+  submitError?: string | null;
 };
 
 export function PersonalityQuiz({
@@ -36,6 +40,8 @@ export function PersonalityQuiz({
   onUpdateScale,
   onComplete,
   onBack,
+  submitting = false,
+  submitError = null,
 }: Props) {
   const insets = useSafeAreaInsets();
   const total = SCALE_QUESTIONS.length;
@@ -64,6 +70,9 @@ export function PersonalityQuiz({
   };
 
   const handleNext = () => {
+    // While API-7 is in flight the Finish button is disabled; this guard also
+    // blocks the programmatic path so a double-submit (→ 409) is impossible.
+    if (submitting) return;
     // Ensure the current question has a persisted value (defaults to the
     // middle position, 3) even if the user hasn't touched the slider.
     if (state.scales[question.id] == null) {
@@ -145,11 +154,26 @@ export function PersonalityQuiz({
         <Touchable
           testID="personality-continue-button"
           onPress={handleNext}
-          style={[styles.nextBtn]}
+          disabled={submitting}
+          accessibilityState={{ disabled: submitting, busy: submitting }}
+          style={[styles.nextBtn, submitting && styles.nextBtnDisabled]}
         >
-          <Text style={styles.nextLabel}>{isLast ? "Finish" : "Continue"}</Text>
+          {submitting ? (
+            <ActivityIndicator
+              testID="personality-continue-spinner"
+              color={colors.brand.onBrand}
+            />
+          ) : (
+            <Text style={styles.nextLabel}>{isLast ? "Finish" : "Continue"}</Text>
+          )}
         </Touchable>
-        <View style={styles.helperSpacer} />
+        {submitError ? (
+          <Text style={styles.submitError} testID="personality-submit-error">
+            {submitError}
+          </Text>
+        ) : (
+          <View style={styles.helperSpacer} />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -432,5 +456,12 @@ const styles = StyleSheet.create({
   helperSpacer: {
     marginTop: spacing[2],
     height: 15,
+  },
+  submitError: {
+    marginTop: spacing[2],
+    textAlign: "center",
+    fontSize: fontSize.caption,
+    color: colors.danger.default,
+    minHeight: 15,
   },
 });

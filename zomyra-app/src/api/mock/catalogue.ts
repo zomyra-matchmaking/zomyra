@@ -259,7 +259,7 @@ export const CATALOGUE: { key: OptionCategoryKey; values: CatalogueOption[] }[] 
     ),
   },
   {
-    key: "relocationWillingness",
+    key: "openToRelocation",
     values: opts(["yes", "Yes"], ["no", "No"], ["depends", "Depends on Circumstances"]),
   },
 

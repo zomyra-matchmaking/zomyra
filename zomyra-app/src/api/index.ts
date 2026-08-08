@@ -37,6 +37,7 @@ export {
 } from "./endpoints/consent";
 export {
   useGetCitiesQuery,
+  useGetCompatibilityQuizQuery,
   useGetOnboardingOptionsQuery,
   useSubmitOnboardingMutation,
 } from "./endpoints/onboarding";

@@ -108,13 +108,32 @@ export default function ConsentScreen() {
     }
 
     /*
-     * Back to the gate rather than straight to `/onboarding`. §9.1's table is
-     * the single place that decides where a user belongs, and the mutation
-     * invalidates `Me`, so the refetched `consents` array makes it say
-     * Onboarding on its own. Hardcoding it here would be a second copy of the
-     * row above this one — and one that could disagree with the server.
+     * **Forward on this write's own success — not via a follow-up `GET /me`.**
+     * (CONVENTIONS.md — "navigate on the write's own response".)
+     *
+     * This used to `replace("/")` and let `resolveRootDestination` re-read the
+     * refetched `consents` array and route on. That coupled a successful
+     * consent write to a *second*, unrelated request: if that `/me` failed or
+     * came back stale, a user who had just successfully agreed would be
+     * stranded on the gate — the same class of defect that stranded a
+     * successful submit in Module 5.5.
+     *
+     * Direct nav is safe here because the destination is **deterministic**: the
+     * only reason this screen is reachable is `!profileComplete`, and a
+     * `!profileComplete` account that has *just* recorded consent has exactly
+     * one §9.1 destination — Onboarding. Unlike the auth screens (where a
+     * returning user's destination genuinely depends on `verificationStatus`
+     * and `discoveryMode` and so must be resolved from `/me`), there is nothing
+     * for the gate to disambiguate. The mutation still invalidates `Me`, so the
+     * cache is refreshed for later screens; it simply no longer *drives* this
+     * navigation.
+     *
+     * ⚠️ This reverses the "Consent is a row in §9.1's table, not a screen the
+     * auth flow pushes" decision in MIGRATION.md §Module-4 addendum. See
+     * CONVENTIONS.md for why, and for the auth-screen exception that still
+     * routes through the gate on purpose.
      */
-    router.replace("/");
+    router.replace("/onboarding");
   };
 
   const decline = async () => {

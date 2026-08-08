@@ -35,9 +35,9 @@
  * API-7's body, none has an API-39 category, and — the part that makes them
  * safe to drop — **none had a screen**: they were declared here and rendered
  * nowhere, so no user was ever asked for them. `relocation` in particular is a
- * *different* field from `relocationWillingness` ("Would you relocate after
- * marriage?"), which is very much alive; the prototype carried both and wired
- * only the latter.
+ * *different* field from `openToRelocation` ("Are you open to relocating after
+ * marriage?", renamed from `relocationWillingness` in O-23), which is very much
+ * alive; the prototype carried both and wired only the latter.
  *
  * **`fitness` was briefly in that list and should not have been.** It had a
  * real screen and is a required Plot question (owner's decision, 2026-08-05).
@@ -89,6 +89,11 @@ export type OnboardingState = {
   /** "How often do you exercise…". Required; see `OnboardingPlot.fitness`. */
   fitness: OptionKey;
   familyType: OptionKey;
+  /**
+   * FR-3c — the user's own relocation stance (public + filterable). Renamed from
+   * `relocationWillingness` and moved Anchor → Plot in O-23; see OnboardingPlot.
+   */
+  openToRelocation: OptionKey;
   /** Optional. If empty, ProfileView falls back to the auto-generated summary. */
   bio: string;
 
@@ -100,7 +105,6 @@ export type OnboardingState = {
   interfaithStance: OptionKey;
   smokingPartnerComfort: OptionKey;
   householdPreference: OptionKey;
-  relocationWillingness: OptionKey;
 
   // ---- Love ---------------------------------------------------------------
   /** FR-14's slider answers, keyed by `SCALE_QUESTIONS[].id`. */
@@ -131,6 +135,7 @@ export const defaultOnboardingState: OnboardingState = {
   smoking: "",
   fitness: "",
   familyType: "",
+  openToRelocation: "",
   bio: "",
   partnerAgeRange: [25, 32],
   matchLocationPreference: "",
@@ -138,7 +143,6 @@ export const defaultOnboardingState: OnboardingState = {
   interfaithStance: "",
   smokingPartnerComfort: "",
   householdPreference: "",
-  relocationWillingness: "",
   scales: {},
   photos: [],
 };

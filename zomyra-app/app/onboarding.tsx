@@ -32,12 +32,20 @@
  *
  * ## What submitting does, and does not, decide
  *
- * `handleSubmit` fires API-7 once at the end and then navigates to **`/`**, not
- * to `/verify`. The mutation invalidates `Me`, `resolveRootDestination` re-reads
- * it and returns the photos step itself. Hardcoding `/verify` here would be a
- * second copy of a §9.1 row that could disagree with the server — the identical
- * reasoning that keeps FR-1a out of the auth screens and consent's accept
- * handler pointed at `/`.
+ * `handleSubmit` fires API-7 once at the end and, **on the mutation's own
+ * success, navigates straight to the photos step** (`/verify?entry=photos`). It
+ * does *not* bounce through `/` to let a follow-up `GET /me` decide the
+ * destination: a profile that has just been submitted is always `unverified`,
+ * so Photos is the single correct next step and the submit's 200 already proves
+ * we may go there. Gating navigation on a second request would let a successful
+ * write be stranded by an unrelated `/me` failure — and, worse, would turn a
+ * backend that 200s without persisting into a silent bounce back into
+ * Onboarding (submit says done, `/me` says `profileComplete:false`, gate returns
+ * the user to the flow with no error). The mutation still invalidates `Me` so
+ * the cache is fresh for later screens; it just no longer *drives* this step.
+ * The one exception is `409 already_submitted` — a stale resubmit whose true
+ * server-side position is unknowable from the 409 alone — which still defers to
+ * the §9.1 gate at `/`.
  *
  * NFR-16 is applied here too: §12.7 records `/onboarding` and `/verify` as the
  * two authenticated surfaces the tab shell's call cannot reach, because the gate
@@ -51,7 +59,9 @@ import { StyleSheet, Text, TextInput, View } from "react-native";
 import {
   errorHasCode,
   errorMessage,
+  isApiError,
   useGetCitiesQuery,
+  useGetCompatibilityQuizQuery,
   useSubmitOnboardingMutation,
   type CatalogueOption,
   type OptionCategoryKey,
@@ -401,6 +411,12 @@ const Q1: QuestionScreen[] = [
     title: "Your world",
     subtitle: "How does your family live?",
   }),
+  // FR-3c — the user's *own* relocation stance (public + filterable), a Plot
+  // question. Renamed from `relocationWillingness` and moved out of Anchor in
+  // O-23; the near-homonym partner-preference it replaced was deleted in v1.51.
+  choice(1, "openToRelocation", "openToRelocation", {
+    title: "Are you open to relocating after marriage?",
+  }),
   {
     kind: "q", section: 1,
     id: "bio",
@@ -457,9 +473,6 @@ const Q2: QuestionScreen[] = [
     title: "Comfortable marrying a smoker?",
   }),
   choice(2, "householdPreference", "householdPreference", { title: "Your future household?" }),
-  choice(2, "relocationWillingness", "relocationWillingness", {
-    title: "Would you relocate after marriage?",
-  }),
 ];
 
 // Section 3 uses conversational chat UI instead of individual question screens
@@ -481,6 +494,13 @@ export default function OnboardingScreen() {
 
   const { options, isLoading, isError, refetch, missingCategories } = useOnboardingOptions();
   const [submitOnboarding, { isLoading: isSubmitting }] = useSubmitOnboardingMutation();
+  /*
+   * API-33 supplies the compatibility-quiz question set and its version. Held
+   * for the session like API-39; the submit payload's `questionId`s and
+   * `quizVersion` are read off this response rather than invented (O-22), so a
+   * submit cannot proceed until it has loaded.
+   */
+  const { data: quiz } = useGetCompatibilityQuizQuery();
 
   /*
    * API-38 is fetched only once a state has been chosen — `skip` is what makes
@@ -543,12 +563,32 @@ export default function OnboardingScreen() {
    */
   const handleSubmit = useCallback(async () => {
     setSubmitError(null);
+    // The quiz's `questionId`s and version are the backend's (O-22); without
+    // API-33 loaded the `love` block cannot be built, so hold rather than send a
+    // payload the server would reject. The identical draft retries once it lands.
+    if (!quiz) {
+      setSubmitError("Still loading the compatibility quiz — try again in a moment.");
+      return;
+    }
     try {
-      await submitOnboarding(buildSubmitBody(state)).unwrap();
+      await submitOnboarding(buildSubmitBody(state, quiz)).unwrap();
       dispatch(draftSubmitted());
-      router.replace("/");
+      // Forward on the submit's own success — never on a follow-up GET /me.
+      // A just-submitted profile is always `unverified`, so Photos is the one
+      // correct next step (see the header note). This keeps a successful write
+      // from being stranded by a second request that could independently fail.
+      router.replace("/verify?entry=photos");
     } catch (err) {
-      if (errorHasCode(err, "already_submitted")) {
+      // A stale draft resubmitted after onboarding finished elsewhere. The
+      // backend answers this with **HTTP 409** — verified live 2026-08-08 its
+      // envelope `code` is the generic `"conflict"` ("Onboarding has already
+      // been completed for this account."), *not* the `already_submitted` this
+      // once keyed on, so match the status. (409 is the only conflict this
+      // endpoint raises.) Only here is the server-side position genuinely
+      // unknown — the account may already be verified — so the §9.1 gate reads
+      // /me and places them, routing on a recovery edge rather than learning a
+      // fresh submit worked. See docs/CONTRACT-QUESTIONS.md on the code drift.
+      if (errorHasCode(err, "already_submitted") || (isApiError(err) && err.status === 409)) {
         dispatch(draftSubmitted());
         router.replace("/");
         return;
@@ -557,7 +597,7 @@ export default function OnboardingScreen() {
       // persist next to the Finish button they are about to press again.
       setSubmitError(errorMessage(err));
     }
-  }, [dispatch, router, state, submitOnboarding]);
+  }, [dispatch, quiz, router, state, submitOnboarding]);
 
   const handleBack = () => {
     if (idx === 0) {
@@ -646,6 +686,8 @@ export default function OnboardingScreen() {
         onUpdateScale={(id, value) => set("scales", { ...state.scales, [id]: value })}
         onComplete={handleNext}
         onBack={handleBack}
+        submitting={isSubmitting}
+        submitError={submitError}
       />
     );
   }

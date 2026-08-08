@@ -180,6 +180,12 @@ appId: com.zomyra.app
 - tapOn:
     id: "option-nuclear"
 
+# FR-3c — moved out of Anchor into Plot in O-23.
+- assertVisible:
+    id: "onboarding-step-openToRelocation"
+- tapOn:
+    id: "option-yes"
+
 - assertVisible:
     id: "onboarding-step-bio"
 - tapOn:
@@ -190,7 +196,7 @@ appId: com.zomyra.app
     id: "onboarding-next"
 
 # ---------------------------------------------------------------------------
-# Section 2 — Anchor. The owner's list of seven (M5-047).
+# Section 2 — Anchor. The owner's list, six after O-23 moved relocation to Plot (M5-047).
 # ---------------------------------------------------------------------------
 - extendedWaitUntil:
     visible: "Setting Your Anchors"
@@ -227,11 +233,6 @@ appId: com.zomyra.app
     id: "onboarding-step-householdPreference"
 - tapOn:
     id: "option-flexible"
-
-- assertVisible:
-    id: "onboarding-step-relocationWillingness"
-- tapOn:
-    id: "option-yes"
 
 # ---------------------------------------------------------------------------
 # Section 3 — Love. The FR-14 quiz: 12 sliders, submitted as ONE call (M5-048).

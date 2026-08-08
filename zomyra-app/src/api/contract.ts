@@ -261,13 +261,13 @@ export type OptionCategoryKey =
   | "smoking"
   | "fitness"
   | "familyType"
+  | "openToRelocation"
   // Anchor
   | "matchLocationPreference"
   | "childrenPreference"
   | "interfaithStance"
   | "smokingPartnerComfort"
   | "householdPreference"
-  | "relocationWillingness"
   // FR-15 / FR-15a — labels only; the keys are fixed (see `DiscoveryMode`)
   | "discoveryMode";
 
@@ -344,13 +344,27 @@ export type OnboardingPlot = {
    */
   fitness: string;
   familyType: string;
+  /**
+   * FR-3c — **the user's own answer, a public and filterable Plot fact.** "Are
+   * you open to relocating after marriage?", one of `yes | no | depends`.
+   *
+   * ⚠️ **Renamed from `relocationWillingness` (FE v1.50–1.51 / BE v1.12, O-23).**
+   * That earlier field was an *Anchor partner-preference* — a stance about the
+   * partner — which the spec deleted outright; this is a near-homonym but a
+   * different question (the user's *own* stance), which is exactly why FR-3c
+   * exists to keep the two apart. It was already a `plot` field on the wire
+   * (API-7 rejected the old name under `anchor`, verified live 2026-08-07), so
+   * this change is name + screen only, not a wire relocation. Drives the new
+   * premium Discover filter (FR-24 / API-13).
+   */
+  openToRelocation: string;
   /** FK → the backend's `cities` table. The only location value ever sent. */
   cityId: string;
   heightCm: number;
   bio: string;
 };
 
-/** API-7's `anchor` object — all six choice fields are API-39 keys. */
+/** API-7's `anchor` object — all five choice fields are API-39 keys. */
 export type OnboardingAnchor = {
   /**
    * Two flat integers, **not** a nested `{ min, max }`.
@@ -373,7 +387,6 @@ export type OnboardingAnchor = {
   interfaithStance: string;
   smokingPartnerComfort: string;
   householdPreference: string;
-  relocationWillingness: string;
 };
 
 /**
@@ -460,6 +473,32 @@ export type ProfileResponse = {
 export type ProfilePhoto = { photoId: string; url: string; promptSlot: string };
 
 export type QuizAnswer = { questionId: string; sliderValue: number };
+
+/**
+ * API-33 — `GET /compatibility-quiz/questions` (FR-14, BE §14.2).
+ *
+ * The backend owns the question set *and* its version. Each question carries the
+ * server `questionId` (a UUID) that API-7's {@link QuizAnswer.questionId} must
+ * echo verbatim, plus a stable `dimensionKey` the client joins to its own local
+ * copy of the prompt/pole text (`src/lib/onboarding/scales.ts`) — so the wire
+ * identity is the backend's while the display copy stays client-side. `order` is
+ * the sequence the client presents them in.
+ */
+export type CompatibilityQuizQuestion = {
+  questionId: string;
+  dimensionKey: string;
+  order: number;
+};
+
+export type CompatibilityQuizResponse = {
+  /**
+   * The server's version of the question set (BE returns it as `version`). It is
+   * echoed back to API-7 as `love.quizVersion` — the client owns neither the set
+   * nor its number (O-22).
+   */
+  version: number;
+  questions: CompatibilityQuizQuestion[];
+};
 
 // ---------------------------------------------------------------------------
 // Discover — FE TDD §9.5
