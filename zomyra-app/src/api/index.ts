@@ -22,6 +22,7 @@ export {
 } from "./errors";
 
 export {
+  sessionAdopted,
   useGoogleSignInMutation,
   useRequestOtpMutation,
   useVerifyOtpMutation,
@@ -36,6 +37,7 @@ export {
 } from "./endpoints/consent";
 export {
   useGetCitiesQuery,
+  useGetCompatibilityQuizQuery,
   useGetOnboardingOptionsQuery,
   useSubmitOnboardingMutation,
 } from "./endpoints/onboarding";

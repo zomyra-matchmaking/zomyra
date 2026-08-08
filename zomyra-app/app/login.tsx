@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import { Image, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { errorMessage, useGoogleSignInMutation } from "@/src/api";
+import { errorMessage, sessionAdopted, useGoogleSignInMutation } from "@/src/api";
 import { signInWithGoogle } from "@/src/auth/google";
 import { toast } from "@/src/components/ui/Toast";
 import { colors, fontSize, fontWeight, radii, spacing } from "@/src/theme";
@@ -72,6 +72,16 @@ export default function Login() {
       toast.show(errorMessage(exchange.error));
       return;
     }
+    /*
+     * ⚠️ **M55-007, the Google half.** Both auth paths share `adoptSession`, so
+     * both shared the race: the exchange resolving is not the same event as the
+     * tokens reaching the keychain, and the gate routes on the second one.
+     */
+    if (!(await sessionAdopted())) {
+      toast.show("We couldn't complete sign-in. Please try again.");
+      return;
+    }
+
     /*
      * To the gate, not to a destination. API-3 returns `isNewAccount` and
      * `profileComplete`, which is not enough to satisfy §9.1 — it also needs

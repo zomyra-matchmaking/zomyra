@@ -23,45 +23,9 @@
  *    actually sent.
  * 5. **`photos` never appears.** Those go to API-8 in the Photos step (FR-9).
  */
-import type { OnboardingSubmitBody } from "@/src/api";
+import type { CompatibilityQuizResponse, OnboardingSubmitBody } from "@/src/api";
 
-import { SCALE_QUESTIONS } from "./scales";
 import type { OnboardingState } from "./types";
-
-/**
- * ⚠️ **A stopgap for a value the client does not own.**
- *
- * `quizVersion` describes *which FR-14 question set the user was shown*, so that
- * an answer can never be scored against a set it wasn't given — the same
- * discipline as `SENSITIVE_DATA_CONSENT_VERSION` (O-20). An answer scored
- * against the wrong question set is worse than a missing one, because nothing
- * looks wrong.
- *
- * **Owner's decision, 2026-08-05: the backend owns this number** (see
- * `docs/CONTRACT-QUESTIONS.md` §8). API-33 serves the quiz *and* its version
- * (BE §14.2), and the client's only job is to echo back whatever it received.
- * This constant exists solely because API-33 is not built yet and
- * `SCALE_QUESTIONS` is still a client-side list in `./scales.ts` — there is
- * nothing to echo.
- *
- * **So `1` is not a version the client chose well; it is a number this client
- * invented, and it is very likely wrong.** Every submit until API-33 lands
- * carries a version the backend never issued. Two things follow:
- *
- * - **Do not bump this on a question change.** Bumping would be maintaining a
- *   second numbering scheme for something with one owner, which is the exact
- *   drift §8 exists to prevent. Ask the backend for the real number instead.
- * - **When API-33 is wired up, delete this constant** rather than assigning to
- *   it. The questions and the version arrive together in one response, and
- *   `buildSubmitBody` should read the version off that response — a client-side
- *   copy could only ever disagree with it.
- *
- * The owner has also asked the backend whether this field is needed at all,
- * given that the questions are backend-driven and an API version could signal a
- * question change (§8a). If that lands, this key leaves the body entirely — one
- * more reason to delete rather than maintain the constant.
- */
-export const QUIZ_VERSION = 1;
 
 /**
  * Whether the draft can be submitted at all.
@@ -98,12 +62,13 @@ export function missingFields(draft: OnboardingState): string[] {
     ["smoking", "Smoking"],
     ["fitness", "Fitness"],
     ["familyType", "Family type"],
+    ["relationshipStatus", "Relationship status"],
+    ["openToRelocation", "Open to relocation"],
     ["matchLocationPreference", "Match location"],
     ["childrenPreference", "Children"],
     ["interfaithStance", "Interfaith"],
     ["smokingPartnerComfort", "Partner smoking"],
     ["householdPreference", "Household"],
-    ["relocationWillingness", "Relocation"],
   ];
   for (const [key, label] of required) {
     if (!draft[key]) missing.push(label);
@@ -116,9 +81,12 @@ export function missingFields(draft: OnboardingState): string[] {
     missing.push("Other language");
   }
   // FR-14 is answered on one screen that cannot be left partly done, so this is
-  // a guard against reaching submit having skipped it entirely, not per-answer
-  // validation.
-  if (Object.keys(draft.scales).length < SCALE_QUESTIONS.length) missing.push("Compatibility quiz");
+  // a guard against reaching submit having skipped it **entirely**, not
+  // per-answer validation — and deliberately not a fixed count. The quiz set is
+  // the backend's (API-33, O-22), so its length is not the client's to assert;
+  // `buildSubmitBody` sends exactly the served questions the user answered, and
+  // `PersonalityQuiz` cannot advance past the served set without an answer.
+  if (Object.keys(draft.scales).length === 0) missing.push("Compatibility quiz");
 
   return missing;
 }
@@ -136,7 +104,10 @@ export function missingFields(draft: OnboardingState): string[] {
  */
 export const OTHER_LANGUAGE_KEY = "other";
 
-export function buildSubmitBody(draft: OnboardingState): OnboardingSubmitBody {
+export function buildSubmitBody(
+  draft: OnboardingState,
+  quiz: CompatibilityQuizResponse,
+): OnboardingSubmitBody {
   const usesOther = draft.languages.includes(OTHER_LANGUAGE_KEY);
   const otherText = draft.languagesOther.trim();
 
@@ -159,6 +130,12 @@ export function buildSubmitBody(draft: OnboardingState): OnboardingSubmitBody {
       smoking: draft.smoking,
       fitness: draft.fitness,
       familyType: draft.familyType,
+      // FR-18 / FR-4 — marital history, captured once then locked (O-24). A plain
+      // Plot member on submit; the immutability lock is Module 6's to enforce.
+      relationshipStatus: draft.relationshipStatus,
+      // FR-3c — the user's own relocation stance, a public Plot fact. Renamed
+      // from `relocationWillingness` (O-23); see OnboardingPlot.openToRelocation.
+      openToRelocation: draft.openToRelocation,
       cityId: draft.cityId,
       heightCm: draft.heightCm ?? 0,
       bio: draft.bio.trim(),
@@ -171,20 +148,28 @@ export function buildSubmitBody(draft: OnboardingState): OnboardingSubmitBody {
       interfaithStance: draft.interfaithStance,
       smokingPartnerComfort: draft.smokingPartnerComfort,
       householdPreference: draft.householdPreference,
-      relocationWillingness: draft.relocationWillingness,
     },
     love: {
-      quizVersion: QUIZ_VERSION,
       /*
-       * Driven by `SCALE_QUESTIONS`, not by `Object.entries(draft.scales)`:
-       * iterating the draft would submit answers to questions this client
-       * version no longer asks, which a resumed draft (NFR-1) makes reachable.
-       * The question set defines the answer set.
+       * Both the version and the `questionId`s are the backend's, echoed off
+       * API-33's response (O-22) — the client owns neither. `quizVersion`
+       * travels so an answer can never be scored against a set it wasn't given.
        */
-      quizAnswers: SCALE_QUESTIONS.filter((q) => draft.scales[q.id] != null).map((q) => ({
-        questionId: q.id,
-        sliderValue: draft.scales[q.id],
-      })),
+      quizVersion: quiz.version,
+      /*
+       * Driven by `quiz.questions` (the backend's set), not by
+       * `Object.entries(draft.scales)`: iterating the draft would submit answers
+       * to dimensions the served set no longer asks, which a resumed draft
+       * (NFR-1) makes reachable. Each answer is joined to its slider value by
+       * `dimensionKey` — the stable key shared with the local prompt copy — and
+       * carries the server `questionId` UUID verbatim.
+       */
+      quizAnswers: quiz.questions
+        .filter((q) => draft.scales[q.dimensionKey] != null)
+        .map((q) => ({
+          questionId: q.questionId,
+          sliderValue: draft.scales[q.dimensionKey],
+        })),
     },
   };
 }

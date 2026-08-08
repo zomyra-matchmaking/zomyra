@@ -67,20 +67,17 @@ Append a "Module log" entry at the end of every module, in the same session that
   now returns **`401 invalid_google_token`** for a bogus token, where it returned `503` a day
   earlier — so **API-3 is deployed and validating**. API-1/API-2 are still `404` (on hold behind
   LLP → DLT registration) and `/v1/docs-json` is still `404`. Endpoint map in §6's Module 2 addendum.
-- **Module 5.5 (test harness) is finished on `module/5.5-test-harness`, committed but not pushed and
-  with no PR** (2026-08-06, C-6). `yarn test` runs 14 tests over 5 suites; six previously-`static`/
-  `runtime` cases are now `build` and green. Maestro 2.8.0 is installed and **both E2E flows have
-  been run** against an EAS `preview-mock-simulator` build — **and both are red because of a real
-  Module 4 defect the harness found on its first run:**
-  ⚠️ **M55-007 — Module 4 — a fast sign-in lands on Welcome instead of the §9.1 destination.**
-  `app/otp.tsx` navigates on `await verifyOtp(...)`, but the tokens are written by `adoptSession`
-  off `onQueryStarted`, which RTK Query starts but does **not** await. The gate then sees no session
-  and redirects to `/login`. It does not reproduce at human tapping speed, which is why five modules
-  of manual passes missed it; **both auth paths share `adoptSession`, so Google is affected too.**
-  M55-008 is `BLOCKED` behind it, so `onboarding.yaml` past sign-in is still unexercised.
-  A second, lower-severity finding: **M55-010 — Module 5 — `OptionCard`'s testID is keyed on the
-  display label** (dead code, so not a live defect). **Per §2.4.2 neither was fixed here.**
-  **Next up: fix M55-007 in its own branch, then Module 6 — Photos & verification.**
+- **Module 5.5 (test harness) is merged** (PR #7, 2026-08-06). `yarn test` runs 14 tests over 5
+  suites; six previously-`static`/`runtime` cases are now `build` and green. Maestro 2.8.0 is
+  installed and both E2E flows exist. Its first real run found a genuine Module 4 defect — **M55-007,
+  a fast sign-in landing on Welcome instead of the §9.1 destination** — plus a minor testID violation
+  (M55-010). Per §2.4.2 the harness reported both and fixed neither.
+- **Both findings are fixed on `fix/module-5.5-findings`, committed but not pushed and with no PR**
+  (2026-08-06, C-6). `adoptSession` now exposes `sessionAdopted()` and both auth screens await it
+  before navigating; `OptionCard` takes a required `optionKey`. **`yarn test` is 17/17 and both
+  Maestro flows pass (2/2, 4m35s)** against a locally built `preview-mock` Release app — the first
+  time `onboarding.yaml` has ever run past sign-in. See §6's addendum.
+  **Next up: Module 6 — Photos & verification.**
 - **Next up: Module 5 — Onboarding & profile schema.** The sequence in §2 is being followed in
   order. It inherits a working consent gate immediately in front of the Onboarding stack, both
   auth paths landing on `/` so §9.1 decides, and the shared loading state. **Read §12.3 and
@@ -136,7 +133,7 @@ except `package-lock.json` (the project uses yarn) and the superseded `Personali
 | 3 | Navigation | **Complete** (2026-08-02) | Tab semantics + root gate are structural; needs Module 2 to call `GET /me`. **+ the shared loading primitive (§13) + the accountStatus blocker (§12.4)** |
 | 4 | Auth & session | **Complete** (2026-08-03) | First real API integration; unblocks every authenticated call. **+ FR-2a's consent screen + O-18(a) settled on a scheme-owning build** |
 | 5 | Onboarding & profile schema | **Complete** (2026-08-05) | **Character changed by FE v1.44 (§12.3):** no longer "align local enums" — the client now hardcodes *no* choice lists at all. Owns API-38 + API-39 as well as consuming them |
-| **5.5** | **Test harness (Jest + RNTL, Maestro)** | **Complete** (2026-08-06) — ⚠️ *both Maestro flows ran and are red on a real Module 4 sign-in race (M55-007); see §6* | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
+| **5.5** | **Test harness (Jest + RNTL, Maestro)** | **Complete** (2026-08-06, PR #7). Its two findings are fixed on `fix/module-5.5-findings`; both flows now pass — see §6 | **Added 2026-08-06 — see §2.4.** Sits here so the first automated test arrives with five modules to cover, not twelve. Numbered `5.5` deliberately: renumbering 6–12 would invalidate every `M<n>-<nnn>` ID in TEST-CASES.md |
 | 6 | Photos & verification | Not started | Removes the base64-in-storage violation; establishes the image-cache foundation |
 | 7 | Discover, filters & Express Interest→Match | Not started | Core loop and densest edge-case spec; needs 5 and 6 |
 | 8 | Requests | Not started | Small; reuses Discover's pagination and the shared Match screen |
@@ -588,6 +585,9 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 
 | O-20 | **Consent text versioning — the mechanism is built; what is open is ownership of the copy.** ✅ **Engineering's half is done (Module 4).** `SENSITIVE_DATA_CONSENT_VERSION` in `src/lib/consent.ts` is the constant, it sits beside a statement of what version 1 says, and the file states the bump rule: adding a category, changing a use, or changing who data is shared with is a bump; a typo or clarity re-word is not. `app/consent.tsx` renders that copy and API-40 sends that number, so the value and the text cannot drift apart in the client. ⚠️ **What is genuinely still open is not a frontend task and cannot be closed by one:** (a) **who owns the sensitive-data copy** — the version-1 text was written by the frontend to satisfy FR-2a's requirement that the categories be named plainly, and **has never been through legal review**; (b) **who approves a bump**, since bumping is what makes every prior acceptance older than the current notice and therefore identifies who must be re-asked. Until (a) happens the consent log records agreement to unreviewed wording, which is the evidential weakness the table exists to prevent — the log is well-formed, but only as good as the copy it points at. **If legal changes the wording materially, the constant goes to 2 in the same commit**, which is a one-line change the file already documents. FR-11a's biometric equivalent is deliberately not defined yet — **Module 6 owns it** and should set it the same way, beside its own copy. | ~~Module 4~~ **Legal review — before the consent screen ships to real users** | Product owner + legal |
 | O-21 | **`ip_address` on consent rows at hard-delete** — BE v1.7 flags it as undecided: purged with the rest of the user's PII at FR-28's hard delete, or retained as a legitimate compliance interest in proving consent was obtained. **Backend-side and legal, no client work either way** — recorded so it isn't mistaken for a frontend gap. | Backend | BE + legal |
+| O-22 | **The Love quiz submits client-invented slugs, not the server UUIDs the contract requires — a guaranteed API-7 `400` on any real submit (surfaced by the owner's FE v1.49, §12.9).** The contract, on **both** sides and for some time, is that `love.quizAnswers[].questionId` is the server-issued UUID from **API-33** (`GET /compatibility-quiz/questions`), read from that response and echoed back verbatim; `dimensionKey`/`order` is the join key the client uses to attach its local pole copy. **The client does neither.** API-33 is not wired at all, the 12 questions come from the hardcoded `SCALE_QUESTIONS` list (`src/lib/onboarding/scales.ts`), and `src/lib/onboarding/submit.ts:184` sends `questionId: q.id` — a client slug. It passed Module 5 only because Module 5 submits against mocks, whose validation is lenient. **The fix is FR-3b's own pattern, one the client already applies to onboarding options:** fetch API-33 (RTK Query, in-memory like API-39), render each question by matching `dimensionKey`/`order` to local copy, and submit the fetched `questionId`. ~~**Not this session's to build**~~ ✅ **DONE 2026-08-08** (`fix/module-5.5-findings`): the **submit** half was already fixed earlier (API-33 wired, `submit.ts` sends the served `questionId` UUID + `quiz.version` — M5-057/M5-060). The remaining **render** half is now done too: `PersonalityQuiz` presents `quiz.questions` in the server's `order`, joins each `dimensionKey` to local display copy via `scaleCopyFor` (fallback card if copy is missing), and keys answers by `dimensionKey`; `SCALE_QUESTIONS` is now **display copy only**. Both callers — onboarding §3 and the Edit-Profile **retake** (`personality-test.tsx`, the API-26 surface) — fetch API-33 and gate on a loader + retry, so neither hardcodes the set. The `missingFields` completeness guard no longer asserts a fixed count (backend owns the set). Unit-pinned by `submit.test.ts` (M5-070); render/loader by M5-071. tsc clean. **API-26 retake submit itself is still Module 6's** — this only makes its *rendering* backend-driven. Live re-verify pending. | ✅ **DONE — live re-verify pending** | FE |
+| O-23 | **"Relocation" moved Anchor → Plot (FE v1.50–1.51 / BE v1.12, §12.10) — the merged onboarding modules still ship the old field and must change.** The spec deletes Anchor's `relocationWillingness` (partner-preference) and adds Plot's `openToRelocation` (`yes\|no\|depends`, public + filterable, new premium filter FR-24/API-13, disambiguated by new FR-3c). The client does **not** track the catalogue's key set — keys are a fixed contract (`src/api/contract.ts:213`), so this is a code change across ~7 sites: remove the Anchor key at `src/hooks/use-onboarding-options.ts:100`; drop field + default at `src/lib/onboarding/types.ts:103,141` and add `openToRelocation` to Plot; move it in the submit body at `src/lib/onboarding/submit.ts:71,142` (Anchor→Plot — otherwise API-7 still carries the deleted key); update the union member + interface field at `src/api/contract.ts:270,376`; relabel the mock at `src/api/mock/catalogue.ts:262`; and move the question between the Anchor and Plot **screens** (Anchor 7→6, Plot →~19). Backend's column drop is theirs (C-1). ✅ **DONE 2026-08-08** (`fix/module-5.5-findings`, owner OK'd this branch + confirmed BE v1.12 deployed): renamed `relocationWillingness`→`openToRelocation` across contract union+`OnboardingPlot`, `types.ts` (draft+default, Anchor→Plot), `use-onboarding-options.ts`, `submit.ts` (label+plot body), mock `catalogue.ts`+`handlers.ts` allowlist, and moved the screen from Anchor §2 to Plot §1 (after Family type) in `onboarding.tsx` + the Maestro flow (M5-066). **One correction to the item above:** the field was *already* a `plot` field on the wire (moved 2026-08-07, M5-059), so this was a name+screen change, not a wire relocation. `tsc` clean (3 pre-existing unrelated errors in discover/profile/chat untouched). Live re-verify pending. **O-22 left separate** (owner's call — new API-33 wiring, its own pass). | ✅ **DONE — live re-verify pending** | FE |
+| O-24 | **New Plot field `relationship_status` + the FR-4 immutability revision (FE v1.54 / BE v1.15, §12.11) — hits merged onboarding *and* built Edit Profile.** (a) `relationship_status` is a new backend-driven Plot field (21st `/onboarding/options` category, keys `never_married`/`divorced`), so the same ~7-site fixed-key change as O-23 (`use-onboarding-options.ts`, `types.ts`, `submit.ts` Plot member, `contract.ts` union+interface, `mock/catalogue.ts`, a new onboarding screen), **plus**: a new onboarding **screen with FR-4 immutability messaging**, a **read-only row on Edit Profile (FR-27)**, its **own profile-detail row directly after the hero photo (FR-18)**, and a new **Basic** (non-premium) filter on FR-24. (b) FR-4's immutable set changes: **`relationship_status` joins it, `height` leaves it** — `PATCH /profile` now accepts `heightCm` and rejects `firstName/lastName/dateOfBirth/relationshipStatus`; the stale comment at `app/(tabs)/(profile)/edit-profile.tsx:80` (\"name/DOB/height\") must be corrected. ✅ **Module-5 portion DONE 2026-08-08** (`fix/module-5.5-findings`): the onboarding capture + API-7 submit are wired exactly like O-23 — `relationshipStatus` added to `contract.ts` (union + `OnboardingPlot`), `types.ts` (draft + default), `submit.ts` (required list + plot body), `use-onboarding-options.ts` (`REQUIRED_CATEGORIES`), mock `catalogue.ts` (`never_married`/`divorced`) + `handlers.ts` allowlist, a new Plot screen in `onboarding.tsx` **carrying the FR-4 point-of-entry immutability message**, the Maestro walk, and M5-067. Client uses the camelCase category key `relationshipStatus` (matching `familyType`/`openToRelocation`), values backend-driven. FR-4 comment at `edit-profile.tsx` corrected (height out, relationshipStatus in). `tsc` clean (same 3 pre-existing unrelated errors). Live re-verify pending. **Deferred to their owning modules** (per owner: build only what Module 5 owns): the FR-4 **lock enforcement** + **read-only Edit Profile row (FR-27)** are **Module 6** (Edit Profile's API-23/PATCH are Module 6-owed — see that file's header); FR-18's **profile-detail row** and FR-24's **Basic filter** live in the **Discover** module (`ProfileView.tsx` renders the Discover mock model, not onboarding). Backend's users column + options category are theirs (C-1). | ✅ **Module-5 DONE — FR-27/FR-18/FR-24 are later modules; live re-verify pending** | FE |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -3647,6 +3647,174 @@ that can be made to fail on demand. Recorded as the remaining Module 5 test debt
 
 ---
 
+### 12.9 Owner docx set — FE v1.49 + BE v1.10 (received 2026-08-07)
+
+The owner handed over two **consolidated** `.docx` — `zomyra_frontend_requirements_v1_49.docx` and
+`ZOMYRA_Backend_TDD_v1_10.docx` — and noted the cofounder is building the backend to the latter.
+Diffed against the repo's delta-tracked state (FE through `FE-TDD-v1.49-delta.md`, BE through
+`BE-TDD-v1.11-delta.md`). **The reassuring headline: almost everything in these docs is already
+tracked and mostly already built. The problem is not the content — it is that both documents reuse a
+version number the repo already spent on different content.** Two collisions, one stale contradiction,
+one live client defect.
+
+**Collision 1 — two different "FE v1.49".** The repo's `FE-TDD-v1.49-delta.md` defines v1.49 as *"add
+the `X-Client-Info` header"* (§9). The owner's `_v1_49.docx` defines v1.49 as *(1) `fitness` as a
+real Plot field, (2) `questionId` is a server-issued UUID everywhere* — and contains **no mention of
+`X-Client-Info` at all** (its §9 still lists only the two observational headers). Neither v1.49
+contains the other's change. The implementing session and the owner bumped to the same number
+independently.
+
+**Collision 2 — two different "BE v1.10".** The repo splits the 2026-08-06 work into `v1.10` (adds
+`platform` to `POST /consents`) and `v1.11` (adds the `fitness` catalogue category). The owner's
+`_v1_10.docx` changelog says *"first design change since v1.7"* and folds **fitness + questionId**
+into a single `v1.10` — skipping the repo's `platform`/metadata-transport delta entirely.
+
+**The one that can actually bite: the BE docx is stale on two agreed decisions the client already
+ships.** Both were **agreed with the backend on 2026-08-06** (CONTRACT-QUESTIONS §11, marked
+decided), and both are live in the merged client — yet the cofounder's `_v1_10.docx` records neither:
+
+| Agreed & shipped on the client | Where the client does it | What the BE v1.10 docx says |
+|---|---|---|
+| `platform` is a **body field** on `POST /consents` | `src/api/endpoints/consent.ts:60` sends `{ …body, platform }` | **Contradicts it** — line ≈1385 still reads *"platform … read server-side from the existing `X-App-Version` header … not supplied as request-body fields — no new client plumbing needed. The request body stays just consentType + version."* This is the superseded position; a strict validator built to it drops or 400s the field the client sends |
+| `X-Client-Info` on **every** request | built per `FE-TDD-v1.49-delta.md` | Absent. §7.1 lists only `X-App-Version` + `X-Bundle-Update-Id`, so the backend consumer (devices upsert + Sentry context) has no doc to build to |
+
+This is a **doc-hygiene warning for the cofounder**, not a design dispute — the decisions stand; the
+consolidated docx simply predates or dropped them. Flagged in CONTRACT-QUESTIONS §11 as the message
+to send. **C-1 holds — we do not edit the backend doc; we surface the divergence.**
+
+**Substance that is genuinely fine (do not re-open):**
+- **`fitness`** — in both owner docs, in the repo (BE v1.11 delta, `plot.fitness` in the client),
+  and actively being verified on the `fix/module-5.5-findings` branch (`probe-fitness.sh`). The
+  version *label* differs; the field does not.
+- **`questionId` as a server UUID** — the *backend* contract already said this (BE v1.10 docx lines
+  ≈1319/1808/637, and BE ≤v1.9 before it): quiz answers submit the UUID from API-33, never a slug.
+  The owner's FE v1.49 is the **client** contract catching up, not a new backend ask.
+
+**Collision → live client defect (O-22).** Because the client never implemented the UUID rule, it
+still submits **client-invented slugs** for all twelve quiz answers: `src/lib/onboarding/submit.ts:184`
+maps `questionId: q.id` where `q.id` comes from the hardcoded `SCALE_QUESTIONS` list
+(`src/lib/onboarding/scales.ts`), and **API-33 is not wired at all** — the client fetches no question
+set. Against API-7's server-side validation this is a guaranteed `400 validation_error` (exactly the
+400 the owner's v1.49 changelog attributes to the 2026-08-06 staging run). It escaped Module 5
+because Module 5 submits against mocks. Recorded as **O-20**; it is FR-3b's backend-driven pattern
+extended to the Love quiz — the same treatment already applied to onboarding options, not yet to the
+quiz.
+
+No files renamed or diagrammed on our side; this is a diff record only.
+
+### 12.10 Owner docx set — FE v1.50→v1.53 + BE v1.12→v1.14 (received 2026-08-08)
+
+Two consolidated `.docx` again (`zomyra_frontend_requirements_v1_53.docx`, `ZOMYRA_Backend_TDD_v1_14.docx`),
+cofounder building to the backend one. Diffed against the repo state left by §12.9. **Everything new
+resolves into exactly two coherent feature threads. One lands inside the merged onboarding modules and
+needs code (→ O-23); the other lands in a module that is not built yet, so it is a spec note, not
+rework.** The stale-contradiction from §12.9 is **still open** in v1.14 (below).
+
+**Thread A — "relocation" moves Anchor → Plot (FE v1.50–1.51, BE v1.12). TOUCHES MERGED MODULES 3–5.**
+The field the client asks about changes identity, not just place:
+- **New Plot field `openToRelocation`** (`yes | no | depends`) — the user's *own* answer, **public and
+  filterable**. It is a new premium Discover filter (FR-24 / API-13) — that filter is the reason it was
+  added: Anchor already asked what a user wants *of a partner*, but the user's own stance was never
+  captured, so "show me people open to relocating" was unanswerable. New **FR-3c** exists only to keep
+  the two near-homonyms apart (public own-answer vs. private partner-preference).
+- **Anchor's `relocationWillingness` is deleted outright** — from FR-5, the API-7 `anchor` object, the
+  API-39 catalogue's Anchor list (**Anchor 7 → 6 categories / 7 → 6 screens**), and the screen
+  inventory. FE v1.51 also corrects a v1.49 miscount: **Plot reads ~19 screens** now (covering both
+  `fitness` and `openToRelocation`), not ~17.
+- **BE v1.12** drops the `user_partner_preferences.relocation_willingness` column. Their migration
+  note: it discards data already collected from any user who finished Anchor and is not recoverable
+  from the new field (different question). **Backend-side — C-1, not ours; recorded so it is not read
+  as a frontend gap.**
+- **Why this is real client work, not a free catalogue swap:** the API-39 catalogue supplies *labels*;
+  the field **keys are a fixed client contract** (`src/api/contract.ts:213`), and `relocationWillingness`
+  is a hardcoded Anchor key in the fixed list (`src/hooks/use-onboarding-options.ts:100`). The client
+  will **not** drop the removed field or grow the new one on its own, and the API-7 submit body would
+  otherwise still carry the deleted key. **→ O-23.**
+
+**Thread B — Discover end-of-feed, 3-tier relaxation (FE v1.52–1.53, BE v1.13–1.14). NOT in modules 1–5.**
+- New **FR-13a**: filtered feed exhausts → offer to drop FR-24 filters → that exhausts (or none set) →
+  offer to drop Anchor partner-preferences (age, location, children, interfaith, smoker-comfort,
+  household are **dropped, not loosened**) → terminal "you've seen everyone" with no further CTA.
+  **Safety exclusions never relax.** Session-only, reset-on-close, in-memory.
+- **API-12** (`GET /discover`): `relaxFilters` (bool) → **`relaxLevel`** (`none | filters | anchor`);
+  `outsideFiltersAvailable` (bool) → **`nextRelaxLevel`** (`filters | anchor | null`, collapses a
+  skipped tier). BE v1.13 introduced the two-state form; **BE v1.14 replaced it with this three-tier
+  form** — so the *only* live shape is `relaxLevel`/`nextRelaxLevel`; the booleans never ship.
+- **Impact on merged modules: none.** The Discover feed is a later, unbuilt module. Whoever builds it
+  targets the three-tier shape from the start — no rework here. The `relocation`/relaxation strings in
+  `src/lib/discover/mock.ts` are prototype mock copy, inert. **No open item** — this is a build-to-spec
+  note for the future Discover module, captured here so it is not built to the superseded booleans.
+
+**Still-open stale contradiction (from §12.9, unresolved through v1.14).** BE v1.14 line ≈1345 repeats
+verbatim: *"platform and app_version … read server-side from the existing `X-App-Version` header …
+not supplied as request-body fields … The request body stays just consentType + version."* The merged
+client still sends `platform` in the body (`src/api/endpoints/consent.ts:60`), and `X-Client-Info` is
+still absent from the backend doc's header list. **The decision is not open — §11a was finalized
+2026-08-07: the body field stays** (header-only rejected; `X-Client-Info` is strippable, wrong for a
+legal record). So two backend revisions (v1.10 → v1.14) have shipped **without folding in a settled
+decision** — the cofounder's doc is simply overdue for the correction. Re-flagged in
+CONTRACT-QUESTIONS §11c. **C-1 holds: not edited backend-side.**
+
+**Frontend doc updated to record the decision (2026-08-08).** On the owner's instruction, the *frontend*
+requirements doc was bumped **v1.53 → v1.54** (new file `zomyra_frontend_requirements_v1_54.docx`;
+v1.53 left intact) to make the two shipped behaviours explicit rather than merely implied: API-40's
+body now lists `platform` with the append-only-legal-artifact rationale, and §9's cross-cutting header
+convention now names three headers including `X-Client-Info` (with its best-effort/strippable caveat).
+This does not touch or resolve the *backend*-doc contradiction — that is still the cofounder's to fix.
+⚠️ **Version-collision risk — this materialised the next day; see §12.11.** `v1.54` was chosen to follow
+the doc's own changelog convention (editing content without a bump would have created a second "v1.53").
+The owner then independently issued their *own* `zomyra_frontend_requirements_v1_54.docx` (relationship_status,
+received 2026-08-09) — a **different** v1.54. **The owner's v1.54 is authoritative; our generated v1.54 is
+withdrawn**, and the platform / `X-Client-Info` wording it carried **was re-based onto the owner's v1.54
+→ `zomyra_frontend_requirements_v1_55.docx` (produced 2026-08-09, in `~/Downloads`)** so it is not lost.
+Exactly the pathology the numbering-convention decision the founders owe
+exists to prevent.
+
+**Fine, do not re-open:** no *new* version-number collisions this batch — FE advanced 1.50→1.53 and BE
+1.12→1.14 on numbers the repo had not spent. The §12.9 collisions (two "FE v1.49", two "BE v1.10")
+are unchanged and still belong to the numbering-convention decision the founders owe.
+
+No files renamed or diagrammed; diff record only.
+
+### 12.11 Owner docx set — FE v1.54 + BE v1.15 (received 2026-08-09)
+
+The owner's authoritative `zomyra_frontend_requirements_v1_54.docx` + `ZOMYRA_Backend_TDD_v1_15.docx`.
+**Note the v1.54 collision first (§12.10):** this owner v1.54 is a *different* document from the one we
+generated on 2026-08-08 — ours recorded `platform`/`X-Client-Info`, theirs adds `relationship_status`
+and is silent on ours. **Theirs wins; ours is withdrawn and its two edits were re-applied on top of
+theirs → `zomyra_frontend_requirements_v1_55.docx` (2026-08-09).** One coherent feature this batch, plus a paired immutability correction. **Both land
+inside merged/built onboarding + profile code (→ O-24).**
+
+**New Plot field `relationship_status`** (FE v1.54, BE v1.15). Same shape as O-23's `openToRelocation`,
+so the client work is the same fixed-key-contract change — but with a wider blast radius:
+- **A Plot self-attribute**, backend-driven from `GET /onboarding/options` (FR-3b) — a **21st** catalogue
+  category, proposed keys `never_married` / `divorced` (final wording a product call; client never
+  hardcodes the labels, but the *key* is a fixed client contract, so the field still has to be added by
+  hand — `use-onboarding-options.ts`, `types.ts`, `submit.ts` Plot member, `contract.ts` union/interface,
+  `mock/catalogue.ts`, and a new onboarding **screen**).
+- **API-7 plot member** + **`GET /profile/me` field**.
+- **A new *Basic* filter** on FR-24 (`GET /filters/options`, `premiumOnly: false`) — *unlike*
+  `openToRelocation`, which is premium. No new pattern; it just uses FR-24's existing basic/premium split.
+- **Profile detail (FR-18):** its own row, positioned **directly after the hero/cover photo, before About
+  Me** — the first fact shown after the photo. Not folded into At-a-Glance.
+- **Edit Profile (FR-27):** shown **read-only/locked** (like age and name), not omitted.
+
+**FR-4 immutability set revised** (BE v1.15, mirrored FE v1.54) — a distinct correction riding along:
+- **`relationship_status` joins** the locked-after-onboarding set (403 `immutable_field`, same as name /
+  date-of-birth); onboarding must show the FR-4 point-of-entry immutability message when capturing it.
+- **`height` is removed** from the immutable set — reversing the v1.0 wireframe-derived grouping.
+  `PATCH /profile` now **accepts** `heightCm` and **rejects** `firstName`/`lastName`/`dateOfBirth`/
+  `relationshipStatus`.
+- **This touches built code:** `app/(tabs)/(profile)/edit-profile.tsx:80` documents the immutable set as
+  *"name/DOB/height … not enforced here"* — now stale on both counts (height out, relationship_status in).
+  Edit Profile is already built, and FR-4 enforcement was deferred there, so the fix is: correct the
+  documented set now, and when enforcement is built use `{name, dateOfBirth, relationshipStatus}`, not
+  height.
+
+No files renamed or diagrammed; diff record only.
+
+---
+
 ### Module 5 follow-up 3 — `X-Client-Info`, API-40's `platform`, and a staging re-probe, 2026-08-06
 
 **Staging moved.** Re-probing `https://zomyra-staging.duckdns.org` found API-38, API-39, API-40,
@@ -3862,3 +4030,91 @@ warnings, none from this module) · `yarn typecheck:baseline` clean (the same 3 
 **What §2.4 asked for is complete.** What is *not* done, and is deliberately not this module's to
 do: fixing the M55-007 sign-in race, and — once that lands — running `onboarding.yaml` past sign-in
 to calibrate its remaining widget legs. Both want their own session and their own branch.
+
+### Module 5.5 addendum — both findings fixed, both flows green (2026-08-06)
+
+**Branch:** `fix/module-5.5-findings`, off `master` after PR #7 merged. This is the separate session
+§2.4.2 was reserving: the harness reported, this repairs.
+
+#### M55-007 — the sign-in race
+
+`adoptSession` keeps its place on `onQueryStarted` — that is what stops any sign-in path from
+forgetting to land its tokens — but it now **records its work in a module-level promise**, assigned
+synchronously while RTK Query handles the mutation's `pending` action, so it always refers to the run
+the caller is about to await. `sessionAdopted()` exposes it, and both `app/otp.tsx` and
+`app/login.tsx` await it before `router.replace("/")`.
+
+The insight worth keeping: the defect was never that the work was in the wrong place, it was that the
+**ordering was assumed rather than expressed**. A comment asserting "this runs first" is not a
+mechanism. What changed is that the sequence is now an `await` a reader can see.
+
+A `false` result is surfaced as *"We couldn't complete sign-in. Please try again."* rather than as an
+OTP error, because the credentials were accepted and the keychain write is what failed — there is
+nothing in the form for the user to correct.
+
+**Regression coverage is M55-013…M55-015**, and its shape is the point: `router.replace` is spied on
+to capture `session.status` *at the instant navigation is requested*. Asserting the end state would
+pass with or without the fix, since waiting long enough authenticates either way. Verified by
+reverting the `await` in `app/otp.tsx` — the suite goes red with `"anonymous"`.
+
+Standing this up needed two `jest.config.js` additions, and they had been latent since 5.5a because
+**no suite had ever rendered a component**: `lucide-react-native` resolves, under `jest-expo`'s
+`react-native` export condition, to a `.mjs` bundle Jest's transform does not match (now mapped to
+its CJS build), and `react-native-safe-area-context` needed transforming. Every screen imports an
+icon, so this had been blocking *all* component testing, not just these three cases.
+
+#### M55-010 — the label-keyed testID
+
+`OptionCard` takes an `optionKey` and emits ``option-${optionKey}``. **Required, not defaulted from
+`title`** — an optional prop falling back to the label would re-open the same trap for the next
+caller, which is the only way this defect can bite at all. Zero call sites, so the required prop
+costs nothing.
+
+#### Both Maestro flows now pass — 2/2, 4m35s
+
+`login.yaml` 1m25s (all four legs), `onboarding.yaml` 3m10s. **This is the first time
+`onboarding.yaml` has run past sign-in**, and the two legs 5.5b flagged as most likely to need
+calibration — the height **slider swipe** and the `repeat: 12` quiz — both worked unchanged on their
+first real execution.
+
+One flow bug surfaced, and it is the kind that would have poisoned later work quietly:
+**`hideKeyboard` is a tap, and it hit the button.** Maestro dismisses the iOS keyboard by tapping
+outside it; this screen *lifts* Continue above the keyboard rather than hiding it behind, so the
+dismissing tap landed on Continue. The step advanced, the flow's own `tapOn: onboarding-next`
+advanced it again, and the run **silently skipped the DOB question** while the next two assertions
+still passed. Both `hideKeyboard` calls are gone and `docs/TESTING.md` carries the rule.
+
+#### The build: local, not EAS — and the checkout path cost three patches, since resolved
+
+Built with `npx expo run:ios --configuration Release` rather than spending an EAS credit, at the
+owner's choice. Worth doing again — a flow that can only be re-tested by spending a cloud build is a
+flow nobody re-tests — but **the checkout path contained spaces** (`…/New Matrimony App/…`) and three
+separate scripts in the toolchain do not quote it. Two fail loudly; the third,
+`node_modules/expo-constants/scripts/get-app-config-ios.sh:14`, **fails silently**: BSD `basename`
+accepts the split words, its `!= "Pods"` guard matches, and it `exit 0`s having written no
+`app.config`. The build succeeds and the app dies at launch on `expo-linking needs access to the
+expo-constants manifest` — an error naming a package unrelated to the cause.
+
+All three live in generated or vendored files that `expo prebuild` and `yarn install` restore, so
+patching them was never a fix, only a thing to redo. EAS was unaffected — it builds at a clean path,
+which is exactly why this was invisible until the first local build.
+
+**Resolved the same day.** The owner renamed the checkout to `…/New-Matrimony-App/…`. All three
+patches were then reverted to upstream and the space-free path verified against pristine scripts:
+build green, `EXConstants.bundle/app.config` present (1262 bytes; absent under the bug), both Maestro
+flows passing. Nothing local remains to re-apply. One correction falls out of the re-verification:
+the `LANG=en_US.UTF-8` that `pod install` needs was written up here as a consequence of the spaces —
+it is not. It reproduced unchanged at the space-free path and is purely Ruby's default `ASCII-8BIT`
+locale. `docs/TESTING.md` carries the corrected note.
+
+**New cases:** M55-013…M55-016, all PASS. M55-007 and M55-010 flip FAIL → PASS; M55-008 flips
+BLOCKED → PASS. **Module 5.5 is now 16 cases, all green.**
+
+**Verified green:** `yarn test` 17/17 · `npx eslint app src --no-cache` 0 errors (the same 13
+pre-existing warnings) · `yarn typecheck:baseline` clean (the same 3 inherited errors) ·
+`maestro check-syntax` OK on all three flow files · `maestro test .maestro/flows` **2/2 passed**.
+
+**Still open, and deliberately untouched:** M5-042's contract question — the real backend has no
+`plot.fitness` field (CONTRACT-QUESTIONS §9), so whether API-7 drops the key or `400`s is unknown.
+The mock accepts it and the flow's fitness leg passes; that proves the *client*, not the contract.
+This is the owner's call to settle with their cofounder, not a harness matter.

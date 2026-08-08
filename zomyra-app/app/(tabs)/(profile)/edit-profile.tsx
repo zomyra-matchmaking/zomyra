@@ -77,7 +77,12 @@ import type { OnboardingState } from "@/src/lib/onboarding/types";
  *    city's state alongside `cityId`, or the client needs a city→state lookup.
  *    Raised in docs/CONTRACT-QUESTIONS.md. Today the picker just starts at the
  *    state step, which is correct but re-asks a question the server knows.
- * 3. **FR-4's immutability rules** on name/DOB/height are not enforced here.
+ * 3. **FR-4's immutability rules** are not enforced here. The locked set was
+ *    revised in O-24 (BE v1.15 / FE v1.54): it is now `{firstName, lastName,
+ *    dateOfBirth, relationshipStatus}` — `relationshipStatus` joined it and
+ *    `height` left it, so `PATCH /profile` now *accepts* `heightCm` and rejects
+ *    the four. When enforcement lands, lock those four (not height), and show
+ *    `relationshipStatus` as a read-only row (FR-27).
  */
 import { colors, alpha, fontSize, fontWeight, radii, spacing } from "@/src/theme";
 import { Touchable } from "@/src/components/ui";

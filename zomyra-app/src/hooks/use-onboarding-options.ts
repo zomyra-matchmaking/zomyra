@@ -92,12 +92,13 @@ const REQUIRED_CATEGORIES: OptionCategoryKey[] = [
   "drinking",
   "smoking",
   "familyType",
+  "relationshipStatus",
+  "openToRelocation",
   "matchLocationPreference",
   "childrenPreference",
   "interfaithStance",
   "smokingPartnerComfort",
   "householdPreference",
-  "relocationWillingness",
 ];
 
 function buildIndex(

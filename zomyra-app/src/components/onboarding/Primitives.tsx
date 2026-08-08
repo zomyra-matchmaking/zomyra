@@ -15,16 +15,35 @@ import { isIOS } from "@/src/utils/platform";
 type OptionCardProps = {
   selected: boolean;
   onSelect: () => void;
+  /**
+   * The catalogue **key** this card stands for — `"male"`, not `"Male"`.
+   *
+   * Required, and deliberately not defaulted from {@link OptionCardProps.title}:
+   * this card emitted ``option-${title}`` until Module 5.5b (M55-010), which put
+   * a *label*-keyed id into the same `option-*` namespace `OptionGrid` fills
+   * with *key*-keyed ones. Under FR-3b the backend may reword a label at any
+   * time with no client release, so an id built from one is an E2E failure
+   * waiting on a copy edit. An optional prop falling back to the title would
+   * re-open exactly that trap for the next caller.
+   */
+  optionKey: string;
   title: string;
   description?: string;
   compact?: boolean;
 };
 
-export function OptionCard({ selected, onSelect, title, description, compact }: OptionCardProps) {
+export function OptionCard({
+  selected,
+  onSelect,
+  optionKey,
+  title,
+  description,
+  compact,
+}: OptionCardProps) {
   return (
     <Touchable
       feedback="scale"
-      testID={`option-${title}`}
+      testID={`option-${optionKey}`}
       onPress={onSelect}
       style={[styles.optCard, compact ? styles.optCardCompact : null, selected ? styles.optCardSelected : null]}
     >

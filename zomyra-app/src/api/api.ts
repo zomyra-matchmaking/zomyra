@@ -63,6 +63,7 @@ export const api = createApi({
      */
     "Locations",
     "OnboardingOptions",
+    "CompatibilityQuiz",
   ],
   /**
    * RTK Query's cache is in-memory by design. Anything that must survive a

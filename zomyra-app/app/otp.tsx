@@ -21,7 +21,9 @@
  * server's count the moment either changed.
  *
  * The token pair never passes through this screen — `verifyOtp`'s
- * `onQueryStarted` puts it on the keychain (`src/api/endpoints/auth.ts`).
+ * `onQueryStarted` puts it on the keychain (`src/api/endpoints/auth.ts`). What
+ * this screen *does* owe that work is a wait: see `sessionAdopted` at the
+ * bottom of `verify()`, and M55-007.
  */
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -29,7 +31,13 @@ import { StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/src/components/common/ScreenHeader";
-import { errorMessage, isApiError, useRequestOtpMutation, useVerifyOtpMutation } from "@/src/api";
+import {
+  errorMessage,
+  isApiError,
+  sessionAdopted,
+  useRequestOtpMutation,
+  useVerifyOtpMutation,
+} from "@/src/api";
 import { formatCountdown, useCountdown } from "@/src/hooks/use-countdown";
 import { useKeyboardInset } from "@/src/hooks/use-keyboard-inset";
 import { colors, radii, fontSize, fontWeight, spacing } from "@/src/theme";
@@ -179,6 +187,19 @@ export default function OtpScreen() {
           lockout.start(failure.retryAfterSeconds);
         }
       }
+      return;
+    }
+
+    /*
+     * ⚠️ **M55-007.** The mutation resolving means the *server* accepted the
+     * code; it does not mean the client has adopted the session. Navigating on
+     * the strength of the former raced the keychain write and the root gate,
+     * finding no session, bounced back to Welcome — every time under
+     * automation, never once by hand. There is nothing for the user to fix
+     * here, so a failure is a plain "try again" rather than an OTP error.
+     */
+    if (!(await sessionAdopted())) {
+      setError("We couldn't complete sign-in. Please try again.");
       return;
     }
 

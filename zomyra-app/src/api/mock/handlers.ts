@@ -12,6 +12,7 @@
  */
 import { MOCK_GOOGLE_ID_TOKEN } from "@/src/auth/google";
 import { MOCK_PROFILES } from "@/src/lib/discover/mock";
+import { SCALE_QUESTIONS } from "@/src/lib/onboarding/scales";
 
 import type { DiscoverFeedResponse, OnboardingSubmitBody } from "../contract";
 import {
@@ -25,6 +26,23 @@ import {
 } from "./accounts";
 import { CATALOGUE, CITIES_BY_STATE } from "./catalogue";
 import { issueSession, isAccessTokenValid, currentUserId, rotateSession } from "./session";
+
+/*
+ * API-33's served set. The `questionId`s are stable UUID-shaped values —
+ * deterministic so a resubmit of the same draft matches — and deliberately
+ * *not* the `dimensionKey` slug: the mock exists to prove the client echoes the
+ * server id (O-22), so it must fail a client that sends its own `SCALE_QUESTIONS`
+ * ids. `dimensionKey` mirrors those slugs because it is the join key the client
+ * renders its local prompt copy by. `quizVersion` is likewise the backend's, not
+ * `1` — a client that hardcodes a version would submit the wrong number here.
+ */
+const QUIZ_VERSION = 3;
+const QUIZ_QUESTIONS = SCALE_QUESTIONS.map((q, i) => ({
+  questionId: `00000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`,
+  dimensionKey: q.id,
+  order: i + 1,
+}));
+const QUIZ_QUESTION_IDS = new Set(QUIZ_QUESTIONS.map((q) => q.questionId));
 
 export type MockRequest = {
   method: string;
@@ -104,6 +122,12 @@ const REQUIRED_PLOT_KEYS = [
   // carrying it — see `OnboardingPlot.fitness`.
   "fitness",
   "familyType",
+  // O-24 marital history — required Plot field, locked after onboarding (FR-4).
+  // See `OnboardingPlot.relationshipStatus`.
+  "relationshipStatus",
+  // FR-3c own-answer Plot field, renamed from `relocationWillingness` (O-23) —
+  // see `OnboardingPlot.openToRelocation`.
+  "openToRelocation",
   "cityId",
   "heightCm",
 ] as const satisfies readonly (keyof import("../contract").OnboardingPlot)[];
@@ -280,6 +304,15 @@ const handlers: Record<string, Handler> = {
     data: { categories: CATALOGUE.map((c) => ({ key: c.key, values: [...c.values] })) },
   }),
 
+  // ---- API-33 · GET /compatibility-quiz/questions --------------------------
+  // Backend-driven question set + version (FR-14). Copied on the way out for the
+  // same reason the catalogue is — a mock never hands a caller a live reference
+  // to its own storage.
+  "GET /compatibility-quiz/questions": () => ({
+    ok: true,
+    data: { version: QUIZ_VERSION, questions: QUIZ_QUESTIONS.map((q) => ({ ...q })) },
+  }),
+
   // ---- API-38 · GET /locations/cities --------------------------------------
   // `?state=` is **required**, and an unknown key is `400 invalid_state` rather
   // than an empty list — FE §9.2 specifies both, and they are different bugs on
@@ -377,6 +410,25 @@ const handlers: Record<string, Handler> = {
     if (ageErrors.length > 0) {
       return fail(400, "validation_error", "Partner age range is missing or invalid.", {
         errors: ageErrors,
+      });
+    }
+
+    /*
+     * The O-22 guard: every `love.quizAnswers[].questionId` must be a UUID this
+     * mock served from API-33, not a client-invented `SCALE_QUESTIONS` slug. This
+     * is the check that would have caught the shipped bug — the client used to
+     * send `questionId: q.id` and the mock never looked, so a guaranteed staging
+     * `400` passed locally.
+     */
+    const badQuizIds = (love.quizAnswers ?? [])
+      .map((a) => a.questionId)
+      .filter((id) => !QUIZ_QUESTION_IDS.has(id));
+    if (badQuizIds.length > 0) {
+      return fail(400, "validation_error", "One or more quiz answers reference an unknown question.", {
+        errors: badQuizIds.map((id) => ({
+          field: `love.quizAnswers[${id}]`,
+          message: "Unknown questionId — must be a UUID served by API-33.",
+        })),
       });
     }
 

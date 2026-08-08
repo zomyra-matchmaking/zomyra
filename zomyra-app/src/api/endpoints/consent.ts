@@ -12,11 +12,15 @@
  * at the *end* of Plot/Anchor/Love, which would record the consent after the
  * data it was meant to gate had already been collected.
  *
- * **It invalidates `Me`**, which is the whole mechanism: `GET /me`'s `consents`
- * array is the source of truth for what has been accepted, so the refetch is
- * what makes `resolveRootDestination` stop returning `/consent`. Without the
- * invalidation the client would have recorded consent server-side and still be
- * looking at a stale array saying it had not.
+ * **It invalidates `Me` to keep the cache honest — it does not route.** The
+ * consent screen navigates on this mutation's own success (a `!profileComplete`
+ * account that has just consented is deterministically headed to Onboarding —
+ * see `app/consent.tsx` and CONVENTIONS.md). Invalidating `Me` only ensures the
+ * *next* reader of `GET /me` (the tabs guard, a later cold start at `/`) sees
+ * the recorded consent rather than a stale `consents` array. Earlier this
+ * refetch drove navigation too; that coupled a successful consent write to a
+ * second request that could fail or lag on its own and strand the user on the
+ * gate.
  */
 import { CLIENT_PLATFORM } from "@/src/config/device";
 

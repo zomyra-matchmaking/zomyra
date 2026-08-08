@@ -34,6 +34,7 @@
 import { api } from "../api";
 import type {
   CitiesResponse,
+  CompatibilityQuizResponse,
   OnboardingOptionsResponse,
   OnboardingSubmitBody,
   OnboardingSubmitResponse,
@@ -57,6 +58,22 @@ export const onboardingApi = api.injectEndpoints({
     }),
 
     /**
+     * API-33 — the FR-14 compatibility quiz, backend-driven (BE §14.2).
+     *
+     * The client no longer invents the question set or its version: the answers
+     * submitted to API-7 carry the `questionId` UUIDs served here, and
+     * `quizVersion` is echoed off this response rather than a client constant
+     * (O-22). Held for the session like API-39 — the set does not change mid-flow
+     * and refetching it would only risk a version skew against answers already
+     * collected.
+     */
+    getCompatibilityQuiz: build.query<CompatibilityQuizResponse, void>({
+      query: () => ({ url: "/compatibility-quiz/questions" }),
+      providesTags: ["CompatibilityQuiz"],
+      keepUnusedDataFor: SESSION_LIFETIME,
+    }),
+
+    /**
      * API-38 — the cities of one state (FR-3a).
      *
      * **The `state` argument is the cache key**, which is the entire reason
@@ -75,13 +92,15 @@ export const onboardingApi = api.injectEndpoints({
     /**
      * API-7 — the single end-of-flow submit.
      *
-     * **`invalidatesTags: ["Me"]` is what routes the user onward.** The
-     * mutation's own response is `{ profileComplete: true }`, but the client
-     * does not branch on it: `resolveRootDestination` reads `GET /me`, so the
-     * refetch this triggers is what makes §9.1 return the photos step. Reading
-     * the mutation result instead would be a second copy of a routing decision
-     * that already exists in one place — the same reasoning that kept FR-1a out
-     * of the auth screens (see `src/lib/root-route.ts`).
+     * **`invalidatesTags: ["Me"]` keeps the cache honest; it does not route.**
+     * The screen navigates on the mutation's own success (a just-submitted
+     * profile is always `unverified`, so the next step is deterministically
+     * Photos — see `app/onboarding.tsx`). Invalidating `Me` only ensures that
+     * the *next* screen to read `GET /me` (Verify, later Discover) sees the
+     * post-submit state rather than a stale cache. Earlier this tag drove
+     * navigation too; that coupled a successful write to a second request that
+     * could fail on its own — and masked a backend 200-without-persist as a
+     * silent bounce back into Onboarding.
      *
      * **`Profile` is invalidated too** — Edit Profile's `GET /profile/me` is a
      * projection of exactly what was just submitted, so a cached miss from
@@ -101,6 +120,7 @@ export const onboardingApi = api.injectEndpoints({
 
 export const {
   useGetOnboardingOptionsQuery,
+  useGetCompatibilityQuizQuery,
   useGetCitiesQuery,
   useSubmitOnboardingMutation,
 } = onboardingApi;

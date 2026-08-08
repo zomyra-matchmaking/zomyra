@@ -1,8 +1,14 @@
 /**
  * PersonalityQuiz — one-question-per-screen compatibility test.
  *
- * Replaces the previous conversational PersonalityChat. Each of the
- * SCALE_QUESTIONS gets its own screen with:
+ * ⚠️ **The question set is the backend's (API-33), not this component's.** The
+ * caller passes `questions` (from `useGetCompatibilityQuizQuery`); this screen
+ * presents them in the server's `order`, joins each `dimensionKey` to local
+ * display copy (`scaleCopyFor`), stores answers keyed by `dimensionKey`, and the
+ * submit echoes the server `questionId` (O-22). The count, order and identity of
+ * questions all follow the server — nothing here hardcodes the set.
+ *
+ * Each served question gets its own screen with:
  *   - A segmented progress bar at the top (one small bar per question)
  *   - The question title + prompt
  *   - A smooth slider between the two extremes with labels underneath
@@ -12,72 +18,97 @@
  * navigating back preserves prior answers.
  */
 import { useMemo, useState } from "react";
-import { Animated, Easing, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, Easing, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
+import type { CompatibilityQuizQuestion } from "@/src/api";
 import { Slider } from "@/src/components/onboarding/Slider";
 import { colors, radii, alpha, fontSize, fontWeight, spacing } from "@/src/theme";
-import { SCALE_QUESTIONS } from "@/src/lib/onboarding/scales";
+import { scaleCopyFor } from "@/src/lib/onboarding/scales";
 import type { OnboardingState } from "@/src/lib/onboarding/types";
 import { Touchable } from "@/src/components/ui";
 import { isAndroid } from "@/src/utils/platform";
 
 type Props = {
+  /** The backend's served question set (API-33). Presented in `order`. */
+  questions: CompatibilityQuizQuestion[];
   state: OnboardingState;
-  onUpdateScale: (id: string, value: number) => void;
+  /** `dimensionKey` of the answered question, and its 1–5 slider value. */
+  onUpdateScale: (dimensionKey: string, value: number) => void;
   onComplete: () => void;
   onBack?: () => void;
+  /** API-7 is in flight (fires from Finish on the last question). */
+  submitting?: boolean;
+  /** A submit failure to surface beside the Finish button, or null. */
+  submitError?: string | null;
 };
 
 export function PersonalityQuiz({
+  questions,
   state,
   onUpdateScale,
   onComplete,
   onBack,
+  submitting = false,
+  submitError = null,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const total = SCALE_QUESTIONS.length;
+
+  // Present in the server's order — the client owns neither the set nor its
+  // sequence (O-22). A copy so the sort never mutates the cached response.
+  const ordered = useMemo(
+    () => [...questions].sort((a, b) => a.order - b.order),
+    [questions],
+  );
+  const total = ordered.length;
 
   // Start at the first unanswered question if the user is coming back to
   // finish; otherwise start at 0.
   const initialIndex = useMemo(() => {
-    const firstUnanswered = SCALE_QUESTIONS.findIndex(
-      (q) => state.scales[q.id] == null,
+    const firstUnanswered = ordered.findIndex(
+      (q) => state.scales[q.dimensionKey] == null,
     );
     return firstUnanswered === -1 ? 0 : firstUnanswered;
-  }, [state.scales]);
+  }, [ordered, state.scales]);
 
   const [index, setIndex] = useState(initialIndex);
 
-  const question = SCALE_QUESTIONS[index];
-  const value = state.scales[question.id] ?? 3;
-  const isLast = index === total - 1;
+  // Clamp against a served set that shrank since `index` was set (a resumed
+  // session where the backend now serves fewer questions).
+  const safeIndex = Math.min(index, total - 1);
+  const question = ordered[safeIndex];
+  const copy = scaleCopyFor(question.dimensionKey);
+  const value = state.scales[question.dimensionKey] ?? 3;
+  const isLast = safeIndex === total - 1;
 
   const handleBack = () => {
-    if (index === 0) {
+    if (safeIndex === 0) {
       onBack?.();
       return;
     }
-    setIndex(index - 1);
+    setIndex(safeIndex - 1);
   };
 
   const handleNext = () => {
+    // While API-7 is in flight the Finish button is disabled; this guard also
+    // blocks the programmatic path so a double-submit (→ 409) is impossible.
+    if (submitting) return;
     // Ensure the current question has a persisted value (defaults to the
     // middle position, 3) even if the user hasn't touched the slider.
-    if (state.scales[question.id] == null) {
-      onUpdateScale(question.id, value);
+    if (state.scales[question.dimensionKey] == null) {
+      onUpdateScale(question.dimensionKey, value);
     }
     if (isLast) {
       onComplete();
       return;
     }
-    setIndex(index + 1);
+    setIndex(safeIndex + 1);
   };
 
   const handleSliderChange = (v: number) => {
-    onUpdateScale(question.id, v);
+    onUpdateScale(question.dimensionKey, v);
   };
 
   const handleSliderComplete = (_v: number) => {
@@ -106,16 +137,16 @@ export function PersonalityQuiz({
             <ArrowLeft size={20} color={colors.text.primary} strokeWidth={2.2} />
           </Touchable>
           <Text style={styles.counter} testID="personality-counter">
-            {index + 1} / {total}
+            {safeIndex + 1} / {total}
           </Text>
         </View>
 
         <View style={styles.progressRow} testID="personality-progress">
-          {SCALE_QUESTIONS.map((q, i) => (
+          {ordered.map((q, i) => (
             <ProgressSegment
-              key={q.id}
+              key={q.questionId}
               state={
-                i < index ? "completed" : i === index ? "active" : "upcoming"
+                i < safeIndex ? "completed" : i === safeIndex ? "active" : "upcoming"
               }
             />
           ))}
@@ -125,11 +156,11 @@ export function PersonalityQuiz({
       {/* Question body */}
       <QuestionBody
         // Re-mount on every question change so intro animation fires again.
-        key={question.id}
-        title={question.title}
-        prompt={question.prompt}
-        left={question.left}
-        right={question.right}
+        key={question.dimensionKey}
+        title={copy.title}
+        prompt={copy.prompt}
+        left={copy.left}
+        right={copy.right}
         value={value}
         onChange={handleSliderChange}
         onComplete={handleSliderComplete}
@@ -145,11 +176,26 @@ export function PersonalityQuiz({
         <Touchable
           testID="personality-continue-button"
           onPress={handleNext}
-          style={[styles.nextBtn]}
+          disabled={submitting}
+          accessibilityState={{ disabled: submitting, busy: submitting }}
+          style={[styles.nextBtn, submitting && styles.nextBtnDisabled]}
         >
-          <Text style={styles.nextLabel}>{isLast ? "Finish" : "Continue"}</Text>
+          {submitting ? (
+            <ActivityIndicator
+              testID="personality-continue-spinner"
+              color={colors.brand.onBrand}
+            />
+          ) : (
+            <Text style={styles.nextLabel}>{isLast ? "Finish" : "Continue"}</Text>
+          )}
         </Touchable>
-        <View style={styles.helperSpacer} />
+        {submitError ? (
+          <Text style={styles.submitError} testID="personality-submit-error">
+            {submitError}
+          </Text>
+        ) : (
+          <View style={styles.helperSpacer} />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -432,5 +478,12 @@ const styles = StyleSheet.create({
   helperSpacer: {
     marginTop: spacing[2],
     height: 15,
+  },
+  submitError: {
+    marginTop: spacing[2],
+    textAlign: "center",
+    fontSize: fontSize.caption,
+    color: colors.danger.default,
+    minHeight: 15,
   },
 });

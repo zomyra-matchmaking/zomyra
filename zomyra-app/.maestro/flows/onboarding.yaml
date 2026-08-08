@@ -54,7 +54,12 @@ appId: com.zomyra.app
 - tapOn:
     id: "onboarding-last-name"
 - inputText: "Lovelace"
-- hideKeyboard
+# ⚠️ **No `hideKeyboard` here, and that is deliberate.** On iOS Maestro dismisses
+# the keyboard by tapping outside it — and this screen's Continue is *lifted
+# above* the keyboard rather than hidden behind it, so the dismissing tap lands
+# on Continue. The step advanced before the flow's own tap, which then advanced
+# it again, and the run silently skipped the DOB question. Tapping Continue with
+# the keyboard still up is both simpler and what a real user does.
 - tapOn:
     id: "onboarding-next"
 
@@ -175,17 +180,29 @@ appId: com.zomyra.app
 - tapOn:
     id: "option-nuclear"
 
+# O-24 — marital history, a Plot self-fact locked after onboarding (FR-4).
+- assertVisible:
+    id: "onboarding-step-relationshipStatus"
+- tapOn:
+    id: "option-never_married"
+
+# FR-3c — moved out of Anchor into Plot in O-23.
+- assertVisible:
+    id: "onboarding-step-openToRelocation"
+- tapOn:
+    id: "option-yes"
+
 - assertVisible:
     id: "onboarding-step-bio"
 - tapOn:
     id: "onboarding-bio"
 - inputText: "Curious about people, mathematics and long walks."
-- hideKeyboard
+# No `hideKeyboard` — see the note on the name step.
 - tapOn:
     id: "onboarding-next"
 
 # ---------------------------------------------------------------------------
-# Section 2 — Anchor. The owner's list of seven (M5-047).
+# Section 2 — Anchor. The owner's list, six after O-23 moved relocation to Plot (M5-047).
 # ---------------------------------------------------------------------------
 - extendedWaitUntil:
     visible: "Setting Your Anchors"
@@ -222,11 +239,6 @@ appId: com.zomyra.app
     id: "onboarding-step-householdPreference"
 - tapOn:
     id: "option-flexible"
-
-- assertVisible:
-    id: "onboarding-step-relocationWillingness"
-- tapOn:
-    id: "option-yes"
 
 # ---------------------------------------------------------------------------
 # Section 3 — Love. The FR-14 quiz: 12 sliders, submitted as ONE call (M5-048).
