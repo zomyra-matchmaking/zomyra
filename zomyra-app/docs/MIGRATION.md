@@ -587,6 +587,7 @@ whether it gates commits before these 3 are fixed is a Module 0 call.
 | O-21 | **`ip_address` on consent rows at hard-delete** — BE v1.7 flags it as undecided: purged with the rest of the user's PII at FR-28's hard delete, or retained as a legitimate compliance interest in proving consent was obtained. **Backend-side and legal, no client work either way** — recorded so it isn't mistaken for a frontend gap. | Backend | BE + legal |
 | O-22 | **The Love quiz submits client-invented slugs, not the server UUIDs the contract requires — a guaranteed API-7 `400` on any real submit (surfaced by the owner's FE v1.49, §12.9).** The contract, on **both** sides and for some time, is that `love.quizAnswers[].questionId` is the server-issued UUID from **API-33** (`GET /compatibility-quiz/questions`), read from that response and echoed back verbatim; `dimensionKey`/`order` is the join key the client uses to attach its local pole copy. **The client does neither.** API-33 is not wired at all, the 12 questions come from the hardcoded `SCALE_QUESTIONS` list (`src/lib/onboarding/scales.ts`), and `src/lib/onboarding/submit.ts:184` sends `questionId: q.id` — a client slug. It passed Module 5 only because Module 5 submits against mocks, whose validation is lenient. **The fix is FR-3b's own pattern, one the client already applies to onboarding options:** fetch API-33 (RTK Query, in-memory like API-39), render each question by matching `dimensionKey`/`order` to local copy, and submit the fetched `questionId`. **Not this session's to build** — needs its own branch. Natural owner is a Module 5 follow-up; if deferred, whichever module wires the quiz retake (API-26) must take it, since that endpoint carries the identical rule. | **Module 5 follow-up (or the quiz-retake module)** | FE |
 | O-23 | **"Relocation" moved Anchor → Plot (FE v1.50–1.51 / BE v1.12, §12.10) — the merged onboarding modules still ship the old field and must change.** The spec deletes Anchor's `relocationWillingness` (partner-preference) and adds Plot's `openToRelocation` (`yes\|no\|depends`, public + filterable, new premium filter FR-24/API-13, disambiguated by new FR-3c). The client does **not** track the catalogue's key set — keys are a fixed contract (`src/api/contract.ts:213`), so this is a code change across ~7 sites: remove the Anchor key at `src/hooks/use-onboarding-options.ts:100`; drop field + default at `src/lib/onboarding/types.ts:103,141` and add `openToRelocation` to Plot; move it in the submit body at `src/lib/onboarding/submit.ts:71,142` (Anchor→Plot — otherwise API-7 still carries the deleted key); update the union member + interface field at `src/api/contract.ts:270,376`; relabel the mock at `src/api/mock/catalogue.ts:262`; and move the question between the Anchor and Plot **screens** (Anchor 7→6, Plot →~19). Backend's column drop is theirs (C-1). ✅ **DONE 2026-08-08** (`fix/module-5.5-findings`, owner OK'd this branch + confirmed BE v1.12 deployed): renamed `relocationWillingness`→`openToRelocation` across contract union+`OnboardingPlot`, `types.ts` (draft+default, Anchor→Plot), `use-onboarding-options.ts`, `submit.ts` (label+plot body), mock `catalogue.ts`+`handlers.ts` allowlist, and moved the screen from Anchor §2 to Plot §1 (after Family type) in `onboarding.tsx` + the Maestro flow (M5-066). **One correction to the item above:** the field was *already* a `plot` field on the wire (moved 2026-08-07, M5-059), so this was a name+screen change, not a wire relocation. `tsc` clean (3 pre-existing unrelated errors in discover/profile/chat untouched). Live re-verify pending. **O-22 left separate** (owner's call — new API-33 wiring, its own pass). | ✅ **DONE — live re-verify pending** | FE |
+| O-24 | **New Plot field `relationship_status` + the FR-4 immutability revision (FE v1.54 / BE v1.15, §12.11) — hits merged onboarding *and* built Edit Profile.** (a) `relationship_status` is a new backend-driven Plot field (21st `/onboarding/options` category, keys `never_married`/`divorced`), so the same ~7-site fixed-key change as O-23 (`use-onboarding-options.ts`, `types.ts`, `submit.ts` Plot member, `contract.ts` union+interface, `mock/catalogue.ts`, a new onboarding screen), **plus**: a new onboarding **screen with FR-4 immutability messaging**, a **read-only row on Edit Profile (FR-27)**, its **own profile-detail row directly after the hero photo (FR-18)**, and a new **Basic** (non-premium) filter on FR-24. (b) FR-4's immutable set changes: **`relationship_status` joins it, `height` leaves it** — `PATCH /profile` now accepts `heightCm` and rejects `firstName/lastName/dateOfBirth/relationshipStatus`; the stale comment at `app/(tabs)/(profile)/edit-profile.tsx:80` (\"name/DOB/height\") must be corrected. **Not this session's to build** — batch with O-23 (same onboarding-submit surface) in the Module 5 follow-up. Backend's users column + options category are theirs (C-1). | **Module 5 follow-up (with O-23)** | FE |
 
 **Resolved, do not reopen:** dark mode is out of scope — light theme only (2026-07-27).
 **Web is out of scope** — iOS and Android only (2026-07-28, O-12).
@@ -3760,14 +3761,55 @@ v1.53 left intact) to make the two shipped behaviours explicit rather than merel
 body now lists `platform` with the append-only-legal-artifact rationale, and §9's cross-cutting header
 convention now names three headers including `X-Client-Info` (with its best-effort/strippable caveat).
 This does not touch or resolve the *backend*-doc contradiction — that is still the cofounder's to fix.
-⚠️ **Version-collision risk:** `v1.54` was chosen to follow the doc's own changelog convention (editing
-content without a bump would have created a second "v1.53"), but the cofounder could independently bump
-to `v1.54` for different content — the same pathology as the §12.9 collisions. Belongs to the
-numbering-convention decision the founders still owe.
+⚠️ **Version-collision risk — this materialised the next day; see §12.11.** `v1.54` was chosen to follow
+the doc's own changelog convention (editing content without a bump would have created a second "v1.53").
+The owner then independently issued their *own* `zomyra_frontend_requirements_v1_54.docx` (relationship_status,
+received 2026-08-09) — a **different** v1.54. **The owner's v1.54 is authoritative; our generated v1.54 is
+withdrawn**, and the platform / `X-Client-Info` wording it carried **was re-based onto the owner's v1.54
+→ `zomyra_frontend_requirements_v1_55.docx` (produced 2026-08-09, in `~/Downloads`)** so it is not lost.
+Exactly the pathology the numbering-convention decision the founders owe
+exists to prevent.
 
 **Fine, do not re-open:** no *new* version-number collisions this batch — FE advanced 1.50→1.53 and BE
 1.12→1.14 on numbers the repo had not spent. The §12.9 collisions (two "FE v1.49", two "BE v1.10")
 are unchanged and still belong to the numbering-convention decision the founders owe.
+
+No files renamed or diagrammed; diff record only.
+
+### 12.11 Owner docx set — FE v1.54 + BE v1.15 (received 2026-08-09)
+
+The owner's authoritative `zomyra_frontend_requirements_v1_54.docx` + `ZOMYRA_Backend_TDD_v1_15.docx`.
+**Note the v1.54 collision first (§12.10):** this owner v1.54 is a *different* document from the one we
+generated on 2026-08-08 — ours recorded `platform`/`X-Client-Info`, theirs adds `relationship_status`
+and is silent on ours. **Theirs wins; ours is withdrawn and its two edits were re-applied on top of
+theirs → `zomyra_frontend_requirements_v1_55.docx` (2026-08-09).** One coherent feature this batch, plus a paired immutability correction. **Both land
+inside merged/built onboarding + profile code (→ O-24).**
+
+**New Plot field `relationship_status`** (FE v1.54, BE v1.15). Same shape as O-23's `openToRelocation`,
+so the client work is the same fixed-key-contract change — but with a wider blast radius:
+- **A Plot self-attribute**, backend-driven from `GET /onboarding/options` (FR-3b) — a **21st** catalogue
+  category, proposed keys `never_married` / `divorced` (final wording a product call; client never
+  hardcodes the labels, but the *key* is a fixed client contract, so the field still has to be added by
+  hand — `use-onboarding-options.ts`, `types.ts`, `submit.ts` Plot member, `contract.ts` union/interface,
+  `mock/catalogue.ts`, and a new onboarding **screen**).
+- **API-7 plot member** + **`GET /profile/me` field**.
+- **A new *Basic* filter** on FR-24 (`GET /filters/options`, `premiumOnly: false`) — *unlike*
+  `openToRelocation`, which is premium. No new pattern; it just uses FR-24's existing basic/premium split.
+- **Profile detail (FR-18):** its own row, positioned **directly after the hero/cover photo, before About
+  Me** — the first fact shown after the photo. Not folded into At-a-Glance.
+- **Edit Profile (FR-27):** shown **read-only/locked** (like age and name), not omitted.
+
+**FR-4 immutability set revised** (BE v1.15, mirrored FE v1.54) — a distinct correction riding along:
+- **`relationship_status` joins** the locked-after-onboarding set (403 `immutable_field`, same as name /
+  date-of-birth); onboarding must show the FR-4 point-of-entry immutability message when capturing it.
+- **`height` is removed** from the immutable set — reversing the v1.0 wireframe-derived grouping.
+  `PATCH /profile` now **accepts** `heightCm` and **rejects** `firstName`/`lastName`/`dateOfBirth`/
+  `relationshipStatus`.
+- **This touches built code:** `app/(tabs)/(profile)/edit-profile.tsx:80` documents the immutable set as
+  *"name/DOB/height … not enforced here"* — now stale on both counts (height out, relationship_status in).
+  Edit Profile is already built, and FR-4 enforcement was deferred there, so the fix is: correct the
+  documented set now, and when enforcement is built use `{name, dateOfBirth, relationshipStatus}`, not
+  height.
 
 No files renamed or diagrammed; diff record only.
 
