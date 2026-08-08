@@ -90,6 +90,11 @@ export type OnboardingState = {
   fitness: OptionKey;
   familyType: OptionKey;
   /**
+   * FR-18 / FR-4 — the user's marital history. A Plot self-fact captured once
+   * and locked afterwards (O-24). See `OnboardingPlot.relationshipStatus`.
+   */
+  relationshipStatus: OptionKey;
+  /**
    * FR-3c — the user's own relocation stance (public + filterable). Renamed from
    * `relocationWillingness` and moved Anchor → Plot in O-23; see OnboardingPlot.
    */
@@ -135,6 +140,7 @@ export const defaultOnboardingState: OnboardingState = {
   smoking: "",
   fitness: "",
   familyType: "",
+  relationshipStatus: "",
   openToRelocation: "",
   bio: "",
   partnerAgeRange: [25, 32],

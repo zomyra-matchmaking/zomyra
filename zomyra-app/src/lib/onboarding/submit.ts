@@ -63,6 +63,7 @@ export function missingFields(draft: OnboardingState): string[] {
     ["smoking", "Smoking"],
     ["fitness", "Fitness"],
     ["familyType", "Family type"],
+    ["relationshipStatus", "Relationship status"],
     ["openToRelocation", "Open to relocation"],
     ["matchLocationPreference", "Match location"],
     ["childrenPreference", "Children"],
@@ -127,6 +128,9 @@ export function buildSubmitBody(
       smoking: draft.smoking,
       fitness: draft.fitness,
       familyType: draft.familyType,
+      // FR-18 / FR-4 — marital history, captured once then locked (O-24). A plain
+      // Plot member on submit; the immutability lock is Module 6's to enforce.
+      relationshipStatus: draft.relationshipStatus,
       // FR-3c — the user's own relocation stance, a public Plot fact. Renamed
       // from `relocationWillingness` (O-23); see OnboardingPlot.openToRelocation.
       openToRelocation: draft.openToRelocation,

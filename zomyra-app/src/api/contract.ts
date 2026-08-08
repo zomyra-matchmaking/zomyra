@@ -261,6 +261,7 @@ export type OptionCategoryKey =
   | "smoking"
   | "fitness"
   | "familyType"
+  | "relationshipStatus"
   | "openToRelocation"
   // Anchor
   | "matchLocationPreference"
@@ -344,6 +345,22 @@ export type OnboardingPlot = {
    */
   fitness: string;
   familyType: string;
+  /**
+   * FR-18 / FR-4 — **the user's marital history, a public Plot fact captured
+   * once and then locked** (O-24, FE v1.54 / BE v1.15). Backend-driven values
+   * from API-39's 21st `relationshipStatus` category (proposed `never_married |
+   * divorced`, final wording a product call — the client never hardcodes the
+   * labels, only stores/submits the key).
+   *
+   * ⚠️ **Joins FR-4's immutable set** (403 `immutable_field` on any later
+   * `PATCH /profile`, same as name / date-of-birth), and in the same revision
+   * `height` *leaves* that set. Enforcement of the lock and the read-only Edit
+   * Profile row (FR-27) are **Module 6's** — see `edit-profile.tsx`. FR-18's
+   * profile-detail row (first fact after the hero photo) and FR-24's new Basic
+   * filter live in the **Discover** module. This client's Module-5 obligation is
+   * the onboarding capture + API-7 submit only.
+   */
+  relationshipStatus: string;
   /**
    * FR-3c — **the user's own answer, a public and filterable Plot fact.** "Are
    * you open to relocating after marriage?", one of `yes | no | depends`.

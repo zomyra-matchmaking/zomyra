@@ -122,6 +122,9 @@ const REQUIRED_PLOT_KEYS = [
   // carrying it — see `OnboardingPlot.fitness`.
   "fitness",
   "familyType",
+  // O-24 marital history — required Plot field, locked after onboarding (FR-4).
+  // See `OnboardingPlot.relationshipStatus`.
+  "relationshipStatus",
   // FR-3c own-answer Plot field, renamed from `relocationWillingness` (O-23) —
   // see `OnboardingPlot.openToRelocation`.
   "openToRelocation",

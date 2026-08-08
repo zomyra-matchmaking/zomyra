@@ -227,6 +227,13 @@ export const CATALOGUE: { key: OptionCategoryKey; values: CatalogueOption[] }[] 
       ["flexible", "Flexible"],
     ),
   },
+  // O-24 — FR-18/FR-4 marital history. Proposed keys per BE v1.15; final wording
+  // is a product call (the client never hardcodes labels). See
+  // `OnboardingPlot.relationshipStatus`.
+  {
+    key: "relationshipStatus",
+    values: opts(["never_married", "Never Married"], ["divorced", "Divorced"]),
+  },
 
   // ---- Anchor ------------------------------------------------------------
   {

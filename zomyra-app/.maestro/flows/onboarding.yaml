@@ -180,6 +180,12 @@ appId: com.zomyra.app
 - tapOn:
     id: "option-nuclear"
 
+# O-24 — marital history, a Plot self-fact locked after onboarding (FR-4).
+- assertVisible:
+    id: "onboarding-step-relationshipStatus"
+- tapOn:
+    id: "option-never_married"
+
 # FR-3c — moved out of Anchor into Plot in O-23.
 - assertVisible:
     id: "onboarding-step-openToRelocation"

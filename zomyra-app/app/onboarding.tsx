@@ -411,6 +411,13 @@ const Q1: QuestionScreen[] = [
     title: "Your world",
     subtitle: "How does your family live?",
   }),
+  // O-24 — marital history, a Plot self-fact. FR-4 locks it after onboarding, so
+  // the subtitle carries the point-of-entry immutability message the spec asks
+  // for; the read-only Edit Profile row and its enforcement are Module 6's.
+  choice(1, "relationshipStatus", "relationshipStatus", {
+    title: "What's your relationship status?",
+    subtitle: "You won't be able to change this later, so please pick carefully.",
+  }),
   // FR-3c — the user's *own* relocation stance (public + filterable), a Plot
   // question. Renamed from `relocationWillingness` and moved out of Anchor in
   // O-23; the near-homonym partner-preference it replaced was deleted in v1.51.
